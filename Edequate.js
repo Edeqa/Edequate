@@ -2,8 +2,10 @@
  * Edequate - javascript DOM and interface routines
  * Copyright (C) Edeqa LLC <http://www.edeqa.com>
  *
- * v.1.1 - some fixes and improvements
- * v.1 - initial release
+ * History:
+ * 1.2 - HTMLElement#updateHTML(text)
+ * 1.1 - some fixes and improvements
+ * 1 - initial release
  */
 
 function Edequate(options) {
@@ -299,6 +301,16 @@ function Edequate(options) {
             div.classList.add("hidden");
         }
         return div;
+    };
+
+    HTMLElement.prototype.updateHTML = function(update, options) {
+        clearTimeout(this._updateTask);
+        options = options || {};
+        this.innerHTML = update;
+        if(!options.noflick) {
+            this.classList.add("changed");
+            this._updateTask = setTimeout(function(){this.classList.remove("changed")}.bind(this), 5000);
+        }
     };
 
     HTMLElement.prototype.place = function(type, args) {
@@ -1870,25 +1882,17 @@ function Edequate(options) {
                     var title = options.title;
                     delete options.title;
                     var notif;
-//                    console.log("A");
                     try {
-//                    console.log("B");
                         notif = new Notification(title, options);
                     } catch (e) {
-//                    console.log("C",e);
                         if(e.name === "TypeError") {
-//                    console.log("D");
                             navigator.serviceWorker.register("/sw.js").then(function(e){
-//                    console.log("E:"+e);
-
                                 navigator.serviceWorker.ready.then(function(registration) {
-//                        console.log("F",registration);
                                     notif = registration.showNotification(title, options);
                                 });
                             });
                         }
                     }
-//                    console.log("G",notif);
                     notif.onclick = function(e){
                         notif.close();
                         window.focus();
@@ -1898,7 +1902,6 @@ function Edequate(options) {
                     if(options.duration) {
                         setTimeout(function(){
                             notif.close();
-//                            notif2 && notif2.close();
                         }, options.duration);
                     }
                 }
