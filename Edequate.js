@@ -3,6 +3,11 @@
  * Copyright (C) Edeqa LLC <http://www.edeqa.com>
  *
  * History:
+ * 1.3 - sprintf redesigned; table#options.sort=true/false; table#options.filter=true/false;
+ *       dialog#options.autoclose=true/false; dialog#setHeader; dialog#getHeader;
+ *       dialog#setFooter; dialog#getFooter; dialog#setPositive; dialog#getPositive;
+ *       dialog#setNeutral; dialog#getNeutral; dialog#setNegative; dialog#getNegative;
+ *       menu; create#options.children; create#options.variable; create#options.childName
  * 1.2 - HTMLElement#updateHTML(text)
  * 1.1 - some fixes and improvements
  * 1 - initial release
@@ -27,7 +32,6 @@ function Edequate(options) {
         ID:"id",
         SRC:"src",
         HTTP_EQUIV: "http-equiv",
-        CONTENT:"content",
         TABLE:"table",
         TR:"tr",
         TH:"th",
@@ -91,7 +95,8 @@ function Edequate(options) {
         NOT_AN_OBJECT: 2,
         INCORRECT_JSON: 4,
         ERROR_LOADING: 8,
-        ERROR_SENDING_REQUEST: 16
+        ERROR_SENDING_REQUEST: 16,
+        INVALID_MODULE: 32,
     };
     this.ERRORS = ERRORS;
 
@@ -348,6 +353,43 @@ function Edequate(options) {
         });
     }
 
+    if(!String.prototype.sprintf) {
+        Object.defineProperty(String.prototype, "sprintf", {
+            enumerable: false,
+            value: function() {
+                var a = this, b;
+                if(arguments[0].constructor === Array || arguments[0].constructor === Object) {
+                    arguments = arguments[0];
+                }
+                var args = [];
+                for(var i = 0; i < arguments.length; i++) {
+                    args.push(arguments[i]);
+                }
+                return this.replace(/%[\d\.]*[sdf]/g, function(pattern){
+                    var value = args.shift();
+                    var tokens = pattern.match(/^%(0)?([\d\.]*)(.)$/);
+                    switch(tokens[3]) {
+                        case "d":
+                            var length = +tokens[2];
+                            var string = value.toString();
+                            if(length > string.length) {
+                                tokens[1] = tokens[1] || " ";
+                                value = tokens[1].repeat(length - string.length) + string;
+                            }
+                            break;
+                        case "f":
+                            break;
+                        case "s":
+                            break;
+                        default:
+                            console.error("Unknown pattern: " + tokens[0]);
+                    }
+                    return value;
+                });
+            }
+        });
+    }
+
     function EPromise() {
         return {
             then: function(callback) {
@@ -358,8 +400,7 @@ function Edequate(options) {
                 this.onRejected = callback || function(){};
             },
             onResolved: function(value) {
-                console.warn("Define '.then(onResolved(value){...})'");
-                console.log(value);
+                console.warn("Define '.then(onResolved(value){...})'; got response: ", value && value.response);
             },
             onRejected: function(code, value, error) {
                 console.warn("Define '.catch(onRejected(code, value[, error]){...})'");
@@ -437,22 +478,53 @@ function Edequate(options) {
                 for(var x in properties) {
                     if(!properties.hasOwnProperty(x)) continue;
                     if(x === HTML.INNERHTML || x === HTML.INNERTEXT) {
-                        if(properties[x]) {
-                            if(properties[x] instanceof HTMLElement) {
+                        if (properties[x]) {
+                            if (properties[x] instanceof HTMLElement) {
                                 el.appendChild(properties[x]);
-                            } else if(typeof properties[x] === "string") {
-                                properties[x] = properties[x].replace(/\$\{(\w+)\}/g, function(x,y){return u.lang[y] ? u.lang[y].outerHTML : y})
+                            } else if (typeof properties[x] === "string") {
+                                properties[x] = properties[x].replace(/\$\{(\w+)\}/g, function (x, y) {
+                                    return lang[y] ? lang[y].outerHTML : y
+                                })
                                 el[x] = properties[x];
                             } else {
                                 el[x] = properties[x];
                             }
                         }
-                    } else if(x == HTML.CONTENT && properties[x].constructor === Array) {
+                    } else if(x == "variable") {
+                        create.variables[properties[x]] = el;
+                    } else if(x == "childName") {
+                        if(appendTo ) {
+                            if(appendTo instanceof HTMLElement) {
+                                if(appendTo.hasOwnProperty(properties[x])) {
+                                    console.warn("Property " + properties[x] + " of node has overrided.");
+                                }
+                                appendTo[properties[x]] = el;
+                            } else {
+                                console.error("Property " + properties[x] + " can not be defined for non-HTMLElement.")
+                            }
+                        } else {
+                            console.error("Property " + properties[x] + " can not be defined for null.")
+                        }
+                    } else if(x == "content" && properties[x].constructor === Array) {
                         for(var i = 0; i < properties[x].length; i++) {
                             el.appendChild(properties[x][i]);
                         }
-                    } else if(x === HTML.CONTENT && properties[x].constructor !== String) {
+                    } else if(x === "content" && properties[x].constructor !== String) {
                         el.appendChild(properties[x]);
+                    } else if(x === "children" && properties[x]) {
+                        var nodes = [];
+                        if(properties[x] instanceof HTMLElement) {
+                            properties[x].childNodes.forEach(function (item) {
+                                nodes.push(item);
+                            });
+                        } else if (properties[x].constructor === Array) {
+                            nodes = properties[x];
+                        }
+                        nodes.forEach(function(item) {
+                            if(item instanceof HTMLElement) {
+                                el.appendChild(item);
+                            }
+                        });
                     } else if(properties[x] instanceof HTMLElement) {
                         el.appendChild(properties[x]);
                         el[x] = properties[x];
@@ -535,6 +607,7 @@ function Edequate(options) {
 
         return el;
     }
+    create.variables = {};
     this.create = create;
 
     function clear(node) {
@@ -590,10 +663,14 @@ function Edequate(options) {
                 var a;
                 if(needInstantiate) {
                     if(this.instance && window[this.instance] && window[this.instance].constructor === Function) {
-                        a = new window[this.instance](context);
-                        a.moduleName = this.instance;
-                        a.module = this.module;
-                        a.origin = this.origin;
+                        try {
+                            a = new window[this.instance](context);
+                            a.moduleName = this.instance;
+                            a.module = this.module;
+                            a.origin = this.origin;
+                        } catch(e) {
+                            returned.onRejected(ERRORS.INVALID_MODULE, this.instance, e);
+                        }
                     } else {
                         returned.onRejected(ERRORS.NOT_AN_OBJECT, this.instance, e);
                         return;
@@ -619,10 +696,10 @@ function Edequate(options) {
     function _parse(key, value) {
         if (typeof value === "string" && /^function.*?\([\s\S]*?\)\s*\{[\s\S]*\}[\s\S]*$/.test(value)) {
             var args = value
-                        .replace(/\/\/.*$|\/\*[\s\S]*?\*\//mg, "") //strip comments
-                        .match(/\([\s\S]*?\)/m)[0]                      //find argument list
-                        .replace(/^\(|\)$/g, "")                    //remove parens
-                        .match(/[^\s(),]+/g) || [],                //find arguments
+                    .replace(/\/\/.*$|\/\*[\s\S]*?\*\//mg, "") //strip comments
+                    .match(/\([\s\S]*?\)/m)[0]                      //find argument list
+                    .replace(/^\(|\)$/g, "")                    //remove parens
+                    .match(/[^\s(),]+/g) || [],                //find arguments
                 body = value.replace(/\n/mg, "").match(/\{([\s\S]*)\}/)[1]          //extract body between curlies
             return Function.apply(0, args.concat(body));
         } else {
@@ -674,7 +751,6 @@ function Edequate(options) {
     }
     this.loadForContext = loadForContext;
 
-    var modalBackground;
     var dialogQueue = [];
     var performingDialogInQueue;
 
@@ -688,10 +764,12 @@ function Edequate(options) {
     *       modal: true|*false*, - if true then dim all behind the dialog and wait for user
     *       hiding: HIDING.method, - default is HIDING.OPACITY
     *       resizeable: true|*false*,
+    *       header, - also can set up using setHeader
     *       items, - items can be added also via dialog.addItem
-    *       positive: button,
-    *       neutral: button,
-    *       negative: button,
+    *       footer, - also can set up using setFooter
+    *       positive: button, - also can set up using setPositive
+    *       neutral: button, - also can set up using setNeutral
+    *       negative: button, - also can set up using setNegative
     *       onopen: function, - also will be called if positive is clicked
     *       onclose: function, - also will be called if negative is clicked
     *       timeout, - dialog will be closed automatically after timeout, onclose will be called
@@ -726,24 +804,57 @@ function Edequate(options) {
     *   }
      * dialog.open()
      * dialog.close()
+     * dialog.setHeader(options) - as for create
+     * dialog.getHeader()
+     * dialog.setFooter(options) - as for create
+     * dialog.getFooter()
+     * dialog.setPositive(button)
+     * dialog.getPositive()
+     * dialog.setNeutral(button)
+     * dialog.getNeutral()
+     * dialog.setNegative(button)
+     * dialog.getNegative()
+     *
      */
     function dialog(options, appendTo) {
         appendTo = appendTo || document.body;
         options = options || {};
 
+        var dim;
+        if(options.modal) {
+            dim = create(HTML.DIV, {className:"dialog-dim hidden"}, appendTo);
+        }
+
         var dialog = create(HTML.DIV, {
-            className:"modal shadow hidden"+(options.className ? " "+options.className : ""),
+            className:"modal shadow hidden" + optionalClassName(options.className),
             tabindex:-1,
-            onblur: options.onblur,
-            onfocus: options.onfocus
+            onblur: function(evt) {
+                if(this._onblur) this._onblur(evt);
+                if(this.autoclose) {
+                    this.close();
+                }
+            },
+            onfocus: options.onfocus,
+            autoclose: options.autoclose,
+            _onblur: options.onblur
         }, appendTo);
         dialog.options = options;
+        if(dim) {
+            dialog.modal = dim;
+        }
 
         dialog.opened = false;
 
         dialog.clearItems = function() {
             clear(dialog.itemsLayout);
+            dialog.itemsLayout.hide();
             dialog.items = [];
+        };
+        dialog.onaccept = function() {
+
+        };
+        dialog.oncancel = function() {
+
         };
 
         dialog.addItem = function(item, appendTo) {
@@ -755,7 +866,7 @@ function Edequate(options) {
             if(item.type === HTML.DIV || item.type === HTML.A) {
                 if(item.enclosed) {
                     div = x = create(item.type, {
-                        className: "dialog-item-enclosed" + (item.className ? " " + item.className : "")
+                        className: "dialog-item-enclosed" + optionalClassName(item.className)
                     });
                     var enclosedButton, enclosedIcon;
                     enclosedButton = create(HTML.DIV, {className:"dialog-item-enclosed-button", onclick: function(){
@@ -770,11 +881,11 @@ function Edequate(options) {
                             x.body.hide(HIDING.SCALE_Y_TOP);
                         }
                     }}, x);
-                    enclosedIcon = create(HTML.DIV, {className:"dialog-item-enclosed-icon notranslate", innerHTML:"expand_more"}, enclosedButton);
+                    enclosedIcon = create(HTML.DIV, {className:"icon dialog-item-enclosed-icon notranslate", innerHTML:"expand_more"}, enclosedButton);
                     create(HTML.DIV, {className:"dialog-item-enclosed-label", innerHTML: item.label || "Show more information"}, enclosedButton);
                     x.body = create(HTML.DIV, {className:"dialog-item-enclosed-body hidden", innerHTML:item.body || ""}, x);
                 } else {
-                    item.className = "dialog-item" + (item.className ? " " + item.className : "");
+                    item.className = "dialog-item" + optionalClassName(item.className);
                     item.innerHTML = item.label || item.title || item.innerHTML || "";
                     delete item.label;
                     delete item.title;
@@ -785,12 +896,12 @@ function Edequate(options) {
             } else if(item.type === HTML.HIDDEN) {
                 div = x = create(HTML.INPUT, {type:HTML.HIDDEN, value:item.value || ""});
             } else if(item.type === HTML.SELECT) {
-                item.itemClassName = "dialog-item dialog-item-input" + (item.itemClassName ? " " + item.itemClassName : "");
+                item.itemClassName = "dialog-item dialog-item-input" + optionalClassName(item.itemClassName);
                 div = create(HTML.DIV, {className: item.itemClassName, onclick: function(){this.firstChild.nextSibling.click();}});
 
                 if(item.label) {
                     var labelOptions = {
-                        className:"dialog-item-label" + (item.labelClassName ? " " + item.labelClassName : "")
+                        className:"dialog-item-label" + optionalClassName(item.labelClassName)
                     };
                     if(item.label.constructor === String) {
                         labelOptions.innerHTML = item.label;
@@ -807,20 +918,20 @@ function Edequate(options) {
 
                 x = create(HTML.SELECT, {
                     type:item.type,
-                    className:"dialog-item-input-select" + (item.className ? " "+item.className : ""),
+                    className:"dialog-item-input-select" + optionalClassName(item.className),
                     tabindex: i,
                     value:item.value || ""
                 }, div);
                 for(var y in item.values) {
-                    u.create(HTML.OPTION, {value:y, innerHTML:item.values[y], selected: item.default == y}, x);
+                    create(HTML.OPTION, {value:y, innerHTML:item.values[y], selected: item.default == y}, x);
                 }
             } else {
-                item.itemClassName = "dialog-item dialog-item-input" + (item.itemClassName ? " " + item.itemClassName : "");
+                item.itemClassName = "dialog-item dialog-item-input" + optionalClassName(item.itemClassName);
                 div = create(HTML.DIV, {className:item.itemClassName, onclick: function(){this.lastChild.click();}});
 
                 if(item.label) {
                     var labelOptions = {
-                        className:"dialog-item-label" + (item.labelClassName ? " " + item.labelClassName : "")
+                        className:"dialog-item-label" + optionalClassName(item.labelClassName)
                     };
                     if(item.label.constructor === String) {
                         labelOptions.innerHTML = item.label;
@@ -838,20 +949,21 @@ function Edequate(options) {
                 else if(item.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
 
                 item.tabindex = i;
-                item.className = "dialog-item-input-"+item.type + (item.className ? " "+item.className : "");
+                item.className = "dialog-item-input-"+item.type + optionalClassName(item.className);
                 if(item.onclick && item.type != HTML.BUTTON) {
                     var a = item.onclick;
                     item.onclick = function(e) { this.focus(); a.call(this); e.stopPropagation(); };
-                } else {
+                } else if(item.onclick) {
+                } else{
                     item.onclick = function(e) { this.focus(); e.stopPropagation(); };
                 }
                 item.onkeyup = function(e){
                     if(e.keyCode === 13 && this.type !== HTML.TEXTAREA) {
-                        dialog.close();
-                        if(options.positive && options.positive.onclick) options.positive.onclick.call(dialog,items);
+                        //dialog.close();
+                        dialog.onaccept();
                     } else if(e.keyCode === 27) {
-                        dialog.close();
-                        if(options.negative && options.negative.onclick) options.negative.onclick.call(dialog,items);
+                        //dialog.close();
+                        dialog.oncancel();
                     }
                 };
                 item.value = item.value || "";
@@ -860,7 +972,7 @@ function Edequate(options) {
 
                 x = create(type, item, div);
             }
-            items.push(x);
+            dialog.items.push(x);
 
             if(item.order) {
                 var appended = false;
@@ -877,8 +989,21 @@ function Edequate(options) {
             } else {
                 appendTo.appendChild(div);
             }
-
+            dialog.itemsLayout.show();
             return x;
+        };
+        dialog.addItems = function(items) {
+            if(items) {
+                items.forEach(function(item){
+                    dialog.addItem(item);
+                })
+            }
+            return dialog;
+        };
+        dialog.setItems = function(items) {
+            dialog.clearItems();
+            dialog.addItems(items);
+            return dialog;
         };
 
         dialog.adjustPosition = function() {
@@ -910,10 +1035,10 @@ function Edequate(options) {
             }
             dialog.focus();
             var focused = false;
-            for(var i in items) {
-                if(items[i].constructor === HTMLInputElement && (items[i].type === HTML.TEXT || items[i].type === HTML.NUMBER)) {
+            for(var i in dialog.items) {
+                if(dialog.items[i].constructor === HTMLInputElement && (dialog.items[i].type === HTML.TEXT || dialog.items[i].type === HTML.NUMBER)) {
                     focused = true;
-                    items[i].focus();
+                    dialog.items[i].focus();
                     break;
                 }
             }
@@ -922,11 +1047,6 @@ function Edequate(options) {
                 else if(dialog.negative && options.timeout) dialog.negative.focus();
             }
         };
-
-        if(options.modal) {
-            modalBackground = modalBackground || u.create(HTML.DIV, {className:"dim"}, appendTo);
-            dialog.modal = modalBackground;
-        }
 
         var backButtonAction = function(event) {
             window.history.pushState(null, document.title, location.href);
@@ -980,11 +1100,14 @@ function Edequate(options) {
             }
 
             clearInterval(dialog.intervalTask);
-            dialog.modal && dialog.modal.show();
+            if(dialog.modal) {
+                dialog.modal.show();
+                dialog.style.zIndex += 10000;
+            }
             dialog.show(dialog.options.hiding.open);
             dialog.opened = true;
             dialog.adjustPosition();
-            if(dialog.options.onopen) dialog.options.onopen.call(dialog,items,event);
+            if(dialog.options.onopen) dialog.options.onopen.call(dialog,dialog.items,event);
             if(dialog.offsetHeight) {
                 if(dialog.options.timeout) {
                     var atom = dialog.options.timeout / 16;
@@ -1021,12 +1144,15 @@ function Edequate(options) {
             }
             clearInterval(dialog.intervalTask);
             dialog.hide(dialog.options.hiding.close);
-            dialog.modal && dialog.modal.hide();
+            if(dialog.modal) {
+                dialog.modal.hide();
+                dialog.style.zIndex -= 10000;
+            }
             dialog.opened = false;
 
             window.removeEventListener("popstate", backButtonAction);
 
-            if(dialog.options.onclose) dialog.options.onclose.call(dialog,items,event);
+            if(dialog.options.onclose) dialog.options.onclose.call(dialog,dialog.items,event);
 
             if(dialog.options.queue) {
                 performingDialogInQueue = null;
@@ -1041,20 +1167,19 @@ function Edequate(options) {
             if(e.keyCode === 27) {
                 if(options.negative && options.negative.onclick) {
                     dialog.close();
-                    options.negative.onclick.call(dialog,items);
+                    options.negative.onclick.call(dialog,dialog.items);
                 }
             }
         });
 
         options = options || {};
-        var items = [];
 
         var defaultCloseButton = {
             icon: " ",
             className: "",
             onclick: function(e){
                 dialog.close();
-                if(options.negative && options.negative.onclick) options.negative.onclick.call(dialog,items);
+                if(options.negative && options.negative.onclick) options.negative.onclick.call(dialog,dialog.items);
             }
         };
         if(options.title) {
@@ -1065,14 +1190,13 @@ function Edequate(options) {
                     button: defaultCloseButton,
                 }
             } else {
-                if(options.title.className) options.title.className = " " + options.title.className;
+                options.title.className = optionalClassName(options.title.className);
                 options.title.button = options.title.button || defaultCloseButton;
                 if(options.title.button.className) options.title.button.className = " " + options.title.button.className;
                 options.title.button.onclick = options.title.button.onclick || function(){};
-
             }
             var titleLayout = create(HTML.DIV, {
-                className:"dialog-title" + (options.title.className || ""),
+                className:"dialog-title" + optionalClassName(options.title.className),
                 onmousedown: function(e) {
                     if(e.button != 0) return;
 //                    var position = dialog.getBoundingClientRect();
@@ -1119,26 +1243,29 @@ function Edequate(options) {
                 }
             }, dialog);
             dialog.titleLayout = create(HTML.DIV, {className:"dialog-title-label", innerHTML: options.title.label }, titleLayout);
+            dialog.setTitle = function(title) {
+                lang.updateNode(dialog.titleLayout, title);
+                //dialog.titleLayout
+            };
 
             if(options.title.button && options.title.button.icon) {
-                create(HTML.DIV, {className:"dialog-title-button notranslate"+ options.title.button.className, innerHTML:options.title.button.icon, onclick:options.title.button.onclick}, titleLayout);
+                create(HTML.DIV, {className:"icon dialog-title-button notranslate" + optionalClassName(options.title.button.className), innerHTML:options.title.button.icon, onclick:options.title.button.onclick}, titleLayout);
             }
 
             if(options.title.filter) {
-                dialog.filterPlaceholder = u.create(HTML.DIV, {className:"dialog-items hidden", innerHTML:"Nothing found"}, dialog);
-                dialog.filterLayout = u.create(HTML.DIV, {
+                dialog.filterLayout = create(HTML.DIV, {
                     className: "dialog-filter"
                 }, titleLayout);
-                dialog.filterButton = u.create(HTML.DIV, {
-                    className: "dialog-filter-button notranslate",
+                dialog.filterButton = create(HTML.DIV, {
+                    className: "icon dialog-filter-button notranslate",
                     innerHTML: "search",
-                    onclick: function() {
+                    onclick: function(evt) {
                         dialog.filterButton.hide();
                         dialog.filterInput.classList.remove("hidden");
                         dialog.filterInput.focus();
                     }
                 }, dialog.filterLayout);
-                dialog.filterInput = u.create(HTML.INPUT, {
+                dialog.filterInput = create(HTML.INPUT, {
                     className: "dialog-filter-input hidden",
                     tabindex: -1,
                     onkeyup: function(evt) {
@@ -1155,6 +1282,10 @@ function Edequate(options) {
                         dialog.filterInput.updateTask = setTimeout(function(){
                             dialog.filterInput.apply();
                         }, 300);
+                    },
+                    onfocus: function(evt) {
+                        evt.preventDefault();
+                        evt.stopPropagation();
                     },
                     onblur: function() {
                         if(!this.value) {
@@ -1192,8 +1323,8 @@ function Edequate(options) {
                         }
                     }
                 }, dialog.filterLayout);
-                dialog.filterClear = u.create(HTML.DIV, {
-                    className: "dialog-filter-clear hidden notranslate",
+                dialog.filterClear = create(HTML.DIV, {
+                    className: "icon dialog-filter-clear hidden notranslate",
                     innerHTML: "clear",
                     onclick: function() {
                         dialog.filterInput.value = "";
@@ -1205,72 +1336,170 @@ function Edequate(options) {
 
         }
 
+        dialog.header = create(HTML.DIV, {className:"hidden"}, dialog);
+        dialog.getHeader = function() { return dialog.header };
+        dialog.setHeader = function(item) {
+            if(!item) {
+                dialog.header.hide();
+                dialog.header.innerHTML = "";
+                return dialog.header;
+            }
+            item.className = "dialog-header" + optionalClassName(item.className);
+            item.innerHTML = item.label || item.title || item.innerHTML || "";
+            delete item.label;
+            delete item.title;
+            var type = item.type;
+            delete item.type;
+            var node = create(type, item);
+            dialog.header.parentNode.replaceChild(node, dialog.header);
+            dialog.header = node;
+            return dialog.header;
+        };
         if(options.header) {
-            var item = options.header;
-            item.className = "dialog-header" + (item.className ? " " + item.className : "");
+            dialog.setHeader(options.header);
+        }
+
+        dialog.itemsLayout = create(HTML.DIV, {className:"dialog-items" +optionalClassName(options.itemsClassName)}, dialog);
+        dialog.items = [];
+        if(options.items) {
+            dialog.addItems(options.items);
+        }
+
+        if(options.title && options.title.filter) {
+            dialog.filterPlaceholder = create(HTML.DIV, {className: "dialog-items hidden",innerHTML: "Nothing found"}, dialog);
+        }
+
+        dialog.footer = create(HTML.DIV, {className:"hidden"}, dialog);
+        dialog.getFooter = function() { return dialog.footer };
+        dialog.setFooter = function(item) {
+            if(!item) {
+                dialog.footer.hide();
+                dialog.footer.innerHTML = "";
+                return dialog.footer;
+            }
+            item.className = "dialog-footer" + optionalClassName(item.className);
             item.innerHTML = item.label || item.title || item.innerHTML || "";
             delete item.label;
             delete item.title;
             var type = item.type;
             delete item.type;
-            dialog.header = create(type, item, dialog);
-        }
-
-        dialog.itemsLayout = create(HTML.DIV, {className:"dialog-items" +(options.itemsClassName ? " "+options.itemsClassName : "")}, dialog);
-        for(var i in options.items) {
-            var item = options.items[i];
-            dialog.addItem(item);
-        }
-        dialog.items = items;
-
+            var node = create(type, item, dialog);
+            dialog.footer.parentNode.replaceChild(node, dialog.footer);
+            dialog.footer = node;
+            return dialog.footer;
+        };
         if(options.footer) {
-            var item = options.footer;
-            item.className = "dialog-footer" + (item.className ? " " + item.className : "");
-            item.innerHTML = item.label || item.title || item.innerHTML || "";
-            delete item.label;
-            delete item.title;
-            var type = item.type;
-            delete item.type;
-            dialog.footer = create(type, item, dialog);
+            dialog.setFooter(options.footer);
         }
 
-        var buttons = create(HTML.DIV, {className:"dialog-buttons hidden" + (options.buttonsClassName ? " " + options.buttonsClassName : "")}, dialog);
+        var buttons = create(HTML.DIV, {className:"dialog-buttons hidden" + optionalClassName(options.buttonsClassName)}, dialog);
+        dialog.positive = create(HTML.BUTTON, {className: "hidden"}, buttons);
+        dialog.neutral = create(HTML.BUTTON, {className: "hidden"}, buttons);
+        dialog.negative = create(HTML.BUTTON, {className: "hidden"}, buttons);
+
+        dialog.getPositive = function() {
+            return dialog.positive;
+        };
+        dialog.setPositive = function(item) {
+            if(!item) {
+                dialog.positive.hide();
+                dialog.onaccept = function() {
+                };
+                return dialog.positive;
+            }
+            item.tabindex = 98;
+            item.className = "dialog-button dialog-button-positive" + optionalClassName(item.className);
+            item._onclick = item.onclick;
+            item.onclick = function(event){
+                if(item._onclick) item._onclick.call(dialog,dialog.items,event);
+                if(item.dismiss == undefined || item.dismiss) dialog.close();
+            };
+            item.innerHTML = item.label;
+
+            if(dialog.positive) {
+                var node = create(HTML.BUTTON, item, buttons);
+                dialog.positive.parentNode.replaceChild(node, dialog.positive);
+                dialog.positive = node;
+            } else {
+                dialog.positive = create(HTML.BUTTON, item, buttons);
+            }
+            buttons.show();
+            dialog.onaccept = function() {
+                item.onclick.call(dialog,dialog.items);
+            };
+            return dialog.positive;
+        };
         if(options.positive && options.positive.label) {
-            options.positive.tabindex = 98;
-            options.positive.className = "dialog-button dialog-button-positive" + (options.positive.className ? " " + options.positive.className : "");
-            options.positive._onclick = options.positive.onclick;
-            options.positive.onclick = function(event){
-                if(options.positive._onclick) options.positive._onclick.call(dialog,items,event);
-                if(options.positive.dismiss == undefined || options.positive.dismiss) dialog.close();
-            };
-            options.positive.innerHTML = options.positive.label;
-            dialog.positive = create(HTML.BUTTON, options.positive, buttons);
-            buttons.show();
+            dialog.setPositive(options.positive);
         }
+
+        dialog.getNeutral = function() {
+            return dialog.neutral;
+        };
+        dialog.setNeutral = function(item) {
+            if(!item) {
+                dialog.neutral.hide();
+                dialog.oncancel = function() {
+                };
+                return dialog.neutral;
+            }
+            item.tabindex = 100;
+            item.className = "dialog-button dialog-button-neutral" + optionalClassName(item.className);
+            item._onclick = item.onclick;
+            item.onclick = function(event){
+                if(item._onclick) item._onclick.call(dialog,dialog.items,event);
+                if(item.dismiss == undefined || item.dismiss) dialog.close();
+            };
+            item.innerHTML = item.label;
+
+            if(dialog.neutral) {
+                var node = create(HTML.BUTTON, item, buttons);
+                dialog.neutral.parentNode.replaceChild(node, dialog.neutral);
+                dialog.neutral = node;
+            } else {
+                dialog.neutral = create(HTML.BUTTON, item, buttons);
+            }
+            dialog.oncancel = function() {
+                item.onclick.call(dialog,dialog.items);
+            };
+            buttons.show();
+            return dialog.neutral;
+        };
         if(options.neutral && options.neutral.label) {
-            options.neutral.tabindex = 100;
-            options.neutral.className = "dialog-button dialog-button-neutral" + (options.neutral.className ? " " + options.neutral.className : "");
-            options.neutral._onclick = options.neutral.onclick;
-            options.neutral.onclick = function(event){
-                if(options.neutral._onclick) options.neutral._onclick.call(dialog,items,event);
-                if(options.neutral.dismiss == undefined || options.neutral.dismiss) dialog.close();
-            };
-            options.neutral.innerHTML = options.neutral.label;
-            dialog.neutral = create(HTML.BUTTON, options.neutral, buttons);
-            buttons.show();
+            dialog.setNeutral(options.neutral);
         }
+
+        dialog.getNegative = function() {
+            return dialog.negative;
+        };
+        dialog.setNegative = function(item) {
+            if(!item) {
+                dialog.negative.hide();
+                return dialog.negative;
+            }
+            item.tabindex = 99;
+            item.className = "dialog-button dialog-button-negative" + optionalClassName(item.className);
+            item._onclick = item.onclick;
+            item.onclick = function(event){
+                if(item._onclick) item._onclick.call(dialog,dialog.items,event);
+                if(item.dismiss == undefined || item.dismiss) dialog.close();
+            };
+            item.innerHTML = item.label;
+
+            if(dialog.negative) {
+                var node = create(HTML.BUTTON, item, buttons);
+                dialog.negative.parentNode.replaceChild(node, dialog.negative);
+                dialog.negative = node;
+            } else {
+                dialog.negative = create(HTML.BUTTON, item, buttons);
+            }
+            buttons.show();
+            return dialog.negative;
+        };
         if(options.negative && options.negative.label) {
-            options.negative.tabindex = 99;
-            options.negative.className = "dialog-button dialog-button-negative" + (options.negative.className ? " " + options.negative.className : "");
-            options.negative._onclick = options.negative.onclick;
-            options.negative.onclick = function(event){
-                if(options.negative._onclick) options.negative._onclick.call(dialog,items,event);
-                if(options.negative.dismiss == undefined || options.negative.dismiss) dialog.close();
-            };
-            options.negative.innerHTML = options.negative.label;
-            dialog.negative = create(HTML.BUTTON, options.negative, buttons);
-            buttons.show();
+            dialog.setNegative(options.negative);
         }
+
         if(options.help) {
             create(HTML.BUTTON, {className:"dialog-help-button", onclick:options.help, innerHTML:"help_outline"}, dialog);
         }
@@ -1318,36 +1547,39 @@ function Edequate(options) {
     }
     this.dialog = dialog;
 
-    function sprintf() {
-        var a = this, b;
-        var args = arguments;
-        if(arguments[0].constructor === Array || arguments[0].constructor === Object) {
-            args = arguments[0];
-        }
-
-        for(b in args){
-            var value = args[b];
-            var replace = "";
-            if (value.constructor === String || value.constructor === Number) {
-                replace = value;
-            } else if(value.constructor === HTMLSpanElement) {
-                if(value.dataset.lang && lang.$origin[value.dataset.lang]) {
-                    replace = lang[value.dataset.lang].outerText;
-                } else {
-                    replace = value.outerText;
-                }
-            } else if (value.constructor === Array) {
-                replace = value;
-            } else if (value.constructor === Object) {
-                replace = value;
-            } else {
-                console.error("Replace failed.")
+    /*
+        function sprintf() {
+            var a = this, b;
+            if(arguments[0].constructor === Array || arguments[0].constructor === Object) {
+                arguments = arguments[0];
             }
-            a = a.replace(/%[a-z]/,replace);
+            var args = [];
+            for(var i = 0; i < arguments.length; i++) {
+                args.push(arguments[i]);
+            }
+            return this.replace(/%[\d\.]*[sdf]/g, function(pattern){
+                var value = args.shift();
+                var tokens = pattern.match(/^%(0)?([\d\.]*)(.)$/);
+                switch(tokens[3]) {
+                case "d":
+                    if(tokens[1] == "0") {
+                        var length = +tokens[2];
+                        var string = value.toString();
+                        value = "0".repeat(length - string.length) + string;
+                    }
+                    break;
+                case "f":
+                    break;
+                case "s":
+                    break;
+                default:
+                    console.error("Unknown pattern: " + tokens[0]);
+                }
+                return value;
+            });
         }
-        return a; // Make chainable
-    }
-    this.sprintf = sprintf;
+        this.sprintf = sprintf;
+    */
 
     function cloneAsObject(object) {
         var o = {};
@@ -1370,17 +1602,18 @@ function Edequate(options) {
                 Object.defineProperty(lang, string, {
                     get: function() {
                         lang.$nodes[string] = lang.$nodes[string] || create(HTML.SPAN, {
-                                dataLang: string
-                            });
+                            dataLang: string
+                        });
                         var a = lang.$nodes[string].cloneNode();
                         a.format = function() {
                             lang.$arguments[this.dataset.lang] = arguments;
-                            this.innerHTML = sprintf.call(this.innerHTML, arguments);
+                            this.innerHTML = lang.$origin[this.dataset.lang] || (this.dataset.lang ? this.dataset.lang.substr(0,1).toUpperCase() + this.dataset.lang.substr(1) : "");
+                            this.innerHTML = this.innerHTML.sprintf(arguments);
                             return this;
                         };
                         a.innerHTML = lang.$origin[string] || (string ? string.substr(0,1).toUpperCase() + string.substr(1) : "");
                         if(lang.$arguments[string]){
-                            a.innerHTML = sprintf.call(a.innerHTML, lang.$arguments[string]);
+                            a.innerHTML = a.innerHTML.sprintf(lang.$arguments[string]);
                         }
                         a.dataset.lang = string;
                         return a;
@@ -1596,7 +1829,7 @@ function Edequate(options) {
             width: 24,
             height: 24,
             preserveAspectRatio: "xMidYMid meet",
-            className: "drawer-menu-item-icon drawer-footer-button",
+            className: "icon drawer-menu-item-icon drawer-footer-button",
             onclick: function(e) {
                 save(options.collapsed, !collapsed);
                 this.replaceChild(collapsed ? footerButtonExpandDiv : footerButtonCollapseDiv, this.firstChild);
@@ -1655,7 +1888,7 @@ function Edequate(options) {
 
 
         var layout = create(HTML.DIV, {
-            className:"drawer changeable" + (collapsed ? " drawer-collapsed" : "") + (options.className ? " "+options.className : ""),
+            className:"drawer changeable" + (collapsed ? " drawer-collapsed" : "") + optionalClassName(options.className),
             tabindex: -1,
             onblur: function(){
                 layout.close();
@@ -1753,8 +1986,8 @@ function Edequate(options) {
                         save("drawer:section:collapsed:"+this.parentNode.order, true);
                     }
                 });
-                layout.sections[i].firstChild.place({ className: "drawer-menu-item drawer-menu-item-expand notranslate" + (sectionCollapsed ? "" : " hidden"), innerHTML: "expand_more"});
-                layout.sections[i].firstChild.place({ className: "drawer-menu-item drawer-menu-item-collapse notranslate" + (sectionCollapsed ? " hidden" : ""), innerHTML: "expand_less"});
+                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-expand notranslate" + (sectionCollapsed ? "" : " hidden"), innerHTML: "expand_more"});
+                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-collapse notranslate" + (sectionCollapsed ? " hidden" : ""), innerHTML: "expand_less"});
             }
         }
 
@@ -1819,7 +2052,7 @@ function Edequate(options) {
 
             if(icon) {
                 if(icon.constructor === String) {
-                    create(HTML.DIV, { className:"drawer-menu-item-icon notranslate", innerHTML: icon }, th);
+                    create(HTML.DIV, { className:"icon drawer-menu-item-icon notranslate", innerHTML: icon }, th);
                 } else {
                     th.appendChild(icon);
                 }
@@ -1841,7 +2074,7 @@ function Edequate(options) {
         footerButtonCollapseDiv = create(HTML.PATH, footerButtonCollapsePath);
         footerButtonExpandDiv = create(HTML.PATH, footerButtonExpandPath);
 
-        layout.toggleButton = create(HTML.DIV, {className: "drawer-menu-item-icon drawer-footer-button notranslate", innerHTML: collapsed ? "last_page" : "first_page", onclick: function(e){
+        layout.toggleButton = create(HTML.DIV, {className: "icon drawer-menu-item-icon drawer-footer-button notranslate", innerHTML: collapsed ? "last_page" : "first_page", onclick: function(e){
             layout.toggleSize();
         }}, layout.footer);
         if(options.footer) {
@@ -1913,7 +2146,7 @@ function Edequate(options) {
     function actionBar(options, appendTo) {
 
         var actionbar = create(HTML.DIV, {
-            className:"actionbar changeable" + (options.className ? " " + options.className : ""),
+            className:"actionbar changeable" + optionalClassName(options.className),
             toggleSize: function(force){
                 var cvollapsed = actionbar.classList.contains("actionbar-collapsed");
                 if(force != undefined) collapsed = force;
@@ -1963,9 +2196,9 @@ function Edequate(options) {
     this.copyToClipboard = copyToClipboard;
 
     function table(options, appendTo) {
-        options.className = "table" + (options.className ? " " + options.className : "");
+        options.className = "table" + optionalClassName(options.className);
         var table = create(HTML.DIV, {
-            className:options.className,
+            className: options.className,
             filter: function() {
                 if(!options.caption.items) return;
                 setTimeout(function(){
@@ -1996,7 +2229,7 @@ function Edequate(options) {
             },
             add: function(row) {
                 row = row || {};
-                row.className = "tr" +(row.onclick ? " clickable":"")+(row.className ? " "+row.className : "");
+                row.className = "tr" +(row.onclick ? " clickable":"")+optionalClassName(row.className);
 
                 var res = create(HTML.DIV, row, table.body);
                 res.cells = [];
@@ -2004,7 +2237,7 @@ function Edequate(options) {
 //                 var res = create(HTML.DIV, {className:"tr"+(row.onclick ? " clickable":"")+(row.className ? " "+row.className : ""), onclick: row.onclick, cells: [] }, table.body);
                 for(var i in row.cells) {
                     var item = row.cells[i];
-                    item.className = "td" + (item.className ? " " + item.className : "");
+                    item.className = "td" + optionalClassName(item.className);
                     item.innerHTML = item.innerHTML || item.label;
                     res.cells.push(create(HTML.DIV, item, res));
                 }
@@ -2074,127 +2307,136 @@ function Edequate(options) {
         if(appendTo) appendTo.appendChild(table);
 
         options.caption = options.caption || {};
-        options.caption.className = "thead" + (options.caption.className ? " "+options.caption.className : "");
+        options.caption.className = "thead" + optionalClassName(options.caption.className);
         if(options.caption.items) {
             table.head = create(HTML.DIV, {className:options.caption.className}, table);
             table.head.cells = [];
 //            var div = create(HTML.DIV, {className:"tr"}, table.head);
             for(var i in options.caption.items) {
                 var item = options.caption.items[i];
-                item.className = "th"+(item.className ? " "+item.className : "");
+                item.className = "th"+optionalClassName(item.className);
                 var innerHTML = item.innerHTML;
                 delete item.innerHTML;
-                item.index = i;
-                item.sort = 0;
-                item.onclick = function() {
-                    this.sort ++;
-                    if(this.sort == 0) this.sort ++;
-                    else if(this.sort > 1) this.sort = -1;
+                if(options.sort == undefined || options.sort) {
+                    item.index = i;
+                    item.sort = 0;
+                    item.onclick = function() {
+                        this.sort ++;
+                        if(this.sort == 0) this.sort ++;
+                        else if(this.sort > 1) this.sort = -1;
 
-                    table.sorts({ index: this.index, mode: this.sort });
-                    table.sort(this.index);
+                        table.sorts({ index: this.index, mode: this.sort });
+                        table.sort(this.index);
 
-                };
-                item.ondblclick = function() {
-                    this.sort = 0;
-                    table.sorts({ index: this.index });
-                    table.head.cells[this.index].firstChild.hide();
-                    table.update();
-                };
+                    };
+                    item.ondblclick = function() {
+                        this.sort = 0;
+                        table.sorts({ index: this.index });
+                        table.head.cells[this.index].firstChild.hide();
+                        table.update();
+                    };
+                }
                 var cell = create(HTML.DIV, item, table.head);
                 cell.place(HTML.DIV,{className:"table-sort hidden", innerHTML:"sort"}).place(HTML.SPAN, {innerHTML: item.innerHTML || item.label});
                 table.head.cells.push(cell);
             }
 
-            table.resetButton = u.create(HTML.DIV, {
-                className: "table-reset-button notranslate",
-                innerHTML: "clear_all",
-                title: "Reset customizations",
-                onclick: function() {
-                    table._sorts = [];
-                    table.saveOption("sorts");
-                    for(var i in table.head.cells) {
-                        table.head.cells[i].sort = 0;
-                        table.head.cells[i].firstChild.hide();
-                    }
-                    table.filter.clear();
-                    table.filterInput.value = "";
-                    table.filterInput.focus();
-                    table.filterInput.apply();
-                    table.filterInput.blur();
-                    table.update();
-                }
-            }, table);
-
-            table.filterLayout = u.create(HTML.DIV, {
-                className: "table-filter"
-            }, table);
-
-            table.filterButton = u.create(HTML.DIV, {
-                className: "table-filter-button notranslate",
-                innerHTML: "search",
-                title: "Filter",
-                onclick: function() {
-                    table.filterButton.hide();
-                    table.filterInput.classList.remove("hidden");
-                    table.filterInput.focus();
-                }
-            }, table.filterLayout);
-
-            table.filterInput = create(HTML.INPUT, {
-                className: "table-filter-input hidden",
-                tabindex: -1,
-                onkeyup: function(evt) {
-                    if(evt.keyCode === 27) {
-                        evt.preventDefault();
-                        evt.stopPropagation();
-                        if(this.value) {
-                            this.value = "";
-                        } else {
-                            this.blur();
+            if((options.filter == undefined || options.filter) || (options.sort == undefined || options.sort)) {
+                table.resetButton = create(HTML.DIV, {
+                    className: "table-reset-button notranslate",
+                    innerHTML: "clear_all",
+                    title: "Reset customizations",
+                    onclick: function() {
+                        table._sorts = [];
+                        table.saveOption("sorts");
+                        for(var i in table.head.cells) {
+                            table.head.cells[i].sort = 0;
+                            table.head.cells[i].firstChild.hide();
                         }
+                        if(table.filterInput) {
+                            table.filter.clear();
+                            table.filterInput.value = "";
+                            table.filterInput.focus();
+                            table.filterInput.apply();
+                            table.filterInput.blur();
+                        }
+                        table.update();
                     }
-                    clearTimeout(table.filterInput.updateTask);
-                    table.filterInput.updateTask = setTimeout(function(){
+                }, table);
+            }
+
+            if(options.filter == undefined || options.filter) {
+
+                table.filterLayout = create(HTML.DIV, {
+                    className: "table-filter"
+                }, table);
+
+                table.filterButton = create(HTML.DIV, {
+                    className: "table-filter-button notranslate",
+                    innerHTML: "search",
+                    title: "Filter",
+                    onclick: function() {
+                        table.filterButton.hide();
+                        table.filterInput.classList.remove("hidden");
+                        table.filterInput.focus();
+                    }
+                }, table.filterLayout);
+
+                table.filterInput = create(HTML.INPUT, {
+                    className: "table-filter-input hidden",
+                    tabindex: -1,
+                    onkeyup: function(evt) {
+                        if(evt.keyCode === 27) {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                            if(this.value) {
+                                this.value = "";
+                            } else {
+                                this.blur();
+                            }
+                        }
+                        clearTimeout(table.filterInput.updateTask);
+                        table.filterInput.updateTask = setTimeout(function(){
+                            table.filterInput.apply();
+                        }, 300);
+                    },
+                    onblur: function() {
+                        if(!this.value) {
+                            table.filterInput.classList.add("hidden");
+                            table.filterButton.show();
+                        }
+                    },
+                    onclick: function() {
+                        this.focus();
+                    },
+                    _filter: function(row) {
+                        var contains = false;
+                        for(var i in row.cells) {
+                            if(row.cells[i].innerText.toLowerCase().indexOf(this.filterInput.value.toLowerCase()) >= 0) return true;
+                        }
+                        return false;
+                    },
+                    apply: function() {
+                        if(this.value) {
+                            table.filterClear.show();
+                        } else {
+                            table.filterClear.hide();
+                        }
+                        var counter = 0;
+                        table.filter.add(table.filterInput._filter);
+                        table.filter();
+                    }
+                }, table.filterLayout);
+                table.filterClear = create(HTML.DIV, {
+                    className: "table-filter-clear hidden notranslate",
+                    innerHTML: "clear",
+                    onclick: function() {
+                        table.filterInput.value = "";
+                        table.filterInput.focus();
                         table.filterInput.apply();
-                    }, 300);
-                },
-                onblur: function() {
-                    if(!this.value) {
-                        table.filterInput.classList.add("hidden");
-                        table.filterButton.show();
                     }
-                },
-                onclick: function() {
-                    this.focus();
-                },
-                _filter: function(row) {
-                    var contains = false;
-                    for(var i in row.cells) {
-                        if(row.cells[i].innerText.toLowerCase().indexOf(this.filterInput.value.toLowerCase()) >= 0) return true;
-                    }
-                    return false;
-                },
-                apply: function() {
-                    if(this.value) {
-                        table.filterClear.show();
-                    } else {
-                        table.filterClear.hide();
-                    }
-                    var counter = 0;
-                    table.filter.add(table.filterInput._filter);
-                    table.filter();
-                }
-            }, table.filterLayout);
-            table.filterClear = create(HTML.DIV, {
-                className: "table-filter-clear hidden notranslate",
-                innerHTML: "clear",
-                onclick: function() {
-                    table.filterInput.value = "";
-                    table.filterInput.focus();
-                    table.filterInput.apply();
-                }
-            }, table.filterLayout);
+                }, table.filterLayout);
+            }
 
             function normalizeFunction(func) {
                 if(!func) return null;
@@ -2246,7 +2488,7 @@ function Edequate(options) {
             }
         }
 
-        table.body = create(HTML.DIV, {className:"tbody" + (options.bodyClassName ? " "+options.bodyClassName : "")}, table);
+        table.body = create(HTML.DIV, {className:"tbody" + optionalClassName(options.bodyClassName)}, table);
 
         table.placeholder = create(HTML.DIV, {
             className:"table-placeholder",
@@ -2273,13 +2515,13 @@ function Edequate(options) {
     var loadingHolder;
     function loading(progress) {
         loadingHolder = loadingHolder || create("div", {style:{
-                position: "fixed", top: 0, bottom: 0, left: 0, right: 0,
-                zIndex: 10000, backgroundColor: "white", display: "flex", flexDirection: "column",
-                justifyContent: "center", alignItems: "center", fontFamily: "sans-serif"
-            }}, document.body)
-                .place(HTML.DIV, {className:"loading-progress-circle"})
-                .place(HTML.DIV, {className:"loading-progress-title", innerHTML: "Loading, please wait... "})
-                .place(HTML.DIV, {className:"loading-progress-subtitle hidden"});
+            position: "fixed", top: 0, bottom: 0, left: 0, right: 0,
+            zIndex: 10000, backgroundColor: "white", display: "flex", flexDirection: "column",
+            justifyContent: "center", alignItems: "center", fontFamily: "sans-serif"
+        }}, document.body)
+            .place(HTML.DIV, {className:"loading-progress-circle"})
+            .place(HTML.DIV, {className:"loading-progress-title", innerHTML: "Loading, please wait... "})
+            .place(HTML.DIV, {className:"loading-progress-subtitle hidden"});
         if(progress) {
             lang.updateNode(loadingHolder.lastChild, progress);
             loadingHolder.lastChild.show();
@@ -2316,12 +2558,12 @@ function Edequate(options) {
         appendTo = appendTo || document.body;
 
         progressHolder = progressHolder || dialog({
-                className: "progress-dialog" + (options.className ? " "+options.className : ""),
-                items: [
-                    { type: HTML.DIV, className: "progress-dialog-circle" },
-                    { type: HTML.DIV, className: "progress-dialog-title" },
-                ]
-            }, appendTo)
+            className: "progress-dialog" + optionalClassName(options.className),
+            items: [
+                { type: HTML.DIV, className: "progress-dialog-circle" },
+                { type: HTML.DIV, className: "progress-dialog-title" }
+            ]
+        }, appendTo)
 //        progress.show(options.label);
     }
     Progress.prototype.show = function(label) {
@@ -2344,8 +2586,8 @@ function Edequate(options) {
     *       onsuccess: function(),
     *       onerror: function(code, origin, error)
     *   }
-     * eventBus.fire(event, object) or fire(event, object)
-     * eventBus.chain(callback) - iterate over holders
+     * eventBus.fire(event, object)
+     * eventBus.fire(callback)
      *
      * File can be presented as the path, ".js" will be added if not exists.
      * File will be added as a holder if it is based on eventBus.eventHolder or
@@ -2427,18 +2669,23 @@ function Edequate(options) {
 
         this.fire = function(event, object) {
             if(!event) return;
-            setTimeout(function(){
+            //setTimeout(function(){
                 for(var i in self.eventBus.modules) {
                     var module = self.eventBus.modules[i];
                     if(self.eventBus.holders[module] && self.eventBus.holders[module].onEvent) {
                         try {
-                            if (!self.eventBus.holders[module].onEvent(event, object)) break;
+                            if(event.constructor === Function) {
+                                var res = event.call(this, self.eventBus.holders[self.eventBus.modules[i]]);
+                                if(res !== undefined && !res) break;
+                            } else {
+                                if (!self.eventBus.holders[module].onEvent.call(this, event, object)) break;
+                            }
                         } catch(e) {
                             console.error(module, event, e);
                         }
                     }
                 }
-            }, 0);
+            //}.bind(this), 0);
         };
 
         this.chain = function(callback) {
@@ -2455,6 +2702,58 @@ function Edequate(options) {
     this.eventBus = new eventBus();
     this.fire = this.eventBus.fire;
 
+
+    /**
+     * menu
+     */
+    function menu(options) {
+        options = options || {};
+        options.className = "menu" + optionalClassName(options.className);
+        options.tabindex = -1;
+        //options.autoclose = true;
+
+        //options._onopen = options.onopen;
+        //options.onopen = function(evt) {
+        //    console.log("MENU OPEN");
+        //    if(options._onopen) options._onopen(evt);
+        //};
+
+        //options._onclose = options.onclose;
+        //options.onclose = function(evt) {
+        //    console.log("MENU CLOSE");
+        //    if(options._onclose) options._onclose(evt);
+        //};
+
+        var items = options.items || [];
+        options.items = [];
+        var menu = new dialog(options, document.body);
+
+        menu._addItem = menu.addItem;
+        menu.addItem = function(item) {
+            item._onclick = item.onclick;
+            item.onclick = function(evt) {
+                if(this._onclick) this._onclick(evt);
+                menu.close(HIDING.OPACITY)
+            };
+            menu._addItem(item);
+        };
+        menu.addItems(items);
+
+        menu._open = menu.open;
+        menu.open = function(aroundNode) {
+            menu._open(HIDING.SCALE_Y_BOTTOM);
+            menu.style.top = (aroundNode.getBoundingClientRect().bottom + 5) + "px";
+            menu.style.left = (aroundNode.getBoundingClientRect().right - menu.offsetWidth) + "px";
+        };
+
+        return menu;
+    }
+    this.menu = menu;
+
+
+    function optionalClassName(className) {
+        return className ? " " + className : "";
+    }
 
     options = options || {};
     if(options.exportConstants) {
