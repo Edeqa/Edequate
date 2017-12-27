@@ -1,8 +1,10 @@
 /**
  * Edequate - javascript DOM and interface routines
- * Copyright (C) Edeqa LLC <http://www.edeqa.com>
+ * Copyright (C) Edeqa <http://www.edeqa.com>
  *
  * History:
+ * 1.5 - onload initialization
+ * 1.4 - table#options#caption.selectable=true/false
  * 1.3 - sprintf redesigned; table#options.sort=true/false; table#options.filter=true/false;
  *       dialog#options.autoclose=true/false; dialog#setHeader; dialog#getHeader;
  *       dialog#setFooter; dialog#getFooter; dialog#setPositive; dialog#getPositive;
@@ -10,7 +12,7 @@
  *       menu; create#options.children; create#options.variable; create#options.childName
  * 1.2 - HTMLElement#updateHTML(text)
  * 1.1 - some fixes and improvements
- * 1 - initial release
+ * 1.0 - initial release
  */
 
 function Edequate(options) {
@@ -88,7 +90,6 @@ function Edequate(options) {
         AUTO:"auto",
         AUDIO:"audio"
     };
-    this.HTML = HTML;
 
     var ERRORS = {
         NOT_EXISTS: 1,
@@ -96,9 +97,8 @@ function Edequate(options) {
         INCORRECT_JSON: 4,
         ERROR_LOADING: 8,
         ERROR_SENDING_REQUEST: 16,
-        INVALID_MODULE: 32,
+        INVALID_MODULE: 32
     };
-    this.ERRORS = ERRORS;
 
     var DRAWER = {
         SECTION_PRIMARY: 0,
@@ -110,7 +110,6 @@ function Edequate(options) {
         SECTION_MISCELLANEOUS: 8,
         SECTION_LAST: 9
     };
-    this.DRAWER = DRAWER;
 
     var HIDING = {
         OPACITY: "opacity",
@@ -120,9 +119,8 @@ function Edequate(options) {
         SCALE_X_RIGHT: "scale-x-right",
         SCALE_Y: "scale-y",
         SCALE_Y_TOP: "scale-y-top",
-        SCALE_Y_BOTTOM: "scale-y-bottom",
+        SCALE_Y_BOTTOM: "scale-y-bottom"
     };
-    this.HIDING = HIDING;
 
     URL = function(link) {
         this.href = link;
@@ -365,9 +363,9 @@ function Edequate(options) {
                 for(var i = 0; i < arguments.length; i++) {
                     args.push(arguments[i]);
                 }
-                return this.replace(/%[\d\.]*[sdf]/g, function(pattern){
+                return this.replace(/%[\d.]*[sdf]/g, function(pattern){
                     var value = args.shift();
-                    var tokens = pattern.match(/^%(0)?([\d\.]*)(.)$/);
+                    var tokens = pattern.match(/^%(0)?([\d.]*)(.)$/);
                     switch(tokens[3]) {
                         case "d":
                             var length = +tokens[2];
@@ -415,7 +413,6 @@ function Edequate(options) {
     function byId(id) {
         return document.getElementById(id);
     }
-    this.byId = byId;
 
     function normalizeName(name) {
         if(name === HTML.CLASSNAME){
@@ -427,13 +424,12 @@ function Edequate(options) {
             var ps = name.split(/([A-Z])/);
             name = ps[0];
             for(var i = 1; i < ps.length; i++) {
-                if(i % 2 != 0) name += "-";
+                if(i % 2 !== 0) name += "-";
                 name += ps[i].toLowerCase();
             }
         }
         return name;
     }
-    this.normalizeName = normalizeName;
 
     var attributable = {
         "frameBorder":1,
@@ -482,17 +478,17 @@ function Edequate(options) {
                             if (properties[x] instanceof HTMLElement) {
                                 el.appendChild(properties[x]);
                             } else if (typeof properties[x] === "string") {
-                                properties[x] = properties[x].replace(/\$\{(\w+)\}/g, function (x, y) {
-                                    return lang[y] ? lang[y].outerHTML : y
-                                })
+                                properties[x] = properties[x].replace(/\${(\w+)}/g, function (x, y) {
+                                    return Lang[y] ? Lang[y].outerHTML : y
+                                });
                                 el[x] = properties[x];
                             } else {
                                 el[x] = properties[x];
                             }
                         }
-                    } else if(x == "variable") {
+                    } else if(x === "variable") {
                         create.variables[properties[x]] = el;
-                    } else if(x == "childName") {
+                    } else if(x === "childName") {
                         if(appendTo ) {
                             if(appendTo instanceof HTMLElement) {
                                 if(appendTo.hasOwnProperty(properties[x])) {
@@ -505,7 +501,7 @@ function Edequate(options) {
                         } else {
                             console.error("Property " + properties[x] + " can not be defined for null.")
                         }
-                    } else if(x == "content" && properties[x].constructor === Array) {
+                    } else if(x === "content" && properties[x].constructor === Array) {
                         for(var i = 0; i < properties[x].length; i++) {
                             el.appendChild(properties[x][i]);
                         }
@@ -533,11 +529,11 @@ function Edequate(options) {
                         el.longclickFunction = properties[x];
                         mousedown = function(evt){
                             clearTimeout(el.longTask);
-                            el.addEventListener("mouseup", mouseup);
-                            el.addEventListener("touchend", mouseup);
+                            el.addEventListener("mouseup", mouseup, {passive: true});
+                            el.addEventListener("touchend", mouseup, {passive: true});
                             el.longTask = setTimeout(function(){
-                                el.removeEventListener("mouseup", mouseup);
-                                el.removeEventListener("touchend", mouseup);
+                                el.removeEventListener("mouseup", mouseup, {passive: true});
+                                el.removeEventListener("touchend", mouseup, {passive: true});
                                 el.longTask = -1;
                                 el.longclickFunction(evt);
                             }, 500);
@@ -545,12 +541,12 @@ function Edequate(options) {
                         mouseup = function(){
                             clearTimeout(el.longTask);
                         };
-                        el.addEventListener("mousedown", mousedown, false);
-                        el.addEventListener("touchstart", mousedown, false);
+                        el.addEventListener("mousedown", mousedown, {passive: true});
+                        el.addEventListener("touchstart", mousedown, {passive: true});
                         el.addEventListener("contextmenu", function(evt){
                             evt.preventDefault();
                             evt.stopPropagation();
-                        }, false);
+                        }, {passive: true});
                     } else if(x.toLowerCase() === "onclick") {
                         el.clickFunction = properties[x];
                         if(el.clickFunction) {
@@ -558,14 +554,18 @@ function Edequate(options) {
                                 if(el.longTask && el.longTask < 0) return;
                                 el.clickFunction(evt);
                             };
-                            el.addEventListener("click", call, false);
-                            el.addEventListener("touch", call, false);
+                            el.addEventListener("click", call, {passive: true});
+                            el.addEventListener("touch", call, {passive: true});
                         }
-                    } else if(x.indexOf("on") == 0) {
+                    } else if(x.indexOf("on") === 0) {
                         var action = x.substr(2).toLowerCase();
                         var call = properties[x];
                         if(call) {
-                            el.addEventListener(action, call, false);
+                            el.addEventListener(action, call, {passive: true});
+                        }
+                    } else if(x === "async" || x === "defer") {
+                        if(!!properties[x]) {
+                            el.setAttribute(x, "");
                         }
                     } else {
                         var propertyName = normalizeName(x), value = properties[x];
@@ -608,15 +608,28 @@ function Edequate(options) {
         return el;
     }
     create.variables = {};
-    this.create = create;
 
-    function clear(node) {
-        if(!node) return;
-        for(var i = node.children.length-1; i>=0; i--) {
-            node.removeChild(node.children[i]);
+    function clear(element) {
+        if(element === null || element === undefined) return "";
+        if(element instanceof HTMLElement) {
+            for(var i = element.childNodes.length-1; i>=0; i--) {
+                element.removeChild(element.children[i]);
+            }
+        } else if(typeof element === "boolean") {
+            return element;
+        } else if(typeof element === "number") {
+            return element;
+        } else if(typeof element === "string") {
+            element = element.replace(/<.*?>/g, "");
+            return element;
+        } else if(element instanceof Array || element instanceof Object) {
+            for(var i in element) {
+                element[i] = clear(element[i])
+            }
+            return element;
         }
+        return element;
     }
-    this.clear = clear;
 
     function destroy(node) {
         try {
@@ -627,7 +640,6 @@ function Edequate(options) {
             console.error(e);
         }
     }
-    this.destroy = destroy;
 
     function keys(o) {
         var keys = [];
@@ -636,9 +648,6 @@ function Edequate(options) {
         }
         return keys;
     }
-    this.keys = keys;
-
-
 
     function require(name, context) {
         var origin = name;
@@ -657,8 +666,8 @@ function Edequate(options) {
             origin:origin,
             module:name,
             instance: needInstantiate ? onlyname : null,
-            async: "true",
-            defer: "true",
+            async: true,
+            defer: true,
             onload: function(e) {
                 var a;
                 if(needInstantiate) {
@@ -687,20 +696,18 @@ function Edequate(options) {
 
         return returned;
     }
-    this.require = require;
-
 
     function _stringify(key, value) {
         return typeof value === "function" ? value.toString() : value;
     }
     function _parse(key, value) {
-        if (typeof value === "string" && /^function.*?\([\s\S]*?\)\s*\{[\s\S]*\}[\s\S]*$/.test(value)) {
+        if (typeof value === "string" && /^function.*?\([\s\S]*?\)\s*{[\s\S]*}[\s\S]*$/.test(value)) {
             var args = value
                     .replace(/\/\/.*$|\/\*[\s\S]*?\*\//mg, "") //strip comments
                     .match(/\([\s\S]*?\)/m)[0]                      //find argument list
                     .replace(/^\(|\)$/g, "")                    //remove parens
                     .match(/[^\s(),]+/g) || [],                //find arguments
-                body = value.replace(/\n/mg, "").match(/\{([\s\S]*)\}/)[1]          //extract body between curlies
+                body = value.replace(/\n/mg, "").match(/{([\s\S]*)}/)[1];          //extract body between curlies
             return Function.apply(0, args.concat(body));
         } else {
             return value;
@@ -713,7 +720,6 @@ function Edequate(options) {
             delete localStorage[self.origin + ":" + name];
         }
     }
-    this.save = save;
 
     function load(name) {
         var value = localStorage[self.origin + ":" + name];
@@ -723,7 +729,6 @@ function Edequate(options) {
             return null;
         }
     }
-    this.load = load;
 
     function saveForContext(name, value) {
         if(!self.context) {
@@ -736,7 +741,6 @@ function Edequate(options) {
             delete localStorage[self.origin + "$" + self.context +":" + name];
         }
     }
-    this.saveForContext = saveForContext;
 
     function loadForContext(name) {
         if(!self.context) {
@@ -749,14 +753,13 @@ function Edequate(options) {
             return null;
         }
     }
-    this.loadForContext = loadForContext;
 
     var dialogQueue = [];
     var performingDialogInQueue;
 
     /**
-     * dialog(options [, appendTo])
-     * options = {
+    * dialog = new Dialog(options [, appendTo])
+    * options = {
     *       id,
     *       title: name | {label, className, button},
     *       queue: true|*false*, - if true then post this dialog to the queue and wait
@@ -816,7 +819,7 @@ function Edequate(options) {
      * dialog.getNegative()
      *
      */
-    function dialog(options, appendTo) {
+    function Dialog(options, appendTo) {
         appendTo = appendTo || document.body;
         options = options || {};
 
@@ -930,7 +933,7 @@ function Edequate(options) {
                 div = create(HTML.DIV, {className:item.itemClassName, onclick: function(){this.lastChild.click();}});
 
                 if(item.label) {
-                    var labelOptions = {
+                    labelOptions = {
                         className:"dialog-item-label" + optionalClassName(item.labelClassName)
                     };
                     if(item.label.constructor === String) {
@@ -944,13 +947,13 @@ function Edequate(options) {
                     create(HTML.LABEL, labelOptions , div);
                 }
 
-                var type = HTML.INPUT;
+                type = HTML.INPUT;
                 if(item.type.toLowerCase() === HTML.TEXTAREA) type = HTML.TEXTAREA;
                 else if(item.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
 
                 item.tabindex = i;
                 item.className = "dialog-item-input-"+item.type + optionalClassName(item.className);
-                if(item.onclick && item.type != HTML.BUTTON) {
+                if(item.onclick && item.type !== HTML.BUTTON) {
                     var a = item.onclick;
                     item.onclick = function(e) { this.focus(); a.call(this); e.stopPropagation(); };
                 } else if(item.onclick) {
@@ -1127,9 +1130,8 @@ function Edequate(options) {
 
 //            window.history.pushState(null, document.title, location.href);
             if(options.title && options.title.button == defaultCloseButton) {
-                window.addEventListener("popstate", backButtonAction);
+                window.addEventListener("popstate", backButtonAction, {passive: true});
             }
-
             return dialog;
         };
 
@@ -1170,7 +1172,7 @@ function Edequate(options) {
                     options.negative.onclick.call(dialog,dialog.items);
                 }
             }
-        });
+        }, {passive: true});
 
         options = options || {};
 
@@ -1187,7 +1189,7 @@ function Edequate(options) {
                 options.title = {
                     label: options.title,
                     className: "",
-                    button: defaultCloseButton,
+                    button: defaultCloseButton
                 }
             } else {
                 options.title.className = optionalClassName(options.title.className);
@@ -1195,6 +1197,7 @@ function Edequate(options) {
                 if(options.title.button.className) options.title.button.className = " " + options.title.button.className;
                 options.title.button.onclick = options.title.button.onclick || function(){};
             }
+
             var titleLayout = create(HTML.DIV, {
                 className:"dialog-title" + optionalClassName(options.title.className),
                 onmousedown: function(e) {
@@ -1223,9 +1226,9 @@ function Edequate(options) {
                             dialog.style.bottom = "auto";
                         }
                     }
-                    window.addEventListener(HTML.MOUSEUP, mouseup);
-                    window.addEventListener(HTML.MOUSEMOVE, mousemove);
-                    e.preventDefault();
+                    window.addEventListener(HTML.MOUSEUP, mouseup, {passive: true});
+                    window.addEventListener(HTML.MOUSEMOVE, mousemove, {passive: true});
+                    // e.preventDefault();
                 },
                 ondblclick: function(e) {
                     var id = options.id || (options.title.label && (options.title.label.dataset.lang ? options.title.label.dataset.lang : options.title.label));
@@ -1240,11 +1243,12 @@ function Edequate(options) {
                     dialog.style.right = "";
                     dialog.style.bottom = "";
                     dialog.adjustPosition();
-                }
-            }, dialog);
+                },
+                oncontextmenu: function(e){e.stopPropagation(); e.preventDefault(); return false;}
+        }, dialog);
             dialog.titleLayout = create(HTML.DIV, {className:"dialog-title-label", innerHTML: options.title.label }, titleLayout);
             dialog.setTitle = function(title) {
-                lang.updateNode(dialog.titleLayout, title);
+                Lang.updateNode(dialog.titleLayout, title);
                 //dialog.titleLayout
             };
 
@@ -1366,7 +1370,10 @@ function Edequate(options) {
         }
 
         if(options.title && options.title.filter) {
-            dialog.filterPlaceholder = create(HTML.DIV, {className: "dialog-items hidden",innerHTML: "Nothing found"}, dialog);
+            dialog.filterPlaceholder = create(HTML.DIV, {
+                className: "dialog-items hidden",
+                innerHTML: "Nothing found"
+            }, dialog);
         }
 
         dialog.footer = create(HTML.DIV, {className:"hidden"}, dialog);
@@ -1407,12 +1414,12 @@ function Edequate(options) {
                 };
                 return dialog.positive;
             }
-            item.tabindex = 98;
+            item.tabindex = -1;
             item.className = "dialog-button dialog-button-positive" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
                 if(item._onclick) item._onclick.call(dialog,dialog.items,event);
-                if(item.dismiss == undefined || item.dismiss) dialog.close();
+                if(item.dismiss === undefined || item.dismiss) dialog.close();
             };
             item.innerHTML = item.label;
 
@@ -1443,12 +1450,12 @@ function Edequate(options) {
                 };
                 return dialog.neutral;
             }
-            item.tabindex = 100;
+            item.tabindex = -1;
             item.className = "dialog-button dialog-button-neutral" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
                 if(item._onclick) item._onclick.call(dialog,dialog.items,event);
-                if(item.dismiss == undefined || item.dismiss) dialog.close();
+                if(item.dismiss === undefined || item.dismiss) dialog.close();
             };
             item.innerHTML = item.label;
 
@@ -1477,12 +1484,12 @@ function Edequate(options) {
                 dialog.negative.hide();
                 return dialog.negative;
             }
-            item.tabindex = 99;
+            item.tabindex = -1;
             item.className = "dialog-button dialog-button-negative" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
                 if(item._onclick) item._onclick.call(dialog,dialog.items,event);
-                if(item.dismiss == undefined || item.dismiss) dialog.close();
+                if(item.dismiss === undefined || item.dismiss) dialog.close();
             };
             item.innerHTML = item.label;
 
@@ -1530,8 +1537,8 @@ function Edequate(options) {
                             dialog.style.height = (position.height + deltaY)+"px";
                         }
                     }
-                    window.addEventListener(HTML.MOUSEUP, mouseup);
-                    window.addEventListener(HTML.MOUSEMOVE, mousemove);
+                    window.addEventListener(HTML.MOUSEUP, mouseup, {passive: true});
+                    window.addEventListener(HTML.MOUSEMOVE, mousemove, {passive: true});
                     e.preventDefault();
                 }
             }, dialog);
@@ -1545,7 +1552,6 @@ function Edequate(options) {
 
         return dialog;
     }
-    this.dialog = dialog;
 
     /*
         function sprintf() {
@@ -1592,28 +1598,27 @@ function Edequate(options) {
         }
         return o;
     }
-    this.cloneAsObject = cloneAsObject;
 
-    function lang(string, value) {
+    function Lang(string, value) {
         if(value) {
-            var prev = lang.$origin[string];
-            lang.$origin[string] = value;
+            var prev = Lang.$origin[string];
+            Lang.$origin[string] = value;
             if(!prev) {
-                Object.defineProperty(lang, string, {
+                Object.defineProperty(Lang, string, {
                     get: function() {
-                        lang.$nodes[string] = lang.$nodes[string] || create(HTML.SPAN, {
+                        Lang.$nodes[string] = Lang.$nodes[string] || create(HTML.SPAN, {
                             dataLang: string
                         });
-                        var a = lang.$nodes[string].cloneNode();
+                        var a = Lang.$nodes[string].cloneNode();
                         a.format = function() {
-                            lang.$arguments[this.dataset.lang] = arguments;
-                            this.innerHTML = lang.$origin[this.dataset.lang] || (this.dataset.lang ? this.dataset.lang.substr(0,1).toUpperCase() + this.dataset.lang.substr(1) : "");
+                            Lang.$arguments[this.dataset.lang] = arguments;
+                            this.innerHTML = Lang.$origin[this.dataset.lang] || (this.dataset.lang ? this.dataset.lang.substr(0,1).toUpperCase() + this.dataset.lang.substr(1) : "");
                             this.innerHTML = this.innerHTML.sprintf(arguments);
                             return this;
                         };
-                        a.innerHTML = lang.$origin[string] || (string ? string.substr(0,1).toUpperCase() + string.substr(1) : "");
-                        if(lang.$arguments[string]){
-                            a.innerHTML = a.innerHTML.sprintf(lang.$arguments[string]);
+                        a.innerHTML = Lang.$origin[string] || (string ? string.substr(0,1).toUpperCase() + string.substr(1) : "");
+                        if(Lang.$arguments[string]){
+                            a.innerHTML = a.innerHTML.sprintf(Lang.$arguments[string]);
                         }
                         a.dataset.lang = string;
                         return a;
@@ -1621,32 +1626,31 @@ function Edequate(options) {
                 });
             }
         }
-        return (lang.$origin[string] && lang[string]) || (string ? string.substr(0, 1).toUpperCase() + string.substr(1) : "");
+        return (Lang.$origin[string] && Lang[string]) || (string ? string.substr(0, 1).toUpperCase() + string.substr(1) : "");
     }
-    this.lang = lang;
 
-    lang.$nodes = lang.$nodes || {};
-    lang.$origin = lang.$origin || {};
-    lang.$arguments = lang.$arguments || {};
+    Lang.$nodes = Lang.$nodes || {};
+    Lang.$origin = Lang.$origin || {};
+    Lang.$arguments = Lang.$arguments || {};
 
-    lang.overrideResources = function(options) {
-        if(options.locale == "en") {
-            lang._overrideResources(options);
+    Lang.overrideResources = function(options) {
+        if(options.locale === "en") {
+            Lang._overrideResources(options);
         } else {
-            lang._overrideResources({
+            Lang._overrideResources({
                 "default": options.default,
                 resources: options.default,
                 type: options.type,
                 resource: options.resource,
                 locale: "en",
                 callback: function() {
-                    lang._overrideResources(options);
+                    Lang._overrideResources(options);
                 }
             });
         }
     };
 
-    lang._overrideResources = function(options) {
+    Lang._overrideResources = function(options) {
         if(!options || !options.default) {
             console.error("Not defined default resources");
             return;
@@ -1659,15 +1663,15 @@ function Edequate(options) {
                 var nodes = document.getElementsByTagName(HTML.SPAN);
                 console.warn("Switching to resources \""+(options.locale || options.resources)+"\".");
                 for(var x in json) {
-//                            if(lang.$origin[x]) {
+//                            if(Lang.$origin[x]) {
 //                                console.warn("Overrided resources: " + x + ":", json[x] ? (json[x].length > 30 ? json[x].substr(0,30)+"..." : json[x]) : "" );
 //                            }
-                    lang(x, json[x]);
+                    Lang(x, json[x]);
                 }
                 for(var i = 0; i < nodes.length; i++) {
                     if(nodes[i].dataset.lang) {
                         try {
-                            nodes[i].parentNode.replaceChild(lang[nodes[i].dataset.lang],nodes[i]);
+                            nodes[i].parentNode.replaceChild(Lang[nodes[i].dataset.lang],nodes[i]);
                         } catch(e) {
                             console.warn("Resource not found: " + nodes[i].dataset.lang);
                         }
@@ -1678,25 +1682,25 @@ function Edequate(options) {
                 switch(code) {
                     case ERRORS.ERROR_LOADING:
                         console.warn("Error fetching resources for",options,xhr.status + ': ' + xhr.statusText);
-                        if(options.default != options.resources){
+                        if(options.default !== options.resources){
                             console.warn("Switching to default resources \""+options.default+"\".");
-                            lang._overrideResources({"default":options.default});
+                            Lang._overrideResources({"default":options.default});
                         }
                         break;
                     case ERRORS.INCORRECT_JSON:
                         console.warn("Incorrect, empty or damaged resources file for",options,error,xhr);
-                        if(options.default != options.resources){
+                        if(options.default !== options.resources){
                             console.warn("Switching to default resources \""+options.default+"\".");
-                            lang._overrideResources({"default":options.default});
+                            Lang._overrideResources({"default":options.default});
                         }
                         break;
                     default:
                         console.warn("Incorrect, empty or damaged resources file for",options,error,xhr);
                         break;
                 }
-                if(options.default != options.resources){
+                if(options.default !== options.resources){
                     console.warn("Switching to default resources \""+options.default+"\".");
-                    lang._overrideResources({"default":options.default});
+                    Lang._overrideResources({"default":options.default});
                 } else {
                     if(options.callback) options.callback();
                 }
@@ -1704,15 +1708,14 @@ function Edequate(options) {
 
         } else if(options.resources.resources) {
             for(var x in options.resources.resources) {
-                if(lang[x]) {
+                if(Lang[x]) {
 //                    console.warn("Overrided resources: " + x + ":", holder.resources[x] ? (holder.resources[x].length > 30 ? holder.resources[x].substr(0,30)+"..." : holder.resources[x]) : "" );
                 }
-                lang(x, options.resources.resources[x]);
+                Lang(x, options.resources.resources[x]);
             }
         }
     };
-
-    lang.updateNode = function(node, lang) {
+    Lang.updateNode = function(node, lang) {
         if(typeof lang === "string") {
             node.innerHTML = lang;
         } else if(node && lang && lang.dataset && lang.dataset.lang) {
@@ -1731,10 +1734,9 @@ function Edequate(options) {
         var xhr = new XMLHttpRequest();
 
         xhr.open(method, url, true);
-//        xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
-        xhr.onreadystatechange = function() { // (3)
-            if (xhr.readyState != 4) return;
-            if (xhr.status != 200) {
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status !== 200) {
                 returned.onRejected(xhr.status, xhr);
             } else {
                 returned.onResolved(xhr);
@@ -1759,17 +1761,14 @@ function Edequate(options) {
     function get(url) {
         return rest("GET",url);
     }
-    this.get = get;
 
     function post(url, body) {
         return rest("POST", url, body);
     }
-    this.post = post;
 
     function put(url) {
         return rest("PUT",url);
     }
-    this.put = put;
 
     /**
      getJSON(url [, post])
@@ -1803,12 +1802,11 @@ function Edequate(options) {
         },0);
         return { then: thenFunction, "catch": catchFunction };
     }
-    this.getJSON = getJSON;
 
-    function drawer(options, appendTo) {
+    function Drawer(options, appendTo) {
 //        collapsed = options.collapsed;
         var collapsed = load(options.collapsed);
-        if(options.collapsed == undefined) {
+        if(options.collapsed === undefined) {
             collapsed = load("drawer:collapsed");
             options.collapsed = "drawer:collapsed";
         } else if(typeof options.collapsed === "boolean") {
@@ -1837,7 +1835,7 @@ function Edequate(options) {
         };
         var footerButtonCollapsePath = {
             xmlns:"http://www.w3.org/2000/svg",
-            d: "M5.46 8.846l3.444-3.442-1.058-1.058-4.5 4.5 4.5 4.5 1.058-1.057L5.46 8.84zm7.194 4.5v-9h-1.5v9h1.5z",
+            d: "M5.46 8.846l3.444-3.442-1.058-1.058-4.5 4.5 4.5 4.5 1.058-1.057L5.46 8.84zm7.194 4.5v-9h-1.5v9h1.5z"
         };
         var footerButtonExpandPath = {
             xmlns:"http://www.w3.org/2000/svg",
@@ -1859,7 +1857,7 @@ function Edequate(options) {
                 layout.style.transition = "";
 
                 if(e.changedTouches) touch = e.changedTouches[0];
-                var x = parseInt(layout.style.left || 0)
+                var x = parseInt(layout.style.left || 0);
                 if(lastDelta < -20 || (lastDelta <=0 && x < -layout.offsetWidth/2)) {
                     layout.style.left = (-layout.offsetWidth*1.5)+"px";
                     setTimeout(function(){layout.close()},500);
@@ -1880,12 +1878,11 @@ function Edequate(options) {
                     e.stopPropagation();
                 }
             };
-            window.addEventListener("touchend", endHolder);
-            window.addEventListener("touchmove", moveHolder);
+            window.addEventListener("touchend", endHolder, {passive: true});
+            window.addEventListener("touchmove", moveHolder, {passive: true});
 
             layout.style.transition = "none";
         };
-
 
         var layout = create(HTML.DIV, {
             className:"drawer changeable" + (collapsed ? " drawer-collapsed" : "") + optionalClassName(options.className),
@@ -1915,7 +1912,7 @@ function Edequate(options) {
             sections: [],
             toggleSize: function(force) {
                 collapsed = !collapsed;
-                if(force != undefined) collapsed = force;
+                if(force !== undefined) collapsed = force;
                 save("drawer:collapsed", collapsed);
                 layout.toggleButton.innerHTML = collapsed ? "last_page" : "first_page";
                 layout.classList[collapsed ? "add" : "remove"]("drawer-collapsed");
@@ -1938,10 +1935,60 @@ function Edequate(options) {
                 if(options.ontogglesize) options.ontogglesize();
                 delete layout.resizeTask;
             }, 500);
-        });
+        }, {passive: true});
 
-        var layoutHeaderHolder = create(HTML.DIV, {className: "drawer-header-holder changeable"});
+        var swipeRightHolder = function(e){
+
+            var touch;
+            if(e.changedTouches) touch = e.changedTouches[0];
+
+            var startX = e.pageX || touch.pageX;
+            var lastX = startX;
+            var lastDelta = 0;
+
+            layout.style.transition = "none";
+            layout.style.left = "-10000px";
+            layout.classList.add("drawer-open");
+            layout.style.left = (-layout.offsetWidth + startX)+"px";
+
+            var endHolder = function(e){
+                window.removeEventListener("touchend", endHolder);
+                window.removeEventListener("touchmove", moveHolder);
+                layout.style.transition = "";
+
+                if(e.changedTouches) touch = e.changedTouches[0];
+                var x = parseInt(layout.style.left || 0);
+                if(lastDelta < -20 || (lastDelta <=0 && x < -layout.offsetWidth/2)) {
+                    layout.style.left = (-layout.offsetWidth*1.5)+"px";
+                    setTimeout(function(){layout.close()},500);
+                } else {
+                    layout.style.left = "";
+                }
+            };
+            var moveHolder = function(e) {
+                var delta;
+                if(e.changedTouches) touch = e.changedTouches[0];
+                delta = (e.pageX || touch.pageX) - layout.offsetWidth;
+                if(delta > 0) delta =0;
+                    layout.style.left = delta + "px";
+                    e.stopPropagation();
+            };
+            window.addEventListener("touchend", endHolder, {passive: true});
+            window.addEventListener("touchmove", moveHolder, {passive: true});
+
+        };
+        //var layoutSwipeCatcher = create(HTML.DIV, {
+        //    className: "drawer-catcher",
+        //    ontouchstart: swipeRightHolder
+        //});
+        //layout.parentNode.insertBefore(layoutSwipeCatcher, layout);
+
+        var layoutHeaderHolder = create(HTML.DIV, {
+            className: "drawer-header-holder changeable",
+            ontouchstart: swipeRightHolder
+        });
         layout.parentNode.insertBefore(layoutHeaderHolder, layout);
+
         layout.header = create(HTML.DIV, { className:"drawer-header changeable" }, layout);
 
         if(options.logo) {
@@ -1985,7 +2032,7 @@ function Edequate(options) {
                         this.lastChild.previousSibling.show();
                         save("drawer:section:collapsed:"+this.parentNode.order, true);
                     }
-                });
+                }, {passive: true});
                 layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-expand notranslate" + (sectionCollapsed ? "" : " hidden"), innerHTML: "expand_more"});
                 layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-collapse notranslate" + (sectionCollapsed ? " hidden" : ""), innerHTML: "expand_less"});
             }
@@ -2083,15 +2130,14 @@ function Edequate(options) {
 
         return layout;
     }
-    this.drawer = drawer;
 
-    function toast() {
+    function Toast() {
         var toast = create(HTML.DIV, {className:"toast-holder hidden", onclick: function(){ this.hide(HIDING.SCALE_Y_BOTTOM); }});
         toast.content = create(HTML.DIV, {className:"toast shadow"}, toast);
         toast.show = function(text,delay){
             if(!toast.parentNode) document.body.appendChild(toast);
             clearTimeout(toast.hideTask);
-            lang.updateNode(toast.content, text);
+            Lang.updateNode(toast.content, text);
             HTMLDivElement.prototype.show.call(toast, HIDING.SCALE_Y_BOTTOM);
             delay = delay || 5000;
             if(delay > 0) {
@@ -2102,7 +2148,6 @@ function Edequate(options) {
         };
         return toast;
     }
-    this.toast = new toast();
 
     function notification(options) {
         if(!options.persistent && !document.hidden) return;
@@ -2141,15 +2186,14 @@ function Edequate(options) {
             });
         }
     }
-    this.notification = notification;
 
-    function actionBar(options, appendTo) {
+    function ActionBar(options, appendTo) {
 
         var actionbar = create(HTML.DIV, {
             className:"actionbar changeable" + optionalClassName(options.className),
             toggleSize: function(force){
                 var cvollapsed = actionbar.classList.contains("actionbar-collapsed");
-                if(force != undefined) collapsed = force;
+                if(force !== undefined) collapsed = force;
                 actionbar.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
                 actionbarHolder.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
                 if(options.ontogglesize) options.ontogglesize(force);
@@ -2180,7 +2224,6 @@ function Edequate(options) {
 
         return actionbar;
     }
-    this.actionBar = actionBar;
 
     function copyToClipboard(input) {
         if(!input) return false;
@@ -2193,15 +2236,54 @@ function Edequate(options) {
             return false;
         }
     }
-    this.copyToClipboard = copyToClipboard;
 
-    function table(options, appendTo) {
+    /**
+    * table = new Table(options [, appendTo])
+    * table.add(rowOptions)
+    * table.head.cells[index]
+    * table.rows.clear()
+    * table.rows[index].cells[index]
+    * table.filter.set(filter) - removes all filters and set specified
+    * table.filter.add(filter)
+    * table.filter.remove(filter)
+    * table.filter.clear()
+    * table.placeholder.show("Sample text")
+    * table.placeholder.hide()
+    * table.sort(index)
+    * table.sorts()
+    * table.update()
+    *
+    * options = {
+    *   className,
+    *   caption: captionOptions
+    *   items: [rowOptions]
+    * }
+    * captionOptions = {
+    *   innerHTML|label,
+    *   className,
+    *   items: [
+    *       label,
+    *       selectable: true/*false*
+    *   ]
+    * }
+    * rowOptions = {
+    *   className,
+    *   onclick: function,
+    *   cells: [cellOptions]
+    * }
+    * cellOptions = {
+    *   innerHTML,
+    *   className,
+    *   style,
+    *   sort: Number/String,
+    * }
+    */
+    function Table(options, appendTo) {
         options.className = "table" + optionalClassName(options.className);
         var table = create(HTML.DIV, {
             className: options.className,
             filter: function() {
                 if(!options.caption.items) return;
-                setTimeout(function(){
                     for(var i in table.rows) {
                         var valid = true;
                         for(var j in table.filter.options) {
@@ -2212,19 +2294,24 @@ function Edequate(options) {
                         }
                         var row = table.rows[i];
                         if(valid && row.isHidden) {
-                            row.show();
+                            setTimeout(function() {
+                                this.show();
+                            }.bind(row), 0);
                         } else if (!valid && !row.isHidden) {
-                            row.hide();
+                            setTimeout(function() {
+                                this.hide();
+                            }.bind(row), 0);
                         }
                     }
-                },0);
             },
             rows: [],
-            saveOption: function(name,value) {
+            saveOption: function(name, value) {
                 if(options.id) {
                     delete savedOptions[name];
-                    savedOptions[name] = value;
-                    save("table:" + options.id, savedOptions);
+                    if(value) {
+                        savedOptions[name] = value;
+                        save("table:" + options.id, savedOptions);
+                    }
                 }
             },
             add: function(row) {
@@ -2233,8 +2320,8 @@ function Edequate(options) {
 
                 var res = create(HTML.DIV, row, table.body);
                 res.cells = [];
+                res.table = table;
 
-//                 var res = create(HTML.DIV, {className:"tr"+(row.onclick ? " clickable":"")+(row.className ? " "+row.className : ""), onclick: row.onclick, cells: [] }, table.body);
                 for(var i in row.cells) {
                     var item = row.cells[i];
                     item.className = "td" + optionalClassName(item.className);
@@ -2276,19 +2363,15 @@ function Edequate(options) {
                 for(var i = 0; i < table.body.childNodes.length; i++) {
                     rows.push(table.body.childNodes[i]);
                 }
-
                 rows.sort(function(a, b) {
-                    var aCriteria = a.cells[index].sort == undefined ? a.cells[index].innerText.toLowerCase() : a.cells[index].sort;
-                    var bCriteria = b.cells[index].sort == undefined ? b.cells[index].innerText.toLowerCase() : b.cells[index].sort;
+                    var aCriteria = a.cells[index].sort === undefined ? a.cells[index].innerText.toLowerCase() : a.cells[index].sort;
+                    var bCriteria = b.cells[index].sort === undefined ? b.cells[index].innerText.toLowerCase() : b.cells[index].sort;
 
-                    return aCriteria == bCriteria ? 0 : (aCriteria > bCriteria ? 1 : -1) * sort;
+                    return aCriteria === bCriteria ? 0 : (aCriteria > bCriteria ? 1 : -1) * sort;
                 });
-
-
                 for(i in rows) {
                     table.body.appendChild(rows[i]);
                 }
-
             },
             _sorts: [],
             sorts: function(options) {
@@ -2300,7 +2383,17 @@ function Edequate(options) {
                     }
                 }
                 if(options.mode) table._sorts.push(options);
-                table.saveOption("sorts",table._sorts);
+                table.saveOption("sorts", table._sorts);
+            }
+        });
+
+        Object.defineProperty(table.rows, "clear", {
+            enumerable: false,
+            value: function() {
+                var item;
+                while(item = table.rows.pop()) {
+                    item.parentNode.removeChild(item);
+                }
             }
         });
 
@@ -2309,20 +2402,25 @@ function Edequate(options) {
         options.caption = options.caption || {};
         options.caption.className = "thead" + optionalClassName(options.caption.className);
         if(options.caption.items) {
-            table.head = create(HTML.DIV, {className:options.caption.className}, table);
+            table.head = create(HTML.DIV, {
+                className: options.caption.className,
+                oncontextmenu: function(e){e.stopPropagation(); e.preventDefault(); return false;}
+            }, table);
             table.head.cells = [];
+
 //            var div = create(HTML.DIV, {className:"tr"}, table.head);
+            var selectable = false;
             for(var i in options.caption.items) {
                 var item = options.caption.items[i];
-                item.className = "th"+optionalClassName(item.className);
+                item.className = "th" + optionalClassName(item.className);
                 var innerHTML = item.innerHTML;
                 delete item.innerHTML;
-                if(options.sort == undefined || options.sort) {
+                if(options.sort === undefined || options.sort) {
                     item.index = i;
                     item.sort = 0;
                     item.onclick = function() {
                         this.sort ++;
-                        if(this.sort == 0) this.sort ++;
+                        if(this.sort === 0) this.sort ++;
                         else if(this.sort > 1) this.sort = -1;
 
                         table.sorts({ index: this.index, mode: this.sort });
@@ -2336,12 +2434,95 @@ function Edequate(options) {
                         table.update();
                     };
                 }
+                if(item.selectable) {
+                    item.onlongclick = function(e) {
+                        this.selectButton.click();
+                    }
+                }
                 var cell = create(HTML.DIV, item, table.head);
-                cell.place(HTML.DIV,{className:"table-sort hidden", innerHTML:"sort"}).place(HTML.SPAN, {innerHTML: item.innerHTML || item.label});
+                cell.sortIcon = create(HTML.DIV,{className:"icon table-sort notranslate hidden", innerHTML: "sort"}, cell);
+                cell.label = create(HTML.SPAN, {innerHTML: item.innerHTML || item.label}, cell);
+                //cell.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;}
+
+                if(item.selectable) {
+                    selectable = true;
+                    cell.selectButton = create(HTML.DIV, {
+                        className:"icon table-select notranslate",
+                        innerHTML:"expand_more",
+                        onclick: function(e){
+                            var cell = this.parentNode;
+
+                            e.stopPropagation();
+                            e.preventDefault();
+
+                            progressHolder.show();
+
+                            setTimeout(function() {
+                                var selected = {};
+                                var index = this.parentNode.index;
+                                for(var j in table.rows) {
+                                    if(selected[table.rows[j].cells[index].innerHTML]) {
+                                        selected[table.rows[j].cells[index].innerHTML] ++;
+                                    } else {
+                                        selected[table.rows[j].cells[index].innerHTML] = 1;
+                                    }
+                                }
+                                var menuItems = [{
+                                    type: HTML.DIV,
+                                    innerHTML: "&#150;",
+                                    onclick: function(e) {
+                                        table.saveOption("selectable");
+                                        delete table.selectable;
+                                        for(var i in table.head.cells) {
+                                            if (table.head.cells[i].selectButton) {
+                                                table.head.cells[i].selectButton.classList.remove("table-select-active");
+                                                table.filter.remove(table.head.cells[i].filter);
+                                                delete table.head.cells[i].filter;
+                                            }
+                                        }
+                                        cell.selectButton.classList.remove("table-select-active");
+                                    }
+                                }];
+                                for(var x in selected) {
+                                    menuItems.push({
+                                        type: HTML.DIV,
+                                        innerHTML: x,
+                                        onclick: function(e) {
+
+                                            if(table.selectable) {
+                                                table.head.cells[table.selectable.index].selectButton.classList.remove("table-select-active");
+                                            }
+                                            table.selectable = { index: index, string: this.innerHTML};
+                                            table.saveOption("selectable", table.selectable);
+
+                                            if(cell.filter) table.filter.remove(this.parentNode.filter);
+                                            var filterSelected = function(row) {
+                                                if(row.table && row.table.selectable) {
+                                                    return row.cells[row.table.selectable.index].innerHTML == row.table.selectable.string;
+                                                } else {
+                                                    return true;
+                                                }
+                                            };
+                                            cell.selectButton.classList.add("table-select-active");
+                                            cell.filter = table.filter.add(filterSelected)
+                                        }
+                                    })
+                                }
+
+                                var menu = new Menu({
+                                    items: menuItems,
+                                    title: this.parentNode.label.cloneNode(true)
+                                });
+                                progressHolder.hide();
+                                menu.open(this.parentNode);
+                            }.bind(this), 0)
+                        }
+                    }, cell);
+                }
                 table.head.cells.push(cell);
             }
 
-            if((options.filter == undefined || options.filter) || (options.sort == undefined || options.sort)) {
+            if((options.filter === undefined || options.filter) || (options.sort === undefined || options.sort) || selectable) {
                 table.resetButton = create(HTML.DIV, {
                     className: "table-reset-button notranslate",
                     innerHTML: "clear_all",
@@ -2352,6 +2533,10 @@ function Edequate(options) {
                         for(var i in table.head.cells) {
                             table.head.cells[i].sort = 0;
                             table.head.cells[i].firstChild.hide();
+                            if(table.head.cells[i].selectButton) {
+                                table.head.cells[i].selectButton.classList.remove("table-select-active");
+                            }
+                            table.saveOption("selectable", table.selectable);
                         }
                         if(table.filterInput) {
                             table.filter.clear();
@@ -2365,7 +2550,7 @@ function Edequate(options) {
                 }, table);
             }
 
-            if(options.filter == undefined || options.filter) {
+            if(options.filter === undefined || options.filter) {
 
                 table.filterLayout = create(HTML.DIV, {
                     className: "table-filter"
@@ -2470,6 +2655,7 @@ function Edequate(options) {
                 }
                 table.saveOption("filter",table.filter.options);
                 table.filter();
+                return newFilterOption;
             };
             table.filter.remove = function(filterOption) {
                 table.filter.options = table.filter.options || [];
@@ -2510,7 +2696,6 @@ function Edequate(options) {
 
         return table;
     }
-    this.table = table;
 
     var loadingHolder;
     function loading(progress) {
@@ -2523,13 +2708,12 @@ function Edequate(options) {
             .place(HTML.DIV, {className:"loading-progress-title", innerHTML: "Loading, please wait... "})
             .place(HTML.DIV, {className:"loading-progress-subtitle hidden"});
         if(progress) {
-            lang.updateNode(loadingHolder.lastChild, progress);
+            Lang.updateNode(loadingHolder.lastChild, progress);
             loadingHolder.lastChild.show();
         } else {
             loadingHolder.lastChild.hide();
         }
     }
-    this.loading = loading;
     loading.hide = function() {
         loadingHolder.hide();
     };
@@ -2557,7 +2741,7 @@ function Edequate(options) {
 
         appendTo = appendTo || document.body;
 
-        progressHolder = progressHolder || dialog({
+        progressHolder = progressHolder || new Dialog({
             className: "progress-dialog" + optionalClassName(options.className),
             items: [
                 { type: HTML.DIV, className: "progress-dialog-circle" },
@@ -2573,7 +2757,6 @@ function Edequate(options) {
     Progress.prototype.hide = function() {
         progressHolder.close();
     };
-    this.progress = new Progress();
 
 
     /**
@@ -2596,7 +2779,7 @@ function Edequate(options) {
      *   onEvent: function(event, object)
      *   start: function()
      */
-    function eventBus() {
+    function EventBus() {
         this.events = window.EVENTS = window.EVENTS || {};
 
         this.eventHolder = function() {
@@ -2629,7 +2812,7 @@ function Edequate(options) {
                     }
                     if(options.onprogress) options.onprogress(loaded);
 
-                    if(loaded == self.eventBus.origins.length) {
+                    if(loaded === self.eventBus.origins.length) {
                         console.log("Preload finished: "+loaded+" files done.");
 
                         if(options.validate && !options.validate()) {
@@ -2669,23 +2852,21 @@ function Edequate(options) {
 
         this.fire = function(event, object) {
             if(!event) return;
-            //setTimeout(function(){
-                for(var i in self.eventBus.modules) {
-                    var module = self.eventBus.modules[i];
-                    if(self.eventBus.holders[module] && self.eventBus.holders[module].onEvent) {
-                        try {
-                            if(event.constructor === Function) {
-                                var res = event.call(this, self.eventBus.holders[self.eventBus.modules[i]]);
-                                if(res !== undefined && !res) break;
-                            } else {
-                                if (!self.eventBus.holders[module].onEvent.call(this, event, object)) break;
-                            }
-                        } catch(e) {
-                            console.error(module, event, e);
+            for(var i in self.eventBus.modules) {
+                var module = self.eventBus.modules[i];
+                if(self.eventBus.holders[module] && self.eventBus.holders[module].onEvent) {
+                    try {
+                        if(event.constructor === Function) {
+                            var res = event.call(this, self.eventBus.holders[self.eventBus.modules[i]]);
+                            if(res !== undefined && !res) break;
+                        } else {
+                            if (!self.eventBus.holders[module].onEvent.call(this, event, object)) break;
                         }
+                    } catch(e) {
+                        console.error(module, event, e);
                     }
                 }
-            //}.bind(this), 0);
+            }
         };
 
         this.chain = function(callback) {
@@ -2699,18 +2880,15 @@ function Edequate(options) {
             }
         }
     }
-    this.eventBus = new eventBus();
-    this.fire = this.eventBus.fire;
-
 
     /**
-     * menu
+     * Menu
      */
-    function menu(options) {
+    function Menu(options) {
         options = options || {};
         options.className = "menu" + optionalClassName(options.className);
         options.tabindex = -1;
-        //options.autoclose = true;
+        options.autoclose = true;
 
         //options._onopen = options.onopen;
         //options.onopen = function(evt) {
@@ -2726,7 +2904,7 @@ function Edequate(options) {
 
         var items = options.items || [];
         options.items = [];
-        var menu = new dialog(options, document.body);
+        var menu = new Dialog(options, document.body);
 
         menu._addItem = menu.addItem;
         menu.addItem = function(item) {
@@ -2735,6 +2913,7 @@ function Edequate(options) {
                 if(this._onclick) this._onclick(evt);
                 menu.close(HIDING.OPACITY)
             };
+            item.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;};
             menu._addItem(item);
         };
         menu.addItems(items);
@@ -2748,12 +2927,16 @@ function Edequate(options) {
 
         return menu;
     }
-    this.menu = menu;
 
 
     function optionalClassName(className) {
         return className ? " " + className : "";
     }
+
+    this.HTML = HTML;
+    this.ERRORS = ERRORS;
+    this.DRAWER = DRAWER;
+    this.HIDING = HIDING;
 
     options = options || {};
     if(options.exportConstants) {
@@ -2766,4 +2949,51 @@ function Edequate(options) {
     this.context = options.context || "";
     this.origin = options.origin || "edequate";
 
+    this.actionBar = ActionBar;
+    this.byId = byId;
+    this.clear = clear;
+    this.cloneAsObject = cloneAsObject;
+    this.copyToClipboard = copyToClipboard;
+    this.create = create;
+    this.destroy = destroy;
+    this.dialog = Dialog;
+    this.drawer = Drawer;
+    this.eventBus = new EventBus();
+    this.fire = this.eventBus.fire;
+    this.get = get;
+    this.getJSON = getJSON;
+    this.keys = keys;
+    this.lang = Lang;
+    this.load = load;
+    this.loading = loading;
+    this.loadForContext = loadForContext;
+    this.menu = Menu;
+    this.normalizeName = normalizeName;
+    this.notification = notification;
+    this.post = post;
+    this.progress = new Progress();
+    this.put = put;
+    this.require = require;
+    this.save = save;
+    this.saveForContext = saveForContext;
+    this.table = Table;
+    this.toast = new Toast();
+
 }
+(function() {
+    var variable = document.currentScript.getAttribute("variable");
+    if(variable) {
+        var origin = document.currentScript.getAttribute("origin");
+        var context = document.currentScript.getAttribute("context");
+        var exportConstants = document.currentScript.getAttribute("exportConstants") == "true";
+        window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
+    }
+    var callback = document.currentScript.getAttribute("callback");
+    if(callback) {
+        try {
+            (new Function(callback))();
+        } catch(e) {
+            console.error(e);
+        }
+    }
+})();
