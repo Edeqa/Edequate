@@ -16,6 +16,10 @@ Javascript DOM and interface routines.
 
 `exportConstants` [optional]  set to `true` to define `Edequate.HTML`, `Edequate.ERRORS`, `Edequate.DRAWER`, `Edequate.HIDING` as the global constants `HTML`, `ERRORS`, `DRAWER`, `HIDING`.
 
+`origin` [optional] prefix for save/load values to browser's localStorage. Default value is `edequate`.
+
+`context` [optional] suffix for context separated save/load values to browser's localStorage. Default value is empty.
+
 ## License
 
 Edequate Framework is licensed under an MIT license. See the `LICENSE` file for specifics.
