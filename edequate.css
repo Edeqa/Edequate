@@ -19,8 +19,8 @@
 html, body {
     height: 100%;
     width: 100%;
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
     display: -webkit-box;   /* OLD - iOS 6-, Safari 3.1-6, BB7 */
     display: -ms-flexbox;  /* TWEENER - IE 10 */
     display: -webkit-flex; /* NEW - Safari 6.1+. iOS 7.1+, BB10 */
@@ -28,10 +28,10 @@ html, body {
     justify-content: center;
     align-items: center;
     position: fixed;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     font-family: sans-serif;
     font-size: 14px;
     color: darkslategray;
@@ -58,6 +58,16 @@ button:hover {
 }
 button:active {
     background-color: #aaaaaa;
+}
+.icon, .icon svg {
+    font-family: "Material Icons";
+    font-feature-settings: "liga" 1;
+    font-style: normal;
+    padding: 0;
+    font-size: 16px;
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
 }
 
 /* CLASSES */
@@ -105,14 +115,14 @@ button:active {
     transform-origin: bottom !important;
 }
 .hiding-animation {
-    transition: opacity 0.2s ease-in-out, all 0.2s ease-in-out !important;
+    transition: opacity 0.1s ease-in-out, all 0.1s ease-in-out !important;
 }
 .toast-holder {
     position: absolute;
     z-index: 50000;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
+    bottom: 0;
+    left: 0;
+    right: 0;
     margin-left: auto;
     margin-right: auto;
     text-align: center;
@@ -165,6 +175,12 @@ button:active {
     display: none;
     visibility: hidden;
 }
+.actionbar-title-suffix {
+    display: inline;
+    margin-left: 5px;
+    font-size: small;
+    font-weight: initial;
+}
 /* Dialog */
 .dialog-title {
     width: 100%;
@@ -184,18 +200,18 @@ button:active {
     padding-right: 24px;
 }
 .dialog-title-button {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     position: absolute;
-    top: 0px;
-    left: 0px;
+    top: 0;
+    left: 0;
     padding: 5px;
     background: none;
     border: none;
     cursor: pointer;
     outline: none;
     color: inherit;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
 }
 .dialog-title-button::before {
     content: "clear";
@@ -206,8 +222,8 @@ button:active {
 }
 .dialog-filter {
     position: absolute;
-    right: 0px;
-    top: 0px;
+    right: 0;
+    top: 0;
     background: none;
     border: none;
     cursor: pointer;
@@ -215,10 +231,10 @@ button:active {
     color: inherit;
 }
 .dialog-filter-button {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     padding: 5px;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
 }
 .dialog-filter-button:hover {
     color: red;
@@ -229,16 +245,19 @@ button:active {
     width: 100px;
 }
 .dialog-filter-clear {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     padding: 5px;
     position: absolute;
-    top: 0px;
-    right: 0px;
+    top: 0;
+    right: 0;
     color: gray;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
 }
 .dialog-header {
+    display: flex;
+    padding: 10px;
+    text-align: center;
 }
 .dialog-items {
     padding: 10px;
@@ -311,9 +330,6 @@ button:active {
     background-color: burlywood;
 }
 .dialog-item-enclosed-icon {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     font-size: initial !important;
 }
 .dialog-item-enclosed-label {
@@ -325,11 +341,13 @@ button:active {
     padding-top: 10px;
     outline-style: dashed;
     outline-width: 1px;
+    white-space: normal;
 }
 .dialog-footer {
     padding: 10px;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 .dialog-buttons {
     align-self: center;
@@ -342,7 +360,7 @@ button:active {
     border-width: 0;
     box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
     display: inline-block;
-    margin: 0px 1px;
+    margin: 0 1px;
     outline: none;
     overflow: hidden;
     padding: 0;
@@ -421,7 +439,7 @@ button:active {
     position: absolute;
     right: 5px;
     bottom: 5px;
-    padding: 0px;
+    padding: 0;
     min-width: unset;
     font-size: initial !important;
     color: darkslategray;
@@ -437,6 +455,19 @@ button:active {
     height: 10px;
     cursor: se-resize;
 }
+.dialog-dim {
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(128, 128, 128, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* Drawer */
 .drawer {
     border-right-style: solid;
@@ -451,6 +482,9 @@ button:active {
     bottom: 0;
     overflow: hidden;
     z-index: 10000;
+}
+.drawer-catcher {
+    display: none;
 }
 .drawer-collapsed {
     max-width: 40px;
@@ -514,7 +548,7 @@ button:active {
     cursor: default;
 }
 .drawer-collapsed .drawer-header-name {
-    font-size: 0px;
+    font-size: 0;
 }
 .drawer-header-title {
     display: block;
@@ -523,7 +557,7 @@ button:active {
     font-size: larger;
 }
 .drawer-collapsed .drawer-header-title {
-    font-size: 0px;
+    font-size: 0;
 }
 .drawer-header-subtitle {
     font-size: inherit;
@@ -533,7 +567,7 @@ button:active {
     white-space: pre;
 }
 .drawer-collapsed .drawer-header-subtitle {
-    font-size: 0px;
+    font-size: 0;
 }
 .drawer-menu {
     position: absolute;
@@ -557,7 +591,7 @@ button:active {
     height: auto;
 }
 .drawer-collapsed .drawer-menu-section-title {
-    height: 0px;
+    height: 0;
     overflow: hidden;
 }
 .drawer-menu-section-title:hover {
@@ -573,18 +607,12 @@ button:active {
     font-weight: bold;
 }
 .drawer-menu-item-expand {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     float: right;
-    padding: 0px !important;
+    padding: 0 !important;
 }
 .drawer-menu-item-collapse, .drawer-collapsed:hover .drawer-menu-item-collapse {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     float: right;
-    padding: 0px !important;
+    padding: 0 !important;
 }
 .drawer-collapsed .drawer-menu-item-collapse {
     float: initial;
@@ -605,15 +633,7 @@ button:active {
     align-items: center;
 }
 .drawer-menu-item-icon, .drawer-menu-item svg {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     margin: 10px;
-    padding: 0px;
-    font-size: 16px;
-    width: 16px;
-    min-width: 16px;
-    height: 16px;
     stroke: darkslategray;
 }
 .drawer-menu-item-label {
@@ -628,7 +648,7 @@ button:active {
     padding: 2px;
     position: relative;
     right: 10px;
-    top: 0px;
+    top: 0;
     font-size: 12px;
     min-width: 12px;
     font-weight: normal;
@@ -681,6 +701,38 @@ button:active {
 .drawer-footer-link {
     margin: 10px;
     cursor: pointer;
+}
+/* Menu */
+.menu {
+    border-radius: 0;
+    border-width: 0;
+    background-color: white;
+    opacity: 1;
+}
+.menu .dialog-title {
+    display: none;
+}
+.menu .dialog-title-button {
+    display: none;
+}
+.menu .dialog-items {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+.menu .dialog-item {
+    height: 20px;
+    min-width: 100px;
+    padding: 5px;
+    margin: 0;
+    box-shadow: none;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    cursor: default;
+}
+.menu .dialog-item:hover {
+    background-color: gainsboro;
 }
 
 /* Table */
@@ -738,20 +790,27 @@ button:active {
     font-style: normal;
     padding: 6px;
     position: absolute;
-    top: 0px;
-    right: 0px;
+    top: 0;
+    right: 0;
     color: gray;
     cursor: default;
 }
 .table-sort {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     position: absolute;
+    top: 4px;
     left: 4px;
 }
 .table-sort-descend {
     transform: scale(1,-1);
+}
+.table-select {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+}
+.table-select-active {
+    background-color: darkslategray;
+    color: white;
 }
 .thead {
     display: table-header-group;
@@ -782,6 +841,10 @@ button:active {
     padding-bottom: 5px;
     border: 1px solid black;
     vertical-align:top;
+}
+.table .thead .th {
+    padding-left: 20px;
+    padding-right: 20px;
 }
 .table.option {
     border: none;
@@ -847,7 +910,8 @@ button:active {
 }
 .progress-dialog-title {
     white-space: nowrap;
-    padding: 10px;
+    padding: 0;
+    display: inline-block;
 }
 
 /* media specific classes */
@@ -864,7 +928,7 @@ button:active {
     body {
         font-family: sans-serif;
         font-size: 16px;
-        margin: 0px;
+        margin: 0;
         zoom: 1;
         color: darkslategray;
         overflow-y: hidden;
@@ -895,18 +959,24 @@ button:active {
         transform: translate(-50%,-50%) !important;
         max-width: 90%;
     }
+    .menu .dialog-title {
+        display: flex;
+    }
+    .menu .dialog-item {
+        height: 40px;
+    }
     /* Actionbar */
     .actionbar {
-        padding: 0px;
+        padding: 0;
         position: fixed;
-        left: 0px;
-        right: 0px;
+        left: 0;
+        right: 0;
         border: none;
         background-color: rgba(76, 147, 175, 1);
         color: white;
         height: 50px;
         display: flex;
-        top: 0px;
+        top: 0;
         opacity: 0.8;
         z-index: 10;
     }
@@ -918,7 +988,7 @@ button:active {
         align-self: center;
         position: absolute;
         top: 14px;
-        left: 0px;
+        left: 0;
         display: block;
         z-index: 100;
         cursor: default;
@@ -943,7 +1013,7 @@ button:active {
     }
     .dialog-filter {
         font-size: 20px;
-        right: 0px;
+        right: 0;
         position: absolute;
         left: 50px;
         height: 50px;
@@ -952,7 +1022,7 @@ button:active {
     .dialog-filter-button {
         padding: 15px;
         position: absolute;
-        right: 0px;
+        right: 0;
     }
     .dialog-filter-input {
         flex: 1 1;
@@ -985,7 +1055,7 @@ button:active {
     .dialog-title-button {
         padding: 15px;
         right: auto;
-        left: 0px;
+        left: 0;
     }
     .dialog-title-button::before {
         content: "arrow_back" !important;
@@ -1010,20 +1080,31 @@ button:active {
     }
     /* Drawer */
     .drawer, .drawer-collapsed {
-        left: 0px;
+        left: 0;
         width: 70%;
         position: fixed;
-        top: 0px;
-        bottom: 0px;
+        top: 0;
+        bottom: 0;
         background-color: white;
         display: none;
         z-index: 10000;
+    }
+    .drawer-catcher, .drawer-header-holder {
+        position: fixed;
+        left: 0;
+        top: 0;
+        background: transparent;
+        width: 10px;
+        height: 100%;
+        z-index: 10000;
+        display: block;
+        visibility: visible;
     }
     .drawer-open {
         display: block;
         outline: none;
         max-width: 240px;
-        box-shadow: 20px 0px 60px 10px rgba(0,0,0,0.75);
+        box-shadow: 20px 0 60px 10px rgba(0,0,0,0.75);
     }
     .drawer:focus {
         display: block;
@@ -1066,16 +1147,16 @@ button:active {
     .drawer-menu-item-badge, .drawer-collapsed .drawer-menu-item-badge, .drawer-collapsed:hover .drawer-menu-item-badge {
         margin: 14px;
         position: absolute;
-        top: 0px;
-        right: 0px;
+        top: 0;
+        right: 0;
     }
     .drawer-header {
     }
     .drawer-footer {
         position: absolute;
         bottom: 10px;
-        left: 0px;
-        right: 0px;
+        left: 0;
+        right: 0;
         width: auto;
         text-align: center;
         font-size: 10px;
@@ -1097,12 +1178,19 @@ button:active {
     /* Table */
     .table {
         font-size: inherit;
+        border: none;
     }
     .table-filter {
         display: none;
     }
     .table-reset-button {
-        display: none;
+        font-size: larger;
+        top: -40px;
+        right: 0;
+        padding: 10px;
+    }
+    .table .thead .th {
+        flex: 1 1 auto;
     }
     .td {
         padding-top: 10px;
