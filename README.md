@@ -1,7 +1,7 @@
 # Edequate
 Javascript DOM and interface routines.
 
-## Loading
+## How to use
 
     <script async 
        src="/js/Edequate.js" 
