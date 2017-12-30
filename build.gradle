@@ -1,0 +1,20 @@
+apply plugin: 'java'
+apply plugin: 'war'
+
+repositories {
+    jcenter()
+    maven { url "https://jitpack.io" }
+    maven { url 'https://maven.fabric.io/public' }
+}
+
+dependencies {
+    compile project(':Helpers')
+//    compile fileTree(dir: 'libs', include: ['*.jar'])
+    providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
+    compile 'org.json:json:20171018'
+    compile 'com.google.guava:guava:20.0'
+    compile 'junit:junit:4.12'
+}
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7

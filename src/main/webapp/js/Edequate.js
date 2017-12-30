@@ -1,6 +1,8 @@
 /**
  * Edequate - javascript DOM and interface routines
- * Copyright (C) Edeqa <http://www.edeqa.com>
+ * Look for updates at https://edeqa.github.io/Edequate/
+ * ------------------------------------------
+ * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
  * 1.5 - onload initialization
@@ -100,7 +102,7 @@ function Edequate(options) {
         INVALID_MODULE: 32
     };
 
-    var DRAWER = {
+    /*var DRAWER = {
         SECTION_PRIMARY: 0,
         SECTION_COMMUNICATION: 2,
         SECTION_SHARE: 3,
@@ -108,6 +110,18 @@ function Edequate(options) {
         SECTION_VIEWS: 6,
         SECTION_MAP: 7,
         SECTION_MISCELLANEOUS: 8,
+        SECTION_LAST: 9
+    };*/
+    var DRAWER = {
+        SECTION_PRIMARY: 0,
+        SECTION_SUMMARY: 1,
+        SECTION_MAIN: 2,
+        SECTION_EXPLORE: 3,
+        SECTION_SHARE: 4,
+        SECTION_RESOURCES: 5,
+        SECTION_MISCELLANEOUS: 6,
+        SECTION_SETTINGS: 7,
+        SECTION_HELP: 8,
         SECTION_LAST: 9
     };
 
@@ -2981,19 +2995,32 @@ function Edequate(options) {
 
 }
 (function() {
-    var variable = document.currentScript.getAttribute("variable");
-    if(variable) {
-        var origin = document.currentScript.getAttribute("origin");
-        var context = document.currentScript.getAttribute("context");
-        var exportConstants = document.currentScript.getAttribute("exportConstants") == "true";
-        window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
+    var scripts = document.getElementsByTagName("script");
+    var node = document.currentScript;
+    if(!node) {
+        for(var i = 0; i < scripts.length; i++) {
+            var src = scripts[i].getAttribute("src");
+            if(src.match(/edequate\.js/i)) {
+                node = scripts[i];
+                break;
+            }
+        }
     }
-    var callback = document.currentScript.getAttribute("callback");
-    if(callback) {
-        try {
-            (new Function(callback))();
-        } catch(e) {
-            console.error(e);
+    if(node) {
+        var variable = node.getAttribute("variable");
+        if(variable) {
+            var origin = node.getAttribute("origin");
+            var context = node.getAttribute("context");
+            var exportConstants = node.getAttribute("exportConstants") == "true";
+            window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
+        }
+        var callback = node.getAttribute("callback");
+        if(callback) {
+            try {
+                (new Function(callback))();
+            } catch(e) {
+                console.error(e);
+            }
         }
     }
 })();

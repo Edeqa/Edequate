@@ -1,0 +1,16 @@
+{
+  "title": "Edequate Example",
+  "copyright": "Test &copy;2017-18 Edeqa",
+  "drawer": {
+    "0": "Primary",
+    "1": "Summary",
+    "2": "Main",
+    "3": "Products",
+    "4": "Share",
+    "5": "Resources",
+    "6": "Miscellaneous",
+    "7": "Settings",
+    "8": "Help",
+    "9": "Last"
+  }
+}

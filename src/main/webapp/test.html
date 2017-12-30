@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        Edeqa
+    </title>
+    <link rel="icon" href="/icons/favicon.ico">
+    <style>
+        @import url('/css/edequate.css');
+        /*@import url('/css/index.css');*/
+        @import url('/css/edeqa-colors.css');
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=no">
+    <script async src="/js/Edequate.js" variable="u" callback="u.toast.show('Simple toast')" exportConstants="true"></script>
+</head>
+<body>
+<div id="loading-dialog" class="modal shadow progress-dialog" tabindex="-1">
+    <div class="dialog-items">
+        <div class="dialog-item progress-dialog-circle"></div>
+        <div class="dialog-item progress-dialog-title">Loading...</div>
+        <div id="loading-dialog-progress" class="dialog-item progress-dialog-title"></div>
+    </div>
+</div>
+<div id="content"></div>
+
+<script>
+    function callback(json) {
+        console.log(json);
+    }
+    function fallback(json) {
+        console.error(json);
+        fetch("/rest/v1/getVersion", {
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json"
+            },
+            method: "POST",
+            body: "test body"
+        })
+        .then(function(res){return res.json()})
+        .then(function(res){console.log(res)})
+        .catch(function(res){console.error(res)})
+    }
+</script>
+
+<script>
+
+function EPromise() {
+	var values,error;
+  this.setResult = function(result) {
+  	values = result;
+  }
+  this.setError = function(err) {
+  	error = err;
+  }
+	this.then = function(callback) {
+  	if(error) return this;
+  	try {
+		  this.setResult(callback(values));
+    } catch(e) {
+    	this.setError(e);
+    }
+    return this;
+  };
+  this.catch = function(fallback) {
+  	if(error) fallback(error)
+  };
+}
+function a() {
+   this.call = function(e) {
+        console.log("A",e);
+      this.setResult(e);
+      return this;
+   }
+}
+a.prototype = new EPromise();
+var b = new a();
+
+b.call("test").then(function(e) {
+	console.log("B",e + ":" + e);
+	return e + ":" + e;
+}).then(function(e) {
+	console.log("C",e + ":" + e);
+  fetch("http://localhost:8088/rest/v1/getLocales").then(function(res){
+  	console.log(res)
+  });
+	return e + ":" + e;
+}).then(function(e) {
+	console.log("D",e + ":" + e + ":" + d);
+	return e + ":" + e;
+}).then(function(e) {
+	console.log("E",e + ":" + e);
+	return e + ":" + e;
+}).catch(function(error) {
+	console.error("F",error);
+})
+
+</script>
+
+<script src="/rest/v1/getVersion?callback=callback"></script>
+<script src="/rest/v2/getVersion?callback=callback"></script>
+<script src="/rest/v1/test?callback=callback&fallback=fallback"></script>
+
+</body>
+</html>

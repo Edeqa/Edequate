@@ -1,5 +1,8 @@
 # Edequate
-Javascript DOM and interface routines.
+
+Site building framework.
+
+Includes javascript DOM and interface routines.
 
 ## How to use
 
