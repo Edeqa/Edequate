@@ -94,9 +94,6 @@ button:active {
 .dialog-dim {
     background-color: rgba(128, 128, 128, 0.4);
 }
-.actionbar {
-    background: linear-gradient(135deg, #325037 0%, #527b3a 54%, #a9c754 100%);
-}
 .drawer {
     background-color: #f0fff0;
 }
@@ -199,7 +196,7 @@ button:active {
         background-color: ivory;
     }
     .actionbar {
-        background-color: rgba(76, 147, 175, 1);
+        background: linear-gradient(135deg, #325037 0%, #527b3a 54%, #a9c754 100%);
         color: white;
     }
     .dialog-filter-input {

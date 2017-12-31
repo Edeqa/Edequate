@@ -17,12 +17,15 @@ public interface RestAction {
     String STATUS_ERROR = "error";
     String STATUS_SUCCESS = "success";
 
-    int CODE_REDIRECT = 302;
     int CODE_STRING = 1;
     int CODE_LIST = 2;
     int CODE_JSON = 3;
+    int CODE_REDIRECT = 302;
 
     int ERROR_ACTION_NOT_DEFINED = 1;
+    int ERROR_NOT_FOUND = 404;
+    int ERROR_GONE = 410;
+    int ERROR_NOT_EXTENDED = 510;
 
 //    String actionName = "restAction";
     String apiVersion = "v1";

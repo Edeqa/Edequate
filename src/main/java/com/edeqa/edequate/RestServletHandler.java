@@ -19,9 +19,14 @@ import java.util.Map;
 
 import javax.servlet.ServletException;
 
+import static com.edeqa.edequate.interfaces.RestAction.CALLBACK;
 import static com.edeqa.edequate.interfaces.RestAction.CODE;
 import static com.edeqa.edequate.interfaces.RestAction.CODE_REDIRECT;
+import static com.edeqa.edequate.interfaces.RestAction.FALLBACK;
 import static com.edeqa.edequate.interfaces.RestAction.MESSAGE;
+import static com.edeqa.edequate.interfaces.RestAction.REQUEST;
+import static com.edeqa.edequate.interfaces.RestAction.STATUS;
+import static com.edeqa.edequate.interfaces.RestAction.STATUS_ERROR;
 
 public class RestServletHandler extends AbstractServletHandler {
 
@@ -63,14 +68,14 @@ public class RestServletHandler extends AbstractServletHandler {
         Map<String, String[]> arguments = requestWrapper.getParameterMap();
 
         JSONObject json = new JSONObject();
-        json.put(RestAction.REQUEST, path);
+        json.put(REQUEST, path);
 
         if (getActions().containsKey(path)) {
             Misc.log("Rest", "performing:", getActions().get(path).getClass().getSimpleName());
             getActions().get(path).call(json, requestWrapper);
         }
 
-        if (!json.has(RestAction.STATUS)) {
+        if (!json.has(STATUS)) {
             Misc.log("Rest", "performing:", Nothing.class.getSimpleName());
             new Nothing().call(json, requestWrapper);
         }
@@ -83,22 +88,25 @@ public class RestServletHandler extends AbstractServletHandler {
 
         String callback = null;
         String fallback = null;
-        if (arguments.containsKey(RestAction.CALLBACK)) {
-            callback = arguments.get(RestAction.CALLBACK)[0];
+        if (arguments.containsKey(CALLBACK)) {
+            callback = arguments.get(CALLBACK)[0];
         }
-        if (arguments.containsKey(RestAction.FALLBACK)) {
-            fallback = arguments.get(RestAction.FALLBACK)[0];
+        if (arguments.containsKey(FALLBACK)) {
+            fallback = arguments.get(FALLBACK)[0];
         }
 
-        if (json.getString(RestAction.STATUS).equals(RestAction.STATUS_ERROR) && !Misc.isEmpty(fallback)) {
+        if (json.getString(STATUS).equals(STATUS_ERROR) && !Misc.isEmpty(fallback)) {
             callback = fallback;
         }
 
-        if (!Misc.isEmpty(callback)) {
+        if (json.getString(STATUS).equals(STATUS_ERROR) && !Misc.isEmpty(callback) ) {
+            requestWrapper.sendError(json.getInt(CODE),callback + "(" + json.toString() + ");");
+        } else if (json.getString(STATUS).equals(STATUS_ERROR)) {
+            requestWrapper.sendError(json.getInt(CODE), json);
+        } else if (!Misc.isEmpty(callback) ) {
             requestWrapper.sendResult(callback + "(" + json.toString() + ");");
         } else {
             requestWrapper.sendResult(json);
-//            out.println(json.toString());
         }
     }
 

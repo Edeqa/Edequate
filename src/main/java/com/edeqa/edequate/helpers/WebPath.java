@@ -49,6 +49,6 @@ public class WebPath {
     }
 
     public String toString() {
-        return directory.toString();
+        return path().toString();
     }
 }

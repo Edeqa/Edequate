@@ -17,8 +17,8 @@ public class Nothing implements RestAction {
         try {
             json.put(STATUS, STATUS_ERROR);
             json.put(MESSAGE, "Action not defined.");
-            json.put(CODE, ERROR_ACTION_NOT_DEFINED);
-            json.put(BODY, Common.fetchBody(request));
+            json.put(CODE, ERROR_NOT_EXTENDED);
+            json.put(BODY, request.getBody());
 
         } catch (Exception e) {
             e.printStackTrace();

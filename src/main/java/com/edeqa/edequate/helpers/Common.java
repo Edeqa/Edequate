@@ -14,20 +14,6 @@ public class Common {
     public static final int VERSION_CODE = 1;
     public static final String VERSION_NAME = "1.0";
 
-    public static String fetchBody(RequestWrapper request) {
-        String body = null;
-        try {
-            InputStreamReader isr = new InputStreamReader(request.getRequestBody(), "utf-8");
-            BufferedReader br = new BufferedReader(isr);
-            body = br.readLine();
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return body;
-    }
-
-
     public static File getWebDirectory(String child) {
         File directory = null;
         child = Misc.isEmpty(child) ? "" : "/" + child;

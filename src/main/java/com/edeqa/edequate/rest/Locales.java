@@ -19,6 +19,7 @@ public class Locales implements RestAction {
 
             JSONObject locales = new JSONObject(new HashMap<String,String>(){{
                 put("en","English");
+                put("ru","Russian");
             }});
 
             json.put(MESSAGE, locales);

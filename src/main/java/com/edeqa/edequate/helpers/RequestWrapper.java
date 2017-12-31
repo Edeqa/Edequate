@@ -10,8 +10,10 @@ import com.sun.net.httpserver.HttpExchange;
 import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
@@ -117,6 +119,14 @@ public class RequestWrapper {
 
     public void sendResponseHeaders(int code, int arg1) {
         if(mode == MODE_SERVLET) {
+            if(charset != null) {
+                String contentType = httpServletResponse.getHeader(HttpHeaders.CONTENT_TYPE);
+                if (!contentType.toLowerCase().contains("; charset=")) {
+                    contentType = contentType + "; charset=" + charset;
+                    httpServletResponse.setHeader(HttpHeaders.CONTENT_TYPE, contentType);
+                }
+            }
+            httpServletResponse.setStatus(code);
         } else if(mode == MODE_EXCHANGE) {
             if(isGzip()) {
                 setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
@@ -142,12 +152,13 @@ public class RequestWrapper {
 
     public void sendRedirect(String redirectLink) throws IOException {
         if(mode == MODE_SERVLET) {
+            setHeader(HttpHeaders.SERVER, "Edequate/" + Common.VERSION_NAME);
             httpServletResponse.sendRedirect(redirectLink);
         } else if(mode == MODE_EXCHANGE) {
-            Headers responseHeaders = httpExchange.getResponseHeaders();
-            responseHeaders.set(HttpHeaders.CONTENT_TYPE, "text/plain");
-            responseHeaders.set(HttpHeaders.DATE, new Date().toString());
-            responseHeaders.set(HttpHeaders.LOCATION, redirectLink);
+            setHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
+            setHeader(HttpHeaders.DATE, new Date().toString());
+            setHeader(HttpHeaders.LOCATION, redirectLink);
+            setHeader(HttpHeaders.SERVER, "Edequate/" + Common.VERSION_NAME);
             httpExchange.sendResponseHeaders(302, 0);
             httpExchange.close();
         }
@@ -270,12 +281,27 @@ public class RequestWrapper {
         sendResult(code, Mime.APPLICATION_JSON, json.toString().getBytes());
     }
 
+    public void sendError(Integer code, String string) {
+        sendResult(code, Mime.TEXT_PLAIN, string.getBytes());
+    }
+
     public void sendResult(Integer code, String contentType, byte[] bytes) {
         try {
+            setHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
+
+            // FIXME - need to check by https://observatory.mozilla.org/analyze.html?host=waytous.net
+            setHeader(HttpHeaders.X_CONTENT_TYPE_OPTIONS, "nosniff");
+            setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, "frame-ancestors 'self'");
+            setHeader(HttpHeaders.X_FRAME_OPTIONS, "SAMEORIGIN");
+            setHeader(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
+            setHeader(HttpHeaders.STRICT_TRANSPORT_SECURITY, "max-age=63072000; includeSubDomains; preload");
+            setHeader(HttpHeaders.VARY, "Accept-Encoding");
+
             addHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
             if(contentType != null) setHeader(HttpHeaders.CONTENT_TYPE, contentType);
-            setHeader(HttpHeaders.SERVER, "Edeqa/" + Common.VERSION_NAME);
+            setHeader(HttpHeaders.SERVER, "Edequate/" + Common.VERSION_NAME);
             setHeader(HttpHeaders.DATE, new Date().toString());
+
             sendResponseHeaders(code, bytes.length);
 
             OutputStream os = getResponseBody();
@@ -304,6 +330,19 @@ public class RequestWrapper {
 
     public void setGzip(boolean gzip) {
         this.gzip = gzip;
+    }
+
+    public String getBody() {
+        String body = null;
+        try {
+            InputStreamReader isr = new InputStreamReader(getRequestBody(), "utf-8");
+            BufferedReader br = new BufferedReader(isr);
+            body = br.readLine();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return body;
     }
 
     public void processBody(Runnable1<StringBuilder> callback, Runnable1<Exception> fallback) {

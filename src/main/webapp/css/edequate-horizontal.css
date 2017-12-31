@@ -2,25 +2,25 @@ body {
     flex-direction: column;
 }
 .layout {
-    flex: 1 1;
+    flex: 1 1 auto;
     margin-bottom: 21px;
     overflow: auto;
     min-height: initial;
 }
 .actionbar {
-    background: linear-gradient(135deg, #2e5d7d 0%,#32667b 54%,#819bc7 100%);
+    background: none;
     display: flex;
     height: 150px;
     flex-direction: column;
     justify-content: flex-end;
     position: fixed;
-    top: 0px;
-    overflow: hidden;
-    width: 100%;
+    top: 0;
+    right: 0;
+    width: auto;
+    z-index: 1;
 }
 .actionbar-holder {
-    display: block;
-    flex: 0 0 150px;
+    display: none;
 }
 .actionbar-button {
     display: none;
@@ -108,21 +108,18 @@ body {
 
 @media screen and (min-width: 1001px) {
     .drawer {
-        height: 150px;
+        flex: 0 0 150px;
         top: 0px;
-        position: fixed;
         border: none;
-        background: none !important;
+        background: linear-gradient(135deg, #2e5d7d 0%,#32667b 54%,#819bc7 100%);
         z-index: 1;
-        /*max-width: 100%;
-        min-width: 100%;*/
-    }
-    .drawer-header {
-        background: none !important;
+        max-width: 100%;
+        min-width: 100%;
+        overflow: initial;
     }
     .drawer-header-holder {
         display: none;
-        flex: 0 0 150px;
+        /*flex: 0 0 150px;*/
     }
     .drawer-header-name, .drawer-collapsed:hover .drawer-header-name {
         display: none;
@@ -217,7 +214,7 @@ body {
         min-width: 100%;
     }
     .drawer.drawer-collapsed {
-        height: 50px;
+        flex: 0 0 50px;
         width: auto;
     }
     .drawer-collapsed .drawer-header {
@@ -261,7 +258,14 @@ body {
     .layout {
         margin-bottom: 0px;
     }
-
+    .actionbar {
+        flex: 0 0 150px;
+        position: relative;
+        width: 100%;
+    }
+    .actionbar-collapsed {
+        flex: 0 0 50px;
+    }
     .actionbar-button {
         display: block;
     }
@@ -298,8 +302,6 @@ body {
 
     .content {
         max-width: 100%;
-        padding-top: 10px;
-        padding-bottom: 10px;
     }
 
     /* Table */

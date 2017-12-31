@@ -1,5 +1,7 @@
 {
     "name": "Edeqa",
+    "short_name": "Edeqa",
+    "start_url": "https://www.edeqa.com",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",

@@ -18,7 +18,7 @@ public class Version implements RestAction {
             json.put(STATUS, STATUS_SUCCESS);
             json.put(CODE, Common.VERSION_CODE);
             json.put(MESSAGE, Common.VERSION_NAME);
-            json.put(BODY, Common.fetchBody(request));
+            json.put(BODY, request.getBody());
 
 //            System.out.println(json.toString(4));
         } catch (Exception e) {

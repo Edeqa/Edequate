@@ -18,6 +18,7 @@ import static com.edeqa.helpers.HtmlGenerator.IMG;
 import static com.edeqa.helpers.HtmlGenerator.LINK;
 import static com.edeqa.helpers.HtmlGenerator.NOSCRIPT;
 import static com.edeqa.helpers.HtmlGenerator.REL;
+import static com.edeqa.helpers.HtmlGenerator.SPAN;
 import static com.edeqa.helpers.HtmlGenerator.SRC;
 import static com.edeqa.helpers.HtmlGenerator.STYLESHEET;
 import static com.edeqa.helpers.HtmlGenerator.TYPE;
@@ -44,20 +45,19 @@ public class MainServletHandler extends AbstractServletHandler {
         a.add(HtmlGenerator.DIV).with(HtmlGenerator.CLASS, "dialog-item progress-dialog-title").with("Loading...");
         a.add(HtmlGenerator.DIV).with(HtmlGenerator.ID, "loading-dialog-progress").with(HtmlGenerator.CLASS, "dialog-item progress-dialog-title");
 
-        html.getBody().add(HtmlGenerator.DIV);
-        html.getBody().add(HtmlGenerator.DIV);
-        html.getBody().add(HtmlGenerator.DIV);
-        html.getBody().add(HtmlGenerator.NOSCRIPT);
-
         HtmlGenerator.Tag noscript = html.getBody().add(NOSCRIPT);
         noscript.add(LINK).with(TYPE, Mime.TEXT_CSS).with(REL, STYLESHEET).with(HREF, "/css/noscript.css");
 
-        HtmlGenerator.Tag header = noscript.add(DIV).with(CLASS, "header").with("Edeqa");
+        HtmlGenerator.Tag header = noscript.add(DIV).with(CLASS, "header");
         header.add(IMG).with(SRC, "/images/edeqa-logo.svg").with(WIDTH, 24).with(HEIGHT, 24);
-        header.with(" Edeqa");
+        header.with("Edequate Example");
 
-        noscript.add(DIV).with(CLASS, "text").with("This service requires to allow Javascript. Please enable Javascript in your browser or use other browser that supports Javascript and try again.");
-        noscript.add(DIV).with(CLASS, "copyright").with("Edequate &copy;2017-18 ").add(A).with(CLASS, "link").with(HREF, "http://edequate.edeqa.com").with("Edeqa");
+        noscript.add(DIV).with(CLASS, "text").with("This site requires to allow Javascript. Please enable Javascript in your browser and try again or use other browser that supports Javascript.");
+
+        HtmlGenerator.Tag copyright = noscript.add(DIV).with(CLASS, "copyright");
+        copyright.add(A).with("Edequate").with(CLASS, "link").with(HREF, "http://www.edeqa.com/edequate");
+        copyright.add(SPAN).with(" &copy;2017-18 ");
+        copyright.add(A).with("Edeqa").with(CLASS, "link").with(HREF, "http://www.edeqa.com");
 
         requestWrapper.sendResult(200, Mime.TEXT_HTML, html.build().getBytes());
 

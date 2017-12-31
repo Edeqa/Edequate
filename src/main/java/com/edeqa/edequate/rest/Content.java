@@ -18,7 +18,7 @@ public class Content implements RestAction {
     @Override
     public void call(JSONObject json, RequestWrapper request) {
         try {
-            JSONObject options = new JSONObject(Common.fetchBody(request));
+            JSONObject options = new JSONObject(request.getBody());
             Misc.log("Content", "requested: " + options);
 
             ArrayList<WebPath> files = new ArrayList<>();
@@ -62,6 +62,9 @@ public class Content implements RestAction {
                 json.put(MESSAGE, path);
             } else {
                 Misc.log("Content", "not found: " + files);
+                json.put(STATUS, STATUS_ERROR);
+                json.put(CODE, ERROR_GONE);
+                json.put(MESSAGE, options);
             }
 
         } catch (Exception e) {

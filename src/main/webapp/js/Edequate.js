@@ -5,22 +5,22 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
- * 1.5 - onload initialization
- * 1.4 - table#options#caption.selectable=true/false
- * 1.3 - sprintf redesigned; table#options.sort=true/false; table#options.filter=true/false;
+ * 5 - onload initialization; DRAWER constants
+ * 4 - table#options#caption.selectable=true/false
+ * 3 - sprintf redesigned; table#options.sort=true/false; table#options.filter=true/false;
  *       dialog#options.autoclose=true/false; dialog#setHeader; dialog#getHeader;
  *       dialog#setFooter; dialog#getFooter; dialog#setPositive; dialog#getPositive;
  *       dialog#setNeutral; dialog#getNeutral; dialog#setNegative; dialog#getNegative;
  *       menu; create#options.children; create#options.variable; create#options.childName
- * 1.2 - HTMLElement#updateHTML(text)
- * 1.1 - some fixes and improvements
- * 1.0 - initial release
+ * 2 - HTMLElement#updateHTML(text)
+ * 1 - some fixes and improvements
+ * 0 - initial release
  */
 
 function Edequate(options) {
     var self = this;
 
-    this.version = 1;
+    this.version = 5;
 
     var HTML = {
         DIV: "div",
@@ -103,14 +103,11 @@ function Edequate(options) {
     };
 
     /*var DRAWER = {
-        SECTION_PRIMARY: 0,
         SECTION_COMMUNICATION: 2,
-        SECTION_SHARE: 3,
         SECTION_NAVIGATION: 5,
         SECTION_VIEWS: 6,
         SECTION_MAP: 7,
         SECTION_MISCELLANEOUS: 8,
-        SECTION_LAST: 9
     };*/
     var DRAWER = {
         SECTION_PRIMARY: 0,
@@ -137,21 +134,32 @@ function Edequate(options) {
     };
 
     URL = function(link) {
-        this.href = link;
-        var p = link.split("://");
+        this.href = link.href || link;
+        var p = this.href.split("://");
         this.protocol = "http:";
-        if(p.length > 1) this.protocol = p.shift() +":";
-        p = p.join("//").split("/");
+        if(p.length > 1) {
+            this.protocol = p.shift() +":";
+            p = p.join("://").split("/");
+        } else {
+            p = p.join("/").split("/");
+        }
         this.host = p.shift();
-        this.pathname = "/" + p.join("/");
-        p = this.host.split(":");
-        this.hostname = p.shift();
-        this.port = p.shift();
+        p = "/" + p.join("/");
+
+        var h = this.host.split(":");
+        this.hostname = h.shift();
+        this.port = h.shift();
         if(!this.port) this.port = "";
         this.origin = this.protocol + "//" + this.host;
-        this.hash = "";
+
+        p = p.split("#");
+        this.hash = p.length > 1 ? p.pop() : "";
+
+        p = p.join("#").split("?");
+        this.search = p.length > 1 ? p.pop() : "";
+
+        this.path = p.join("?");
         this.password = "";
-        this.search = "";
         this.username = "";
 
     };
@@ -627,7 +635,7 @@ function Edequate(options) {
         if(element === null || element === undefined) return "";
         if(element instanceof HTMLElement) {
             for(var i = element.childNodes.length-1; i>=0; i--) {
-                element.removeChild(element.children[i]);
+                element.removeChild(element.childNodes[i]);
             }
         } else if(typeof element === "boolean") {
             return element;
@@ -1899,7 +1907,7 @@ function Edequate(options) {
         };
 
         var layout = create(HTML.DIV, {
-            className:"drawer changeable" + (collapsed ? " drawer-collapsed" : "") + optionalClassName(options.className),
+            className:"drawer noselect changeable" + (collapsed ? " drawer-collapsed" : "") + optionalClassName(options.className),
             tabindex: -1,
             onblur: function(){
                 layout.close();
@@ -2209,7 +2217,7 @@ function Edequate(options) {
                 var cvollapsed = actionbar.classList.contains("actionbar-collapsed");
                 if(force !== undefined) collapsed = force;
                 actionbar.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
-                actionbarHolder.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
+//                actionbarHolder.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
                 if(options.ontogglesize) options.ontogglesize(force);
             },
             setTitle: function(text) {
@@ -2220,7 +2228,7 @@ function Edequate(options) {
                 }
             }
         });
-        create(HTML.SPAN, {innerHTML:"menu", className:"actionbar-button", onclick: options.onbuttonclick, onfocus:function(){}}, actionbar);
+        create(HTML.SPAN, {innerHTML:"menu", className:"actionbar-button icon notranslate", onclick: options.onbuttonclick, onfocus:function(){}}, actionbar);
         var label = create(HTML.DIV, {className:"actionbar-label changeable"}, actionbar);
         actionbar.titleNode = create(HTML.DIV, {className:"actionbar-label-title changeable", innerHTML: options.title || ""}, label);
         actionbar.subtitle = create(HTML.DIV, {className:"actionbar-label-subtitle changeable", innerHTML: options.subtitle || ""}, label);
@@ -2232,8 +2240,8 @@ function Edequate(options) {
             appendTo.insertBefore(actionbar, appendTo.firstChild);
         }
 
-        var actionbarHolder = create(HTML.DIV, {className: "actionbar-holder changeable"});
-        actionbar.parentNode.insertBefore(actionbarHolder, actionbar);
+//        var actionbarHolder = create(HTML.DIV, {className: "actionbar-holder changeable"});
+//        actionbar.parentNode.insertBefore(actionbarHolder, actionbar);
 
 
         return actionbar;
