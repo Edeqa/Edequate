@@ -10,10 +10,10 @@ repositories {
 dependencies {
     compile project(':Helpers')
 //    compile fileTree(dir: 'libs', include: ['*.jar'])
-    providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
+    providedCompile 'javax.servlet:javax.servlet-api:+'
     compile 'org.json:json:20171018'
-    compile 'com.google.guava:guava:20.0'
-    compile 'junit:junit:4.12'
+    compile 'com.google.guava:guava:+'
+    testCompile 'junit:junit:+'
 }
 
 sourceCompatibility = 1.7
