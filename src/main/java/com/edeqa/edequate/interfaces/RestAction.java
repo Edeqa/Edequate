@@ -4,6 +4,7 @@ import com.edeqa.edequate.helpers.RequestWrapper;
 
 import org.json.JSONObject;
 
+@SuppressWarnings("unused")
 public interface RestAction {
 
     String BODY = "body";
@@ -27,9 +28,9 @@ public interface RestAction {
     int ERROR_GONE = 410;
     int ERROR_NOT_EXTENDED = 510;
 
-//    String actionName = "restAction";
-    String apiVersion = "v1";
+    String getApiVersion();
 
+    String getActionName();
 
     void call(JSONObject json, RequestWrapper request);
 }

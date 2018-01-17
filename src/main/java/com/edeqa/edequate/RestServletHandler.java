@@ -1,15 +1,20 @@
 package com.edeqa.edequate;
 
 
+import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.interfaces.RestAction;
+import com.edeqa.edequate.rest.Content;
+import com.edeqa.edequate.rest.Files;
+import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
-import com.edeqa.edequate.abstracts.AbstractServletHandler;
+import com.edeqa.edequate.rest.Version;
 import com.edeqa.helpers.Misc;
 
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,46 +37,66 @@ public class RestServletHandler extends AbstractServletHandler {
 
     private Map<String, RestAction> actions;
 
+    public RestServletHandler() {
+        setActions(new LinkedHashMap<String, RestAction>());
+
+        registerAction(new Content());
+        registerAction(new Files().setFilenameFilter(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.contains("Holder");
+            }
+        }).setChildDirectory("js").setActionName("holders"));
+        registerAction(new Locales());
+        registerAction(new Version());
+        registerAction(new Nothing());
+//        populateRestActions("com.edeqa.edequate.rest");
+    }
+
     @Override
     public void init() throws ServletException {
         super.init();
-        setActions(new LinkedHashMap<String, RestAction>());
-        populateRestActions("com.edeqa.edequate.rest");
+    }
+
+    public void registerAction(RestAction actionHolder) {
+        String apiVersion = actionHolder.getApiVersion();
+        String actionName = actionHolder.getActionName();
+
+        if(getActions().containsKey("/rest/" + apiVersion + "/" + actionName)) {
+            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "for:", "/rest/" + apiVersion + "/" + actionName);
+        } else {
+            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "for:", "/rest/" + apiVersion + "/" + actionName);
+        }
+        getActions().put("/rest/" + apiVersion + "/" + actionName, actionHolder);
     }
 
     protected void populateRestActions(String packageName) {
-
-        Misc.log("Rest", "init actions within", packageName);
+        Misc.log("Rest", "automatic register actions within", packageName);
         List<Class> classes = getAllClasses( packageName);
 
         for (Class item : classes) {
             try {
                 Object instance = item.newInstance();
                 if (instance instanceof RestAction) {
-                    String apiVersion = (String) instance.getClass().getField("apiVersion").get(instance);
-                    String actionName = (String) instance.getClass().getField("actionName").get(instance);
-                    RestAction action = (RestAction) instance;
-                    getActions().put("/rest/" + apiVersion + "/" + actionName, action);
-
-                    Misc.log("Rest", "register:", action.getClass().getSimpleName(), "for:", "/rest/" + apiVersion + "/" + actionName);
+                    registerAction((RestAction) instance);
                 }
-            } catch (InstantiationException | IllegalAccessException | NoSuchFieldException e) {
+            } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
         }
     }
 
     public void perform(RequestWrapper requestWrapper) throws IOException {
+        String path = requestWrapper.getRequestURI().getPath().replaceFirst("/$", "");
 
-        String path = requestWrapper.getRequestURI().toString().replaceFirst("/$", "");
-
-        Map<String, String[]> arguments = requestWrapper.getParameterMap();
+        Map<String, List<String>> arguments = requestWrapper.getParameterMap();
 
         JSONObject json = new JSONObject();
         json.put(REQUEST, path);
 
+
         if (getActions().containsKey(path)) {
-            Misc.log("Rest", "performing:", getActions().get(path).getClass().getSimpleName());
+            Misc.log("Rest", "performing:", getActions().get(path).getClass().getSimpleName(), "for:", path);
             getActions().get(path).call(json, requestWrapper);
         }
 
@@ -89,10 +114,10 @@ public class RestServletHandler extends AbstractServletHandler {
         String callback = null;
         String fallback = null;
         if (arguments.containsKey(CALLBACK)) {
-            callback = arguments.get(CALLBACK)[0];
+            callback = arguments.get(CALLBACK).get(0);
         }
         if (arguments.containsKey(FALLBACK)) {
-            fallback = arguments.get(FALLBACK)[0];
+            fallback = arguments.get(FALLBACK).get(0);
         }
 
         if (json.getString(STATUS).equals(STATUS_ERROR) && !Misc.isEmpty(fallback)) {

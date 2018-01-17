@@ -19,6 +19,8 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -340,7 +342,7 @@ public class RequestWrapper {
             body = br.readLine();
             br.close();
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
         return body;
     }
@@ -374,12 +376,36 @@ public class RequestWrapper {
 
     }
 
-    public Map<String,String[]> getParameterMap() {
-        if(mode == MODE_SERVLET) {
-            return httpServletRequest.getParameterMap();
-        } else if(mode == MODE_EXCHANGE) {
-            Misc.log("//TODO implement RequestWrapper#getParameterMap");
-            return Collections.emptyMap();
+    public Map<String,List<String>> getParameterMap() {
+        try {
+            if (mode == MODE_SERVLET) {
+                HashMap<String, List<String>> map = new HashMap<>();
+                for (Map.Entry<String, String[]> x : httpServletRequest.getParameterMap().entrySet()) {
+                    map.put(x.getKey(), Arrays.asList(x.getValue()));
+                }
+                return map;
+            } else if (mode == MODE_EXCHANGE) {
+                HashMap<String, List<String>> map = new HashMap<>();
+
+                List<String> list;
+                String query = httpExchange.getRequestURI().getQuery();
+                if (!Misc.isEmpty(query)) {
+                    String[] queryParts = httpExchange.getRequestURI().getQuery().split("&");
+                    for (String x : queryParts) {
+                        String[] arguments = x.split("=");
+                        if (map.containsKey(arguments[0])) {
+                            list = map.get(arguments[0]);
+                        } else {
+                            list = new ArrayList<>();
+                            map.put(arguments[0], list);
+                        }
+                        if (arguments.length > 1) list.add(arguments[1]);
+                    }
+                }
+                return map;
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
         return Collections.emptyMap();
     }

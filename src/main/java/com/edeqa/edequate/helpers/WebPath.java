@@ -18,10 +18,12 @@ public class WebPath {
 
     public WebPath(String child) throws UnsupportedEncodingException {
         this(URLDecoder.decode(Thread.currentThread().getContextClassLoader().getResource("").getPath(), "UTF-8").split("/WEB-INF/classes/")[0], child);
+
+//        this("C:\\Users\\eduardm\\AndroidStudioProjects\\WaytousServer\\build\\exploded-app", child);
     }
 
     public File path() {
-        return new File(directory, child);
+        return Misc.isEmpty(this.child) ? new File(directory) : new File(directory, child);
     }
 
     public File path(String child) {
@@ -31,7 +33,10 @@ public class WebPath {
     public WebPath webPath(String... child) {
         StringBuilder childPath = new StringBuilder().append(this.child);
         for (String aChild : child) {
-            childPath.append("/").append(aChild);
+            if(!Misc.isEmpty(aChild)) {
+                if(childPath.length() > 0) childPath.append("/");
+                childPath.append(aChild);
+            }
         }
         return new WebPath(directory, childPath.toString());
     }
@@ -45,7 +50,7 @@ public class WebPath {
     }
 
     public String web(String child) {
-        return "/" + this.child + "/" + child;
+        return "/" + (Misc.isEmpty(this.child) ? "": this.child + "/") + child;
     }
 
     public String toString() {

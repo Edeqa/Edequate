@@ -1,29 +1,37 @@
 package com.edeqa.edequate.rest;
 
+import com.edeqa.edequate.abstracts.FileRestAction;
+import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.helpers.Misc;
-import com.edeqa.edequate.helpers.Common;
-import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.RestAction;
 
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 
-public class Content implements RestAction {
+public class Content extends FileRestAction {
 
-    public static final String actionName = "content";
+    public Content() {
+        super();
+    }
+
+    @Override
+    public String getApiVersion() {
+        return "v1";
+    }
 
     @Override
     public void call(JSONObject json, RequestWrapper request) {
         try {
-            JSONObject options = new JSONObject(request.getBody());
+            String body = request.getBody();
+            if(Misc.isEmpty(body)) return;
+            JSONObject options = new JSONObject(body);
             Misc.log("Content", "requested: " + options);
 
             ArrayList<WebPath> files = new ArrayList<>();
 
-            WebPath webPath = new WebPath("content");
+            WebPath webPath = new WebPath(getWebDirectory(), getChildDirectory());
+//            WebPath webPath = new WebPath("content");
 
             if (options.has("type")) {
                 if (options.has(LOCALE) && options.has("resource")) {
