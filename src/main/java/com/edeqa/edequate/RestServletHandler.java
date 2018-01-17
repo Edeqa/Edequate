@@ -41,6 +41,7 @@ public class RestServletHandler extends AbstractServletHandler {
         setActions(new LinkedHashMap<String, RestAction>());
 
         registerAction(new Content());
+        registerAction(new Content().setChildDirectory("resources"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
