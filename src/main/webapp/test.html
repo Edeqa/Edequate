@@ -7,7 +7,7 @@
     <link rel="icon" href="/icons/favicon.ico">
     <style>
         @import url('/css/edequate.css');
-        /*@import url('/css/index.css');*/
+        /*@import url('/css/main.css');*/
         @import url('/css/edeqa-colors.css');
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=no">
@@ -29,7 +29,7 @@
     }
     function fallback(json) {
         console.error(json);
-        fetch("/rest/v1/getVersion", {
+        fetch("/rest/v1/version", {
             headers: {
               "Accept": "application/json",
               "Content-Type": "application/json"
@@ -81,7 +81,7 @@ b.call("test").then(function(e) {
 	return e + ":" + e;
 }).then(function(e) {
 	console.log("C",e + ":" + e);
-  fetch("http://localhost:8088/rest/v1/getLocales").then(function(res){
+  fetch("http://localhost:8088/rest/v1/locales").then(function(res){
   	console.log(res)
   });
 	return e + ":" + e;
@@ -97,8 +97,8 @@ b.call("test").then(function(e) {
 
 </script>
 
-<script src="/rest/v1/getVersion?callback=callback"></script>
-<script src="/rest/v2/getVersion?callback=callback"></script>
+<script src="/rest/v1/version?callback=callback"></script>
+<script src="/rest/v2/version?callback=callback"></script>
 <script src="/rest/v1/test?callback=callback&fallback=fallback"></script>
 
 </body>

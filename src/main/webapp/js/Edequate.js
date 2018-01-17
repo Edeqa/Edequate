@@ -3015,20 +3015,22 @@ function Edequate(options) {
         }
     }
     if(node) {
-        var variable = node.getAttribute("variable");
-        if(variable) {
-            var origin = node.getAttribute("origin");
-            var context = node.getAttribute("context");
-            var exportConstants = node.getAttribute("exportConstants") == "true";
-            window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
-        }
-        var callback = node.getAttribute("callback");
-        if(callback) {
-            try {
-                (new Function(callback))();
-            } catch(e) {
-                console.error(e);
+        window.addEventListener("load", function() {
+            var variable = node.getAttribute("variable");
+            if(variable) {
+                var origin = node.getAttribute("origin");
+                var context = node.getAttribute("context");
+                var exportConstants = node.getAttribute("exportConstants") == "true";
+                window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
             }
-        }
+            var callback = node.getAttribute("callback");
+            if(callback) {
+                try {
+                    (new Function(callback))();
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        })
     }
 })();

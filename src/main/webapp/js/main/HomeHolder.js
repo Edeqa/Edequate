@@ -8,8 +8,8 @@ function HomeHolder(main) {
 
     this.category = DRAWER.SECTION_PRIMARY;
     this.type = "home";
-    this.title = u.lang.title_home;
-    this.menu = u.lang.title_home;
+    this.title = u.lang.home;
+    this.menu = u.lang.home;
     this.icon = "home";
 
     this.start = function() {

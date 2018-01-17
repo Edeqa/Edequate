@@ -11,7 +11,12 @@
 
 function Main(u) {
     var self = this;
-    this.start = function(info) {
+    this.start = function(startOptions) {
+        startOptions = startOptions || {};
+
+        var info = startOptions.info;
+        var type = startOptions.type || "main";
+
         self.layout = u.create(HTML.DIV, {className:"layout"}, document.body);
         self.actionbar = u.actionBar({
             title: "Loading...",
@@ -45,7 +50,7 @@ function Main(u) {
         });
 
         this.loadResources("main.json", function() {
-            u.getJSON("/rest/v1/content", {locale: self.selectLang.value, resource: "options-index.json"}).then(function(options){
+            u.getJSON("/rest/v1/content", {locale: self.selectLang.value, resource: "options-main.json"}).then(function(options){
                 console.log("Options",options)
 
                 self.drawer = new u.drawer({
@@ -72,7 +77,7 @@ function Main(u) {
                     sections: options.drawer
                 }, document.body);
 
-                u.getJSON("/rest/v1/holders").then(function(json){
+                u.getJSON("/rest/v1/" + type).then(function(json){
                     console.log("holders", json);
                     for(var i in json.message) {
                         json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
@@ -173,8 +178,8 @@ function Main(u) {
     this.loadResources = function(resource, callback) {
         var lang = (u.load("lang") || navigator.language).toLowerCase().slice(0,2);
         u.lang.overrideResources({
-            "default": "/content/en/" + resource,
-            resources: "/rest/v1/content",
+            "default": "/resources/en/" + resource,
+            resources: "/rest/v1/resources",
             resource: resource,
             locale: lang,
             callback: callback

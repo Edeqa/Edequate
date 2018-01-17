@@ -8,8 +8,8 @@ function PrivacyPolicyHolder(main) {
 
     this.category = DRAWER.SECTION_LAST;
     this.type = "privacy";
-    this.title = u.lang.title_privacy_policy;
-    this.menu = u.lang.title_privacy_policy;
+    this.title = u.lang.privacy_policy;
+    this.menu = u.lang.privacy_policy;
     this.icon = "help";
 
     this.start = function() {

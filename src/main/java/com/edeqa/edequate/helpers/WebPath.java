@@ -18,8 +18,6 @@ public class WebPath {
 
     public WebPath(String child) throws UnsupportedEncodingException {
         this(URLDecoder.decode(Thread.currentThread().getContextClassLoader().getResource("").getPath(), "UTF-8").split("/WEB-INF/classes/")[0], child);
-
-//        this("C:\\Users\\eduardm\\AndroidStudioProjects\\WaytousServer\\build\\exploded-app", child);
     }
 
     public File path() {

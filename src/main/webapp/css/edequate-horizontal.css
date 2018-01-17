@@ -8,7 +8,7 @@ body {
     min-height: initial;
 }
 .actionbar {
-    background: none;
+    /*background: none;*/
     display: flex;
     height: 150px;
     flex-direction: column;

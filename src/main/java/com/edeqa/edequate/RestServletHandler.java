@@ -46,7 +46,7 @@ public class RestServletHandler extends AbstractServletHandler {
             public boolean accept(File dir, String name) {
                 return name.contains("Holder");
             }
-        }).setChildDirectory("js/main").setActionName("holders"));
+        }).setChildDirectory("js/main").setActionName("main"));
         registerAction(new Locales());
         registerAction(new Version());
         registerAction(new Nothing());
@@ -96,12 +96,12 @@ public class RestServletHandler extends AbstractServletHandler {
 
 
         if (getActions().containsKey(path)) {
-            Misc.log("Rest", "performing:", getActions().get(path).getClass().getSimpleName(), "for:", path);
+            Misc.log("Rest", "performing:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
             getActions().get(path).call(json, requestWrapper);
         }
 
         if (!json.has(STATUS)) {
-            Misc.log("Rest", "performing:", Nothing.class.getSimpleName());
+            Misc.log("Rest", "performing:", Nothing.class.getSimpleName(), "[" + path + "]");
             new Nothing().call(json, requestWrapper);
         }
 
