@@ -65,6 +65,7 @@ public class Files extends FileRestAction {
             json.put(STATUS, STATUS_SUCCESS);
             json.put(CODE, CODE_LIST);
             json.put(MESSAGE, files);
+            json.put(EXTRA, webPath.web());
         } catch (Exception e) {
             e.printStackTrace();
         }

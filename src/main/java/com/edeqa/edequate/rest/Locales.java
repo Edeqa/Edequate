@@ -11,7 +11,7 @@ public class Locales extends Files {
         super();
         setIncludeDirectories(true);
         setIncludeFiles(false);
-        setChildDirectory("resources");
+        setChildDirectory("content");
         setActionName("locales");
     }
 

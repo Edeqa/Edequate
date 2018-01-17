@@ -24,7 +24,14 @@ public class Content extends FileRestAction {
     public void call(JSONObject json, RequestWrapper request) {
         try {
             String body = request.getBody();
-            if(Misc.isEmpty(body)) return;
+            if(Misc.isEmpty(body)) {
+                Misc.err("Content", "not performed, arguments not defined");
+                json.put(STATUS, STATUS_ERROR);
+                json.put(CODE, ERROR_NOT_EXTENDED);
+                json.put(MESSAGE, "Arguments not defined.");
+                return;
+            }
+
             JSONObject options = new JSONObject(body);
             Misc.log("Content", "requested: " + options);
 

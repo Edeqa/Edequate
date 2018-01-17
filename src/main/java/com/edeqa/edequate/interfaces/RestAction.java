@@ -13,6 +13,7 @@ public interface RestAction {
     String FALLBACK = "fallback";
     String LOCALE = "locale";
     String MESSAGE = "message";
+    String EXTRA = "extra";
     String REQUEST = "request";
     String STATUS = "status";
     String STATUS_ERROR = "error";

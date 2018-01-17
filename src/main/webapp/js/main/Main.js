@@ -75,7 +75,7 @@ function Main(u) {
                 u.getJSON("/rest/v1/holders").then(function(json){
                     console.log("holders", json);
                     for(var i in json.message) {
-                        json.message[i] = json.message[i].replace(".js","");
+                        json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
                     }
                     u.eventBus.register(json.message, {
                         context: self,
