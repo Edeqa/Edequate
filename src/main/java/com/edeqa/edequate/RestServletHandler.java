@@ -97,10 +97,13 @@ public class RestServletHandler extends AbstractServletHandler {
         JSONObject json = new JSONObject();
         json.put(REQUEST, path);
 
-
-        if (getActions().containsKey(path)) {
-            Misc.log("Rest", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
-            getActions().get(path).call(json, requestWrapper);
+        try {
+            if (getActions().containsKey(path)) {
+                Misc.log("Rest", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
+                getActions().get(path).call(json, requestWrapper);
+            }
+        } catch(Exception e) {
+            new Nothing().setThrowable(e).call(json, requestWrapper);
         }
 
         if (!json.has(STATUS)) {

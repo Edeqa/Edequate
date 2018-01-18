@@ -25,6 +25,7 @@ public interface RestAction {
     int CODE_REDIRECT = 302;
 
     int ERROR_ACTION_NOT_DEFINED = 1;
+    int ERROR_RUNTIME = 2;
     int ERROR_NOT_FOUND = 404;
     int ERROR_GONE = 410;
     int ERROR_NOT_EXTENDED = 510;
