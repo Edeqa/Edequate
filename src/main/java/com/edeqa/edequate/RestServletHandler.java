@@ -36,9 +36,12 @@ import static com.edeqa.edequate.interfaces.RestAction.STATUS_ERROR;
 public class RestServletHandler extends AbstractServletHandler {
 
     private Map<String, RestAction> actions;
+    private String webPrefix;
 
     public RestServletHandler() {
         setActions(new LinkedHashMap<String, RestAction>());
+
+        setWebPrefix("/rest/");
 
         registerAction(new Content());
         registerAction(new Content().setChildDirectory("resources"));
@@ -51,7 +54,6 @@ public class RestServletHandler extends AbstractServletHandler {
         registerAction(new Locales());
         registerAction(new Version());
         registerAction(new Nothing());
-//        populateRestActions("com.edeqa.edequate.rest");
     }
 
     @Override
@@ -63,12 +65,12 @@ public class RestServletHandler extends AbstractServletHandler {
         String apiVersion = actionHolder.getApiVersion();
         String actionName = actionHolder.getActionName();
 
-        if(getActions().containsKey("/rest/" + apiVersion + "/" + actionName)) {
-            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "for:", "/rest/" + apiVersion + "/" + actionName);
+        if(getActions().containsKey(getWebPrefix() + apiVersion + "/" + actionName)) {
+            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + getWebPrefix() + apiVersion + "/" + actionName + "]");
         } else {
-            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "for:", "/rest/" + apiVersion + "/" + actionName);
+            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + getWebPrefix() + apiVersion + "/" + actionName + "]");
         }
-        getActions().put("/rest/" + apiVersion + "/" + actionName, actionHolder);
+        getActions().put(getWebPrefix() + apiVersion + "/" + actionName, actionHolder);
     }
 
     protected void populateRestActions(String packageName) {
@@ -97,12 +99,12 @@ public class RestServletHandler extends AbstractServletHandler {
 
 
         if (getActions().containsKey(path)) {
-            Misc.log("Rest", "performing:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
+            Misc.log("Rest", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
             getActions().get(path).call(json, requestWrapper);
         }
 
         if (!json.has(STATUS)) {
-            Misc.log("Rest", "performing:", Nothing.class.getSimpleName(), "[" + path + "]");
+            Misc.log("Rest", "perform:", Nothing.class.getSimpleName(), "[" + path + "]");
             new Nothing().call(json, requestWrapper);
         }
 
@@ -169,7 +171,7 @@ public class RestServletHandler extends AbstractServletHandler {
                     }
                 }
             } else {
-                Misc.err("Rest", "Directory does not exist");
+                Misc.err("Rest", "Directory does not exist:", directory);
             }
             return classes;
         } catch (Exception e) {
@@ -184,5 +186,13 @@ public class RestServletHandler extends AbstractServletHandler {
 
     private void setActions(Map<String, RestAction> actions) {
         this.actions = actions;
+    }
+
+    public String getWebPrefix() {
+        return webPrefix;
+    }
+
+    public void setWebPrefix(String webPrefix) {
+        this.webPrefix = webPrefix;
     }
 }

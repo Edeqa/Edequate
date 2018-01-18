@@ -154,13 +154,13 @@ public class RequestWrapper {
 
     public void sendRedirect(String redirectLink) throws IOException {
         if(mode == MODE_SERVLET) {
-            setHeader(HttpHeaders.SERVER, "Edequate/" + Common.VERSION_NAME);
+            setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
             httpServletResponse.sendRedirect(redirectLink);
         } else if(mode == MODE_EXCHANGE) {
             setHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
             setHeader(HttpHeaders.DATE, new Date().toString());
             setHeader(HttpHeaders.LOCATION, redirectLink);
-            setHeader(HttpHeaders.SERVER, "Edequate/" + Common.VERSION_NAME);
+            setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
             httpExchange.sendResponseHeaders(302, 0);
             httpExchange.close();
         }
@@ -301,7 +301,7 @@ public class RequestWrapper {
 
             addHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
             if(contentType != null) setHeader(HttpHeaders.CONTENT_TYPE, contentType);
-            setHeader(HttpHeaders.SERVER, "Edequate/" + Common.VERSION_NAME);
+            setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
             setHeader(HttpHeaders.DATE, new Date().toString());
 
             sendResponseHeaders(code, bytes.length);

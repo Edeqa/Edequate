@@ -1,6 +1,5 @@
 package com.edeqa.edequate.rest;
 
-import com.edeqa.edequate.helpers.Common;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.interfaces.RestAction;
 
@@ -23,8 +22,9 @@ public class Version implements RestAction {
     public void call(JSONObject json, RequestWrapper request) {
         try {
             json.put(STATUS, STATUS_SUCCESS);
-            json.put(CODE, Common.VERSION_CODE);
-            json.put(MESSAGE, Common.VERSION_NAME);
+            json.put(CODE, com.edeqa.edequate.helpers.Version.getVersionCode());
+            json.put(MESSAGE, com.edeqa.edequate.helpers.Version.getVersionName());
+            json.put(EXTRA, com.edeqa.edequate.helpers.Version.getVersion());
         } catch (Exception e) {
             e.printStackTrace();
         }
