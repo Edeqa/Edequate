@@ -30,8 +30,6 @@ public interface RestAction {
     int ERROR_GONE = 410;
     int ERROR_NOT_EXTENDED = 510;
 
-    String getApiVersion();
-
     String getActionName();
 
     void call(JSONObject json, RequestWrapper request);

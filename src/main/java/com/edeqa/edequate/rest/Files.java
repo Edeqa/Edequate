@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -26,11 +25,6 @@ public class Files extends FileRestAction {
         super();
         setIncludeDirectories(false);
         setIncludeFiles(true);
-    }
-
-    @Override
-    public String getApiVersion() {
-        return "v1";
     }
 
     @Override

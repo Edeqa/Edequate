@@ -9,11 +9,6 @@ import org.json.JSONObject;
 public class Version implements RestAction {
 
     @Override
-    public String getApiVersion() {
-        return "v1";
-    }
-
-    @Override
     public String getActionName() {
         return "version";
     }

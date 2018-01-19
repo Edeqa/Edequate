@@ -17,11 +17,6 @@ public class Nothing implements RestAction {
     }
 
     @Override
-    public String getApiVersion() {
-        return "v1";
-    }
-
-    @Override
     public String getActionName() {
         return "nothing";
     }

@@ -62,15 +62,14 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     public void registerAction(RestAction actionHolder) {
-        String apiVersion = actionHolder.getApiVersion();
         String actionName = actionHolder.getActionName();
 
-        if(getActions().containsKey(getWebPrefix() + apiVersion + "/" + actionName)) {
-            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + getWebPrefix() + apiVersion + "/" + actionName + "]");
+        if(getActions().containsKey(getWebPrefix() + actionName)) {
+            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + getWebPrefix() + actionName + "]");
         } else {
-            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + getWebPrefix() + apiVersion + "/" + actionName + "]");
+            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + getWebPrefix() + actionName + "]");
         }
-        getActions().put(getWebPrefix() + apiVersion + "/" + actionName, actionHolder);
+        getActions().put(getWebPrefix() + actionName, actionHolder);
     }
 
     protected void populateRestActions(String packageName) {

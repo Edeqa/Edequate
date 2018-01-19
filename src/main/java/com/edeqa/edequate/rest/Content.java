@@ -16,11 +16,6 @@ public class Content extends FileRestAction {
     }
 
     @Override
-    public String getApiVersion() {
-        return "v1";
-    }
-
-    @Override
     public void call(JSONObject json, RequestWrapper request) {
         try {
             String body = request.getBody();

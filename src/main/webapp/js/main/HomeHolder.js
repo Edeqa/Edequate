@@ -20,7 +20,7 @@ function HomeHolder(main) {
         console.log("Resuming HomeHolder");
         u.progress.show(u.lang.loading);
         u.clear(main.content);
-        u.post("/rest/v1/content", {resource: "main-home.html", locale: main.selectLang.value}).then(function(xhr){
+        u.post("/rest/content", {resource: "main-home.html", locale: main.selectLang.value}).then(function(xhr){
             u.create(HTML.DIV, {className: "content-normal", innerHTML: xhr.response}, main.content);
             u.progress.hide();
         }).catch(function(error, json) {

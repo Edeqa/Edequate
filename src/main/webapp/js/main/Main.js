@@ -37,7 +37,7 @@ function Main(u) {
             //u.fire.call(EVENTS.RELOAD, type);
         }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
-        u.getJSON("/rest/v1/locales").then(function(json){
+        u.getJSON("/rest/locales").then(function(json){
             console.log("locales", json.message);
             u.clear(self.selectLang);
             var count = 1;
@@ -50,7 +50,7 @@ function Main(u) {
         });
 
         this.loadResources("main.json", function() {
-            u.getJSON("/rest/v1/content", {locale: self.selectLang.value, resource: "options-main.json"}).then(function(options){
+            u.getJSON("/rest/content", {locale: self.selectLang.value, resource: "options-main.json"}).then(function(options){
                 console.log("Options",options)
 
                 self.drawer = new u.drawer({
@@ -77,7 +77,7 @@ function Main(u) {
                     sections: options.drawer
                 }, document.body);
 
-                u.getJSON("/rest/v1/" + type).then(function(json){
+                u.getJSON("/rest/" + type).then(function(json){
                     console.log("holders", json);
                     for(var i in json.message) {
                         json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
@@ -179,7 +179,7 @@ function Main(u) {
         var lang = (u.load("lang") || navigator.language).toLowerCase().slice(0,2);
         u.lang.overrideResources({
             "default": "/resources/en/" + resource,
-            resources: "/rest/v1/resources",
+            resources: "/rest/resources",
             resource: resource,
             locale: lang,
             callback: callback

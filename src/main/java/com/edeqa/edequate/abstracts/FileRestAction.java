@@ -26,9 +26,6 @@ public abstract class FileRestAction implements RestAction {
     }
 
     @Override
-    abstract public String getApiVersion();
-
-    @Override
     public String getActionName() {
         if(actionName != null) return actionName;
         return getChildDirectory();
