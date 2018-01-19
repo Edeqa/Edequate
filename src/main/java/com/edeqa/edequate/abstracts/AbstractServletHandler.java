@@ -11,6 +11,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -19,7 +21,14 @@ import javax.servlet.http.HttpServletResponse;
 
 abstract public class AbstractServletHandler extends HttpServlet implements HttpHandler {
 
+    private String webDirectory;
+
     protected AbstractServletHandler() {
+        try {
+            setWebDirectory(URLDecoder.decode(Thread.currentThread().getContextClassLoader().getResource("").getPath(), "UTF-8").split("/WEB-INF/classes/")[0]);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -56,4 +65,11 @@ abstract public class AbstractServletHandler extends HttpServlet implements Http
         perform(requestWrapper);
     }
 
+    public void setWebDirectory(String webDirectory) {
+        this.webDirectory = webDirectory;
+    }
+
+    public String getWebDirectory() {
+        return webDirectory;
+    }
 }
