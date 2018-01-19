@@ -42,11 +42,48 @@ import static com.edeqa.helpers.HtmlGenerator.WIDTH;
 
 public class MainServletHandler extends AbstractServletHandler {
 
+    private JSONArray mimeTypes;
+
+    public MainServletHandler() {
+
+        JSONArray types = new JSONArray();
+        try {
+            types.put(new JSONObject() {{
+                put("type", "");
+                put("mime", Mime.APPLICATION_UNKNOWN);
+            }});
+            types.put(new JSONObject() {{
+                put("type", "html");
+                put("mime", Mime.TEXT_HTML);
+            }});
+            types.put(new JSONObject() {{
+                put("type", "htm");
+                put("mime", Mime.TEXT_HTML);
+            }});
+            types.put(new JSONObject() {{
+                put("type", "js");
+                put("mime", Mime.APPLICATION_JAVASCRIPT);
+            }});
+            types.put(new JSONObject() {{
+                put("type", "css");
+                put("mime", Mime.TEXT_CSS);
+            }});
+            types.put(new JSONObject() {{
+                put("type", "json");
+                put("mime", Mime.APPLICATION_JSON);
+            }});
+        } catch (Exception e) {
+            Misc.err(e);
+        }
+
+        setMimeTypes(types);
+    }
+
     @Override
     public void perform(RequestWrapper requestWrapper) throws IOException {
 
         URI uri = requestWrapper.getRequestURI();
-        Misc.log("Main", uri);
+//        Misc.log("Main", uri);
 
         if ("/_ah/start".equals(uri.getPath())) {
             requestWrapper.sendResponseHeaders(200,0);
@@ -87,16 +124,14 @@ public class MainServletHandler extends AbstractServletHandler {
 //        String path = uri.getPath().toLowerCase();
         int resultCode = 200;
         if (!webPath.path().getCanonicalPath().startsWith(root.getCanonicalPath())) {
-            System.out.println("A");
             // Suspected path traversal attack: reject with 403 error.
             Misc.log("Main", uri.getPath(), "[403 - suspected path traversal attack]" + (referer != null ? ", referer: " + referer : ""));
             resultCode = 403;
             webPath = new WebPath(getWebDirectory(), "403.html");
 //                Utils.sendResult.call(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
         } else if (webPath.path().isDirectory()) {
-            System.out.println("B");
             webPath = webPath.webPath("index.html");
-            Misc.log("Main", webPath.web(), "[" + (webPath.path().exists() ? webPath.path().length() + " byte(s)" : "not found") + "]" + (referer != null ? ", referer: " + referer : ""));
+            Misc.log("Main", "->", webPath.web(), "[" + (webPath.path().exists() ? webPath.path().length() + " byte(s)" : "not found") + "]" + (referer != null ? ", referer: " + referer : ""));
 //            } else if (etag.equals(ifModifiedSince)) {
 //                resultCode = 304;
 //                file = new File(root + "/304.html");
@@ -108,7 +143,6 @@ public class MainServletHandler extends AbstractServletHandler {
             return;
         } else if (!webPath.path().isFile() || uri.getPath().startsWith("/WEB-INF") || uri.getPath().startsWith("/META-INF") || uri.getPath().startsWith("/.")) {
             // Object does not exist or is not a file: reject with 404 error.
-            System.out.println("C");
 
             boolean found = false;
 //            String[] parts = path.split("/");
@@ -147,20 +181,11 @@ public class MainServletHandler extends AbstractServletHandler {
             boolean text = false;
             String type = Mime.APPLICATION_OCTET_STREAM;
 //            JSONArray types = OPTIONS.getTypes();
-            JSONArray types = new JSONArray();
-            try {
-                types.put(new JSONObject(){{put("type","");put("mime", Mime.APPLICATION_UNKNOWN);}});
-                types.put(new JSONObject(){{put("type","html");put("mime", Mime.TEXT_HTML);}});
-                types.put(new JSONObject(){{put("type","htm");put("mime", Mime.TEXT_HTML);}});
-                types.put(new JSONObject(){{put("type","json");put("mime", Mime.APPLICATION_JSON);}});
-            } catch(Exception e) {
-                Misc.err(e);
-            }
 
             JSONObject json = null;
-            for (int i = 0; i < types.length(); i++) {
-                if(types.isNull(i)) continue;
-                json = types.getJSONObject(i);
+            for (int i = 0; i < getMimeTypes().length(); i++) {
+                if(getMimeTypes().isNull(i)) continue;
+                json = getMimeTypes().getJSONObject(i);
                 if (json.has("name") && webPath.path().getName().toLowerCase().equals(json.getString("name"))) {
                     type = json.getString("mime");
                     break;
@@ -169,8 +194,6 @@ public class MainServletHandler extends AbstractServletHandler {
                     break;
                 }
             }
-
-            System.out.println("D"+webPath.path()+":"+type);
 
             assert json != null;
             if(type.startsWith("text") || (json.has("text") && json.getBoolean("text"))) text = true;
@@ -290,5 +313,13 @@ public class MainServletHandler extends AbstractServletHandler {
         copyright.add(A).with("Edeqa").with(CLASS, "link").with(HREF, "http://www.edeqa.com");
 
         return html;
+    }
+
+    public void setMimeTypes(JSONArray mimeTypes) {
+        this.mimeTypes = mimeTypes;
+    }
+
+    public JSONArray getMimeTypes() {
+        return mimeTypes;
     }
 }
