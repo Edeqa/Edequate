@@ -27,6 +27,7 @@ import javax.servlet.ServletException;
 import static com.edeqa.edequate.interfaces.RestAction.CALLBACK;
 import static com.edeqa.edequate.interfaces.RestAction.CODE;
 import static com.edeqa.edequate.interfaces.RestAction.CODE_REDIRECT;
+import static com.edeqa.edequate.interfaces.RestAction.CODE_DELAYED;
 import static com.edeqa.edequate.interfaces.RestAction.FALLBACK;
 import static com.edeqa.edequate.interfaces.RestAction.MESSAGE;
 import static com.edeqa.edequate.interfaces.RestAction.REQUEST;
@@ -43,6 +44,9 @@ public class RestServletHandler extends AbstractServletHandler {
 
         setWebPrefix("/rest/");
 
+    }
+
+    public void useDefault() {
         registerAction(new Content());
         registerAction(new Content().setChildDirectory("resources"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
@@ -110,10 +114,14 @@ public class RestServletHandler extends AbstractServletHandler {
             new Nothing().call(json, requestWrapper);
         }
 
-        if(json.has(CODE) && json.getInt(CODE) == CODE_REDIRECT && json.has(MESSAGE)) {
-            Misc.log("Rest", "redirect:", json.getString(MESSAGE));
-            requestWrapper.sendRedirect(json.getString(MESSAGE));
-            return;
+        if(json.has(CODE)) {
+            if (json.getInt(CODE) == CODE_REDIRECT && json.has(MESSAGE)) {
+                Misc.log("Rest", "redirect:", json.getString(MESSAGE));
+                requestWrapper.sendRedirect(json.getString(MESSAGE));
+                return;
+            } else if(json.getInt(CODE) == CODE_DELAYED) {
+                return;
+            }
         }
 
         String callback = null;

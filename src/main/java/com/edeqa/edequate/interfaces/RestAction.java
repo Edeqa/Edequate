@@ -22,6 +22,7 @@ public interface RestAction {
     int CODE_STRING = 1;
     int CODE_LIST = 2;
     int CODE_JSON = 3;
+    int CODE_DELAYED = 4;
     int CODE_REDIRECT = 302;
 
     int ERROR_ACTION_NOT_DEFINED = 1;

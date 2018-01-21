@@ -2,16 +2,16 @@ package com.edeqa.edequate;
 
 
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
+import com.edeqa.edequate.helpers.Replacements;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.Version;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.helpers.HtmlGenerator;
 import com.edeqa.helpers.Mime;
+import com.edeqa.helpers.MimeType;
+import com.edeqa.helpers.MimeTypes;
 import com.edeqa.helpers.Misc;
 import com.google.common.net.HttpHeaders;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,48 +42,18 @@ import static com.edeqa.helpers.HtmlGenerator.WIDTH;
 
 public class MainServletHandler extends AbstractServletHandler {
 
-    private JSONArray mimeTypes;
+    private MimeTypes mimeTypes;
+    private Replacements replacements;
 
     public MainServletHandler() {
-
-        JSONArray types = new JSONArray();
-        try {
-            types.put(new JSONObject() {{
-                put("type", "");
-                put("mime", Mime.APPLICATION_UNKNOWN);
-            }});
-            types.put(new JSONObject() {{
-                put("type", "html");
-                put("mime", Mime.TEXT_HTML);
-            }});
-            types.put(new JSONObject() {{
-                put("type", "htm");
-                put("mime", Mime.TEXT_HTML);
-            }});
-            types.put(new JSONObject() {{
-                put("type", "js");
-                put("mime", Mime.APPLICATION_JAVASCRIPT);
-            }});
-            types.put(new JSONObject() {{
-                put("type", "css");
-                put("mime", Mime.TEXT_CSS);
-            }});
-            types.put(new JSONObject() {{
-                put("type", "json");
-                put("mime", Mime.APPLICATION_JSON);
-            }});
-        } catch (Exception e) {
-            Misc.err(e);
-        }
-
-        setMimeTypes(types);
+        setMimeTypes(new MimeTypes().useDefault());
+        setReplacements(new Replacements());
     }
 
     @Override
     public void perform(RequestWrapper requestWrapper) throws IOException {
 
         URI uri = requestWrapper.getRequestURI();
-//        Misc.log("Main", uri);
 
         if ("/_ah/start".equals(uri.getPath())) {
             requestWrapper.sendResponseHeaders(200,0);
@@ -168,37 +138,15 @@ public class MainServletHandler extends AbstractServletHandler {
 
         {
             // Object exists and it is a file: accept with response code 200.
-
-            boolean gzip = false;
-
+            MimeType.setGzipEnabled(false);
             for (String s : requestWrapper.getRequestHeader(HttpHeaders.ACCEPT_ENCODING)) {
                 if(s.toLowerCase().contains("gzip")) {
-                    gzip = true;
+                    MimeType.setGzipEnabled(true);
                     break;
                 }
             }
 
-            boolean text = false;
-            String type = Mime.APPLICATION_OCTET_STREAM;
-//            JSONArray types = OPTIONS.getTypes();
-
-            JSONObject json = null;
-            for (int i = 0; i < getMimeTypes().length(); i++) {
-                if(getMimeTypes().isNull(i)) continue;
-                json = getMimeTypes().getJSONObject(i);
-                if (json.has("name") && webPath.path().getName().toLowerCase().equals(json.getString("name"))) {
-                    type = json.getString("mime");
-                    break;
-                } else if (json.has("type") && webPath.path().getName().toLowerCase().endsWith("." + json.getString("type"))) {
-                    type = json.getString("mime");
-                    break;
-                }
-            }
-
-            assert json != null;
-            if(type.startsWith("text") || (json.has("text") && json.getBoolean("text"))) text = true;
-            if (json.has("gzip") && !json.getBoolean("gzip")) gzip = false;
-//            if(!OPTIONS.isGzip()) gzip = false;
+            MimeType mimeType = getMimeTypes().fetchMimeFor(webPath.path().getName());
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
             dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
@@ -224,12 +172,12 @@ public class MainServletHandler extends AbstractServletHandler {
             // FIXME https://gtmetrix.com/reports/waytous.net/6i4B5kR2
             requestWrapper.setHeader(HttpHeaders.VARY, "Accept-Encoding");
 
-            requestWrapper.setGzip(gzip);
+            requestWrapper.setGzip(mimeType.isGzip());
 
-            if (text) {
-                if(!type.toLowerCase().matches(";\\s*charset\\s*=")) {
-                    type += "; charset=UTF-8";
-                }
+            if (mimeType.isText()) {
+//                if(!mimeType.getMime().matches(";\\s*charset\\s*=")) {
+//                    type += "; charset=UTF-8";
+//                }
 
                 FileReader reader = new FileReader(webPath.path());
                 int c;
@@ -249,10 +197,11 @@ public class MainServletHandler extends AbstractServletHandler {
 //                for(Map.Entry<String,String> x: substitutions.entrySet()) {
 //                    string = string.replaceAll(x.getKey(), x.getValue());
 //                }
+                string = getReplacements().process(string, mimeType);
 
                 requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-                requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, type);
-                if(!gzip) requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(string.length()));
+                requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, mimeType.fetchContentType());
+                if(!mimeType.isGzip()) requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(string.length()));
                 requestWrapper.sendResponseHeaders(resultCode, 0);
 
                 try {
@@ -264,8 +213,8 @@ public class MainServletHandler extends AbstractServletHandler {
                     e.printStackTrace();
                 }
             } else {
-                requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, type);
-                if(!gzip) requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(webPath.path().length()));
+                requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, mimeType.fetchContentType());
+                if(!mimeType.isGzip()) requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(webPath.path().length()));
                 requestWrapper.sendResponseHeaders(resultCode, 0);
                 OutputStream os = requestWrapper.getResponseBody();
 
@@ -315,11 +264,19 @@ public class MainServletHandler extends AbstractServletHandler {
         return html;
     }
 
-    public void setMimeTypes(JSONArray mimeTypes) {
+    public MimeTypes getMimeTypes() {
+        return mimeTypes;
+    }
+
+    public void setMimeTypes(MimeTypes mimeTypes) {
         this.mimeTypes = mimeTypes;
     }
 
-    public JSONArray getMimeTypes() {
-        return mimeTypes;
+    public Replacements getReplacements() {
+        return replacements;
+    }
+
+    public void setReplacements(Replacements replacements) {
+        this.replacements = replacements;
     }
 }

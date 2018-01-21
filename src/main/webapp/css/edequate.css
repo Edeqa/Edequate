@@ -400,15 +400,12 @@ button:active {
     padding: 0;
     position: relative;
     transition: background-color .3s;
+    padding: 8px 16px;
 }
 .dialog-button:hover, .dialog-button:focus {
 }
 .dialog-button > * {
     position: relative;
-}
-.dialog-button {
-    display: block;
-    padding: 8px 16px;
 }
 .dialog-button:before {
     content: "";
@@ -1141,7 +1138,7 @@ button:active {
         text-align: center;
     }
     .dialog-button {
-        padding: 5px;
+        padding: 15px;
     }
     .dialog-title-button {
         padding: 15px;
