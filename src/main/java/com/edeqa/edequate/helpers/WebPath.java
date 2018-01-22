@@ -13,6 +13,7 @@ public class WebPath {
 
     public WebPath(String directory, String child) {
         this.child = Misc.isEmpty(child) ? "" : child;
+        if("/".equals(this.child)) this.child = "";
         this.directory = directory;
     }
 

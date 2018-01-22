@@ -26,19 +26,23 @@ body {
     display: none;
 }
 .actionbar-label {
+    color: #fff;
+    font-size: x-large;
+    font-weight: bold;
     position: absolute;
     top: 10px;
     right: 10px;
-    color: white;
-    font-size: x-large;
-    font-weight: bold;
 }
+/*
 .actionbar-holder.actionbar-collapsed {
     flex: 0 0 50px;
 }
+*/
+/*
 .actionbar.actionbar-collapsed {
     height: 50px;
 }
+*/
 .actionbar-select-lang {
     display: block;
     position: absolute;
@@ -107,6 +111,12 @@ body {
 }
 
 @media screen and (min-width: 1001px) {
+    .actionbar-collapsed {
+        width: auto;
+        justify-content: center;
+        align-items: flex-end;
+        height: 50px;
+    }
     .drawer {
         flex: 0 0 150px;
         top: 0px;
@@ -259,13 +269,13 @@ body {
         margin-bottom: 0px;
     }
     .actionbar {
-        flex: 0 0 150px;
         position: relative;
         width: 100%;
+        justify-content: center;
     }
-    .actionbar-collapsed {
+    /*.actionbar-collapsed {
         flex: 0 0 50px;
-    }
+    }*/
     .actionbar-button {
         display: block;
     }
@@ -278,13 +288,13 @@ body {
         top: auto;
         padding-left: 15px;
     }
-    .actionbar-collapsed .actionbar-label {
+    /*.actionbar-collapsed .actionbar-label {
         left: 0px;
         right: auto;
-        bottom: 15px;
+        bottom: auto;
         top: auto;
         padding-left: 50px;
-    }
+    }*/
     .actionbar-label-title {
         font-size: 24px;
         padding-right: 20px;

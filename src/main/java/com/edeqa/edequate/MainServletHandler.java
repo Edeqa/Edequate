@@ -106,11 +106,10 @@ public class MainServletHandler extends AbstractServletHandler {
 //                resultCode = 304;
 //                file = new File(root + "/304.html");
 //                Utils.sendResult.call(exchange, 304, null, "304 Not Modified\n".getBytes());
-        } else if (!uri.getPath().endsWith("/") && !webPath.path().exists()) {
-            Misc.log("Main", "-> " + uri.getPath() + "/" + (referer != null ? ", referer: " + referer : ""));
-//                Common.log("Main", uri.getPath(), "[302 - redirected]");
-            requestWrapper.sendRedirect(uri.getPath() + "/");
-            return;
+//        } else if (!uri.getPath().endsWith("/") && !webPath.path().exists()) {
+//            Misc.log("Main", "-> " + uri.getPath() + "/" + (referer != null ? ", referer: " + referer : ""));
+//            requestWrapper.sendRedirect(uri.getPath() + "/");
+//            return;
         } else if (!webPath.path().isFile() || uri.getPath().startsWith("/WEB-INF") || uri.getPath().startsWith("/META-INF") || uri.getPath().startsWith("/.")) {
             // Object does not exist or is not a file: reject with 404 error.
 
