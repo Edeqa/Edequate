@@ -23,20 +23,16 @@ public class Nothing implements RestAction {
 
     @Override
     public void call(JSONObject json, RequestWrapper request) {
-        try {
-            json.put(STATUS, STATUS_ERROR);
-            json.put(MESSAGE, getMessage());
-            json.put(CODE, ERROR_NOT_EXTENDED);
-            if(getThrowable() != null) {
-                json.put(EXTRA, getThrowable().getMessage());
-            }
+        json.put(STATUS, STATUS_ERROR);
+        json.put(MESSAGE, getMessage());
+        json.put(CODE, ERROR_NOT_EXTENDED);
+        if(getThrowable() != null) {
+            json.put(EXTRA, getThrowable().getMessage());
+        }
 
-            String body = request.getBody();
-            if (!Misc.isEmpty(body)) {
-                json.put(BODY, request.getBody());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        String body = request.getBody();
+        if (!Misc.isEmpty(body)) {
+            json.put(BODY, request.getBody());
         }
     }
 

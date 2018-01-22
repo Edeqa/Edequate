@@ -4,6 +4,8 @@ import com.edeqa.edequate.helpers.RequestWrapper;
 
 import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
+
 @SuppressWarnings("unused")
 public interface RestAction {
 
@@ -33,5 +35,5 @@ public interface RestAction {
 
     String getActionName();
 
-    void call(JSONObject json, RequestWrapper request);
+    void call(JSONObject json, RequestWrapper request) throws Exception;
 }

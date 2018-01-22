@@ -29,40 +29,36 @@ public class Files extends FileRestAction {
 
     @Override
     public void call(JSONObject json, RequestWrapper request) {
-        try {
-            Misc.log("Files", "list for:", getWebDirectory() + "/" + getChildDirectory(), "[", isIncludeDirectories() ? "directories" : "", isIncludeFiles() ? "files" : "", "]");
+        Misc.log("Files", "list for:", getWebDirectory() + "/" + getChildDirectory(), "[", isIncludeDirectories() ? "directories" : "", isIncludeFiles() ? "files" : "", "]");
 
-            WebPath webPath = new WebPath(getWebDirectory(), getChildDirectory());
+        WebPath webPath = new WebPath(getWebDirectory(), getChildDirectory());
 
-            List<String> files = new ArrayList<>();
-            File[] list;
-            if(getFilenameFilter() != null) {
-                list = webPath.path().listFiles(getFilenameFilter());
-            } else {
-                list = webPath.path().listFiles();
-            }
-
-            if(list != null && list.length > 0) {
-                if(getComparator() != null) {
-                    Arrays.sort(list, comparator);
-                }
-                for (File file : list) {
-                    if (isIncludeDirectories() && file.isDirectory()) {
-                        files.add(file.getName());
-                    }
-                    if (isIncludeFiles() && file.isFile()) {
-                        files.add(file.getName());
-                    }
-                }
-            }
-
-            json.put(STATUS, STATUS_SUCCESS);
-            json.put(CODE, CODE_LIST);
-            json.put(MESSAGE, files);
-            json.put(EXTRA, webPath.web());
-        } catch (Exception e) {
-            e.printStackTrace();
+        List<String> files = new ArrayList<>();
+        File[] list;
+        if(getFilenameFilter() != null) {
+            list = webPath.path().listFiles(getFilenameFilter());
+        } else {
+            list = webPath.path().listFiles();
         }
+
+        if(list != null && list.length > 0) {
+            if(getComparator() != null) {
+                Arrays.sort(list, comparator);
+            }
+            for (File file : list) {
+                if (isIncludeDirectories() && file.isDirectory()) {
+                    files.add(file.getName());
+                }
+                if (isIncludeFiles() && file.isFile()) {
+                    files.add(file.getName());
+                }
+            }
+        }
+
+        json.put(STATUS, STATUS_SUCCESS);
+        json.put(CODE, CODE_LIST);
+        json.put(MESSAGE, files);
+        json.put(EXTRA, webPath.web());
     }
 
     private boolean isIncludeDirectories() {
