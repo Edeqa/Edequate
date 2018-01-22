@@ -8,8 +8,8 @@ import com.edeqa.edequate.helpers.Version;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.helpers.HtmlGenerator;
 import com.edeqa.helpers.Mime;
-import com.edeqa.helpers.MimeType;
-import com.edeqa.helpers.MimeTypes;
+import com.edeqa.edequate.helpers.MimeType;
+import com.edeqa.edequate.helpers.MimeTypes;
 import com.edeqa.helpers.Misc;
 import com.google.common.net.HttpHeaders;
 
