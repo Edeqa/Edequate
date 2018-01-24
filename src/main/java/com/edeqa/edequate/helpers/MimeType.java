@@ -35,7 +35,7 @@ public class MimeType {
     public MimeType(JSONObject json) {
         this();
         if(json.has(NAME)) {
-            setType(json.getString(NAME));
+            setFullName(json.getString(NAME));
         } else if(json.has(TYPE)) {
             setType(json.getString(TYPE));
         }

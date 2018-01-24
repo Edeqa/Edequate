@@ -21,7 +21,11 @@ public class MimeTypes {
     }
 
     public void add(MimeType mimeType) {
-        types.put(mimeType.getType(), mimeType);
+        if(mimeType.getFullName() != null) {
+            fullNames.put(mimeType.getFullName(), mimeType);
+        } else {
+            types.put(mimeType.getType(), mimeType);
+        }
     }
 
     public MimeType fetchMimeFor(String fileName) {
@@ -78,5 +82,9 @@ public class MimeTypes {
         add(new MimeType().setType("m4r").setMime(Mime.AUDIO_AAC));
 
         return this;
+    }
+
+    public Map<String, MimeType> getTypes() {
+        return types;
     }
 }

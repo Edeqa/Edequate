@@ -1,7 +1,5 @@
 package com.edeqa.edequate.helpers;
 
-import javax.activation.MimeType;
-
 public class Replacement {
 
     private String pattern;

@@ -8,8 +8,8 @@ function AboutHolder(main) {
 
     this.category = DRAWER.SECTION_LAST;
     this.type = "about";
-    this.title = "About";
-    this.menu = "About";
+    this.title = u.lang.about;
+    this.menu = u.lang.about;
     this.icon = "info_outline";
 
     this.start = function() {

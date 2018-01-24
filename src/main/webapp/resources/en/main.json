@@ -1,5 +1,20 @@
 {
+  "title": "Edequate Example",
+  "copyright": "Edequate &copy;2017-18 Edeqa",
+
   "home": "Home",
   "privacy_policy": "Privacy policy",
-  "loading": "Loading..."
+  "loading": "Loading...",
+  "about": "About",
+
+  "drawer_primary": "Main",
+  "drawer_summary": "Summary",
+  "drawer_main": "Main",
+  "drawer_explore": "Products",
+  "drawer_share": "Share",
+  "drawer_resources": "Resources",
+  "drawer_miscellaneous": "Miscellaneous",
+  "drawer_settings": "Settings",
+  "drawer_help": "Help",
+  "drawer_last": "Last"
 }

@@ -1,5 +1,20 @@
 {
+  "title": "Edequate Example",
+  "copyright": "Edequate &copy;2017-18 Edeqa",
+
   "home": "Главная",
   "privacy_policy": "Политика конфиденциальности",
-  "loading": "Загрузка..."
+  "loading": "Загрузка...",
+  "about": "О сайте",
+
+  "drawer_primary": "Главная",
+  "drawer_summary": "Сводка",
+  "drawer_main": "Главная",
+  "drawer_explore": "Продукты",
+  "drawer_share": "Поделиться",
+  "drawer_resources": "Ресурсы",
+  "drawer_miscellaneous": "Разное",
+  "drawer_settings": "Параметры",
+  "drawer_help": "Справка",
+  "drawer_last": "Последняя"
 }

@@ -11,6 +11,7 @@
 
 function Main(u) {
     var self = this;
+
     this.start = function(startOptions) {
         startOptions = startOptions || {};
 
@@ -34,7 +35,7 @@ function Main(u) {
             u.save("lang", lang);
 //            window.location = window.location.href;
             self.loadResources("main.json");
-            //u.fire.call(EVENTS.RELOAD, type);
+            self.holder.resume();
         }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
         u.getJSON("/rest/locales").then(function(json){
@@ -50,124 +51,133 @@ function Main(u) {
         });
 
         this.loadResources("main.json", function() {
-            u.getJSON("/rest/content", {locale: self.selectLang.value, resource: "options-main.json"}).then(function(options){
-                console.log("Options",options)
+            self.drawer = new u.drawer({
+                title: u.lang.title || "Title",
+                collapsed: u.load("drawer:collapsed"),
+                logo: {
+                    src: "/images/logo.svg"
+                },
+                onprimaryclick: function(){
+                    console.log("onprimaryclick");
+                },
+                footer: {
+                    className: "drawer-footer-label",
+                    content: [
+                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: u.lang.copyright}),
+                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: u.lang.copyright, onclick: function(e){
+                            //dialogAbout.open();
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+                        }})
+                    ]
+                },
+                sections: {
+                    "0": u.lang.drawer_primary,
+                    "1": u.lang.drawer_summary,
+                    "2": u.lang.drawer_main,
+                    "3": u.lang.drawer_explore,
+                    "4": u.lang.drawer_share,
+                    "5": u.lang.drawer_resources,
+                    "6": u.lang.drawer_miscellaneous,
+                    "7": u.lang.drawer_settings,
+                    "8": u.lang.drawer_help,
+                    "9": u.lang.drawer_last
+                }
 
-                self.drawer = new u.drawer({
-                    title: options.title || "Title",
-                    collapsed: u.load("drawer:collapsed"),
-                    logo: {
-                        src: "/images/logo.svg"
+            }, document.body);
+
+            u.getJSON("/rest/" + type).then(function(json){
+                console.log("holders", json);
+                for(var i in json.message) {
+                    json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
+                }
+                u.eventBus.register(json.message, {
+                    context: self,
+                    onprogress: function (loaded) {
+                        u.byId("loading-dialog-progress").innerHTML = Math.ceil(loaded / json.message.length * 100) + "%";
                     },
-                    onprimaryclick: function(){
-                        console.log("onprimaryclick");
+                    onstart: function () {
+                        console.log(u.eventBus.holders)
                     },
-                    footer: {
-                        className: "drawer-footer-label",
-                        content: [
-                            u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: options.copyright}),
-                            u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: options.copyright, onclick: function(e){
-                                //dialogAbout.open();
-                                e.preventDefault();
-                                e.stopPropagation();
-                                return false;
-                            }})
-                        ]
-                    },
-                    sections: options.drawer
-                }, document.body);
+                    onsuccess: function () {
+                        for(var x in u.eventBus.holders) {
+                            var holder = u.eventBus.holders[x];
+                            if(holder.menu) {
+                                self.drawer.add(holder.category, holder.type, holder.menu, holder.icon, function(){
+                                    u.progress.show("Loading...");
+                                    self.drawer.toggleSize(false);
+                                    self.actionbar.toggleSize(false);
+                                    self.actionbar.setTitle(this.title);
 
-                u.getJSON("/rest/" + type).then(function(json){
-                    console.log("holders", json);
-                    for(var i in json.message) {
-                        json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
-                    }
-                    u.eventBus.register(json.message, {
-                        context: self,
-                        onprogress: function (loaded) {
-                            u.byId("loading-dialog-progress").innerHTML = Math.ceil(loaded / json.message.length * 100) + "%";
-                        },
-                        onstart: function () {
-                            console.log(u.eventBus.holders)
-                        },
-                        onsuccess: function () {
-                            for(var x in u.eventBus.holders) {
-                                var holder = u.eventBus.holders[x];
-                                if(holder.menu) {
-                                    self.drawer.add(holder.category, holder.type, holder.menu, holder.icon, function(){
-                                        u.progress.show("Loading...");
-                                        self.drawer.toggleSize(false);
-                                        self.actionbar.toggleSize(false);
-                                        self.actionbar.setTitle(this.title);
+                                    self.content.scrollTop = 0;
+                                    u.progress.hide();
+                                    window.history.pushState({}, null, "/main/" + this.type);
 
-                                        self.content.scrollTop = 0;
-                                        u.progress.hide();
-                                        window.history.pushState({}, null, "/main/" + this.type);
-
-                                        self.drawer.close();
-                                        if(this.resume) {
-                                            this.resume();
-                                        }
-                                        return false;
-                                    }.bind(holder));
-                                }
+                                    self.drawer.close();
+                                    self.holder = this;
+                                    if(this.resume) {
+                                        this.resume();
+                                    }
+                                    return false;
+                                }.bind(holder));
                             }
-
-                            if(info) {
-                                self.content.innerHTML = info;
-                                self.actionbar.setTitle("Info");
-                                u.byId("loading-dialog").hide();
-                            } else {
-                                var urlPath = new URL(window.location);
-                                var path = urlPath.path.split("/");
-                                if(path.length > 2 && path[1].toLowerCase() == "main") {
-                                    path = path[2];
-                                } else {
-                                    path = "home";
-                               }
-                               var holder = u.eventBus.holders[path.toLowerCase()];
-                               self.actionbar.setTitle(holder.title);
-                               holder.resume();
-
-                            }
-                            u.byId("loading-dialog").hide();
-
-                        },
-                        onerror: function (code, origin, error) {
-                            console.error(code, origin, error);
                         }
-                    });
-                });
 
+                        if(info) {
+                            self.content.innerHTML = info;
+                            self.actionbar.setTitle("Info");
+                            u.byId("loading-dialog").hide();
+                        } else {
+                            var urlPath = new URL(window.location);
+                            var path = urlPath.path.split("/");
+                            if(path.length > 2 && path[1].toLowerCase() == "main") {
+                                path = path[2];
+                            } else {
+                                path = "home";
+                           }
+                           var holder = u.eventBus.holders[path.toLowerCase()];
+                           self.actionbar.setTitle(holder.title);
+                           self.holder = holder;
+                           holder.resume();
+                        }
+                        u.byId("loading-dialog").hide();
 
-                var switchFullDrawer = function(){
-                    if(self.content.scrollTop) {
-                        self.drawer.toggleSize(true);
-                        self.actionbar.toggleSize(true);
-                        self.buttonScrollTop.show(HIDING.OPACITY);
-                        clearTimeout(self.buttonScrollTop.hideTimeout);
-                        self.buttonScrollTop.hideTimeout = setTimeout(function(){
-                            self.buttonScrollTop.hide(HIDING.OPACITY);
-                        }, 1500);
-                    } else {
-                        self.drawer.toggleSize(false);
-                        self.actionbar.toggleSize(false);
-                        self.buttonScrollTop.hide(HIDING.OPACITY);
-                    }
-                };
-                self.content = u.create(HTML.DIV, {className:"content", onwheel: switchFullDrawer, ontouchmove: switchFullDrawer}, self.layout);
-
-
-                self.buttonScrollTop = u.create(HTML.BUTTON, {
-                    className: "icon button-scroll-top changeable hidden",
-                    onclick: function() {
-                        self.content.scrollTop = 0;
-        //                self.content.scrollIntoView({block:"start", behaviour: "smooth"});
-                        switchFullDrawer.call(self.content);
                     },
-                    innerHTML: "keyboard_arrow_up"
-                }, self.layout);
+                    onerror: function (code, origin, error) {
+                        console.error(code, origin, error);
+                    }
+                });
             });
+
+
+            var switchFullDrawer = function(){
+                if(self.content.scrollTop) {
+                    self.drawer.toggleSize(true);
+                    self.actionbar.toggleSize(true);
+                    self.buttonScrollTop.show(HIDING.OPACITY);
+                    clearTimeout(self.buttonScrollTop.hideTimeout);
+                    self.buttonScrollTop.hideTimeout = setTimeout(function(){
+                        self.buttonScrollTop.hide(HIDING.OPACITY);
+                    }, 1500);
+                } else {
+                    self.drawer.toggleSize(false);
+                    self.actionbar.toggleSize(false);
+                    self.buttonScrollTop.hide(HIDING.OPACITY);
+                }
+            };
+            self.content = u.create(HTML.DIV, {className:"content", onwheel: switchFullDrawer, ontouchmove: switchFullDrawer}, self.layout);
+
+
+            self.buttonScrollTop = u.create(HTML.BUTTON, {
+                className: "icon button-scroll-top changeable hidden",
+                onclick: function() {
+                    self.content.scrollTop = 0;
+    //                self.content.scrollIntoView({block:"start", behaviour: "smooth"});
+                    switchFullDrawer.call(self.content);
+                },
+                innerHTML: "keyboard_arrow_up"
+            }, self.layout);
         });
 
 
