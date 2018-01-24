@@ -568,7 +568,7 @@ function Edequate(options) {
                         el.addEventListener("contextmenu", function(evt){
                             evt.preventDefault();
                             evt.stopPropagation();
-                        }, {passive: true});
+                        }, {passive: false});
                     } else if(x.toLowerCase() === "onclick") {
                         el.clickFunction = properties[x];
                         if(el.clickFunction) {
@@ -1530,7 +1530,7 @@ function Edequate(options) {
         }
 
         if(options.help) {
-            create(HTML.BUTTON, {className:"dialog-help-button", onclick:options.help, innerHTML:"help_outline"}, dialog);
+            create(HTML.BUTTON, {className:"dialog-help-button icon", onclick:options.help, innerHTML:"help_outline"}, dialog);
         }
         if(options.resizeable) {
             create(HTML.DIV, {

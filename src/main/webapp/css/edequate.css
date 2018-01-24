@@ -87,9 +87,12 @@ button:active {
     display: none !important;
 }
 .noselect {
-    user-select: none;
-    -moz-user-select: -moz-none;
+    -webkit-touch-callout: none;
     -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .hiding-opacity {
     opacity: 0 !important;
@@ -401,6 +404,9 @@ button:active {
     position: relative;
     transition: background-color .3s;
     padding: 8px 16px;
+    text-decoration: none;
+    background-color: #4c93af;
+    color: white;
 }
 .dialog-button:hover, .dialog-button:focus {
 }
@@ -429,22 +435,18 @@ button:active {
     transition: width .2s ease-out, padding-top .2s ease-out;
 }
 .dialog-button-positive {
-    background-color: #4c93af;
-    color: white;
 }
 .dialog-button-positive:hover/*, .dialog-button-positive:focus*/ {
     background-color: #2e5d7d;
 }
 .dialog-button-neutral {
     background-color: #4c93af;
-    color: white;
 }
 .dialog-button-neutral:hover/*, .dialog-button-neutral:focus*/ {
     background-color: #2e5d7d;
 }
 .dialog-button-negative {
     background-color: #4c93af;
-    color: white;
 }
 .dialog-button-negative:hover/*, .dialog-button-negative:focus*/ {
     background-color: #2e5d7d;
@@ -461,16 +463,12 @@ button:active {
     height: 100%;
 }
 .dialog-help-button {
-    font-family: "Material Icons";
-    font-feature-settings: "liga" 1;
-    font-style: normal;
     background: none;
     border: none;
     outline: none;
     position: absolute;
     right: 5px;
     bottom: 5px;
-    padding: 0;
     min-width: unset;
     font-size: initial !important;
     color: darkslategray;
@@ -1065,6 +1063,8 @@ button:active {
         right: 10px;
         background-color: #819bc7;
         outline: none;
+        font-size: 12px;
+        padding: 5px;
     }
     .actionbar-collapsed .actionbar-select-lang {
         right: -150px;
@@ -1076,6 +1076,7 @@ button:active {
         display: block;
     }
     .actionbar-collapsed .actionbar-label {
+        bottom: 15px;
         padding-left: 50px;
     }
     .actionbar-collapsed .actionbar-label-title {
@@ -1088,16 +1089,14 @@ button:active {
     }
     .dialog-filter {
         font-size: 20px;
-        right: 0;
-        position: absolute;
         left: 50px;
         height: 50px;
-        display: flex;
     }
     .dialog-filter-button {
         padding: 15px;
         position: absolute;
         right: 0;
+        font-size: 20px;
     }
     .dialog-filter-input {
         flex: 1 1;

@@ -31,6 +31,7 @@ body {
     position: absolute;
     top: 10px;
     right: 10px;
+    white-space: nowrap;
 }
 .actionbar-select-lang {
     display: block;
@@ -79,17 +80,6 @@ body {
     align-items: flex-start;
     text-align: left;
     flex-direction: column;
-}
-
-.create-dialog-button {
-    background-color: #4c93af;
-    color: white;
-    cursor: pointer;
-    text-decoration: none;
-
-}
-.create-dialog-button:hover/*, .dialog-button-positive:focus*/ {
-    background-color: #2e5d7d;
 }
 
 .image-full-width {
@@ -273,6 +263,7 @@ body {
         bottom: 15px;
         top: auto;
         padding-left: 15px;
+        white-space: normal;
     }
     .actionbar-collapsed .actionbar-label-title {
         font-size: 16px;
@@ -312,6 +303,4 @@ body {
         font-size:16px;
         height: 25px;
     }
-
-
 }
