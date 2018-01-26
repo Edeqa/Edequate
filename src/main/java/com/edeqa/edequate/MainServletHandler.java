@@ -97,13 +97,13 @@ public class MainServletHandler extends AbstractServletHandler {
         int resultCode = 200;
         if (!webPath.path().getCanonicalPath().startsWith(root.getCanonicalPath())) {
             // Suspected path traversal attack: reject with 403 error.
-            Misc.log("Main", uri.getPath(), "[403 - suspected path traversal attack]", "[" + ipRemote + "]", (referer != null ? "referer: " + referer : ""));
+            Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[403 - suspected path traversal attack]", (referer != null ? "referer: " + referer : ""));
             resultCode = 403;
             webPath = new WebPath(getWebDirectory(), "403.html");
 //                Utils.sendResult.call(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
         } else if (webPath.path().isDirectory()) {
             webPath = webPath.webPath("index.html");
-            Misc.log("Main", "->", webPath.web(), "[" + (webPath.path().exists() ? webPath.path().length() + " byte(s)" : "not found") + "]", "[" + ipRemote + "]", (referer != null ? "referer: " + referer : ""));
+            Misc.log("Main", "[" + ipRemote + "]", "->", webPath.web(), "[" + (webPath.path().exists() ? webPath.path().length() + " byte(s)" : "not found") + "]", (referer != null ? "referer: " + referer : ""));
 //            } else if (etag.equals(ifModifiedSince)) {
 //                resultCode = 304;
 //                file = new File(root + "/304.html");
@@ -130,11 +130,11 @@ public class MainServletHandler extends AbstractServletHandler {
 //            }
             if(!found) {
                 resultCode = 404;
-                Misc.log("Main", uri.getPath(), "[404 - not found]", "[" + ipRemote + "]", (referer != null ? "referer: " + referer : ""));
+                Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[404 - not found]", (referer != null ? "referer: " + referer : ""));
                 webPath = new WebPath(getWebDirectory(),"404.html");
             }
         } else {
-            Misc.log("Main", uri.getPath(), "[" + webPath.path().length() + " byte(s)]", "[" + ipRemote + "]", (referer != null ? "referer: " + referer : ""));
+            Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[" + webPath.path().length() + " byte(s)]",(referer != null ? "referer: " + referer : ""));
         }
 
         {

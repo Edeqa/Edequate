@@ -103,7 +103,7 @@ public class RestServletHandler extends AbstractServletHandler {
         String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
         try {
             if (getActions().containsKey(path)) {
-                Misc.log("Rest", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]", "[" + ipRemote + "]");
+                Misc.log("Rest", "[" + ipRemote + "]", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
                 getActions().get(path).call(json, requestWrapper);
             }
         } catch(Exception e) {
@@ -111,7 +111,7 @@ public class RestServletHandler extends AbstractServletHandler {
         }
 
         if (!json.has(STATUS)) {
-            Misc.log("Rest", "perform:", Nothing.class.getSimpleName(), "[" + path + "]", "[" + ipRemote + "]");
+            Misc.log("Rest", "[" + ipRemote + "]", "perform:", Nothing.class.getSimpleName(), "[" + path + "]");
             new Nothing().call(json, requestWrapper);
         }
 
