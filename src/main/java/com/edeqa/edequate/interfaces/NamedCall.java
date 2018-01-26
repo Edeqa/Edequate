@@ -7,7 +7,7 @@ import org.json.JSONObject;
 import java.io.FileNotFoundException;
 
 @SuppressWarnings("unused")
-public interface RestAction {
+public interface NamedCall<T> {
 
     String BODY = "body";
     String CALLBACK = "callback";
@@ -33,7 +33,7 @@ public interface RestAction {
     int ERROR_GONE = 410;
     int ERROR_NOT_EXTENDED = 510;
 
-    String getActionName();
+    String getName();
 
-    void call(JSONObject json, RequestWrapper request) throws Exception;
+    void call(JSONObject json, T object) throws Exception;
 }

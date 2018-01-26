@@ -1,13 +1,13 @@
 package com.edeqa.edequate.rest;
 
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.RestAction;
+import com.edeqa.edequate.interfaces.NamedCall;
 import com.edeqa.helpers.Misc;
 
 import org.json.JSONObject;
 
 @SuppressWarnings("unused")
-public class Nothing implements RestAction {
+public class Nothing implements NamedCall<RequestWrapper> {
 
     private String message;
     private Throwable throwable;
@@ -17,7 +17,7 @@ public class Nothing implements RestAction {
     }
 
     @Override
-    public String getActionName() {
+    public String getName() {
         return "nothing";
     }
 

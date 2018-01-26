@@ -1,7 +1,7 @@
 package com.edeqa.edequate.abstracts;
 
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.RestAction;
+import com.edeqa.edequate.interfaces.NamedCall;
 
 import org.json.JSONObject;
 
@@ -9,7 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
 @SuppressWarnings("WeakerAccess")
-public abstract class FileRestAction implements RestAction {
+public abstract class FileRestAction implements NamedCall<RequestWrapper> {
 
     private String childDirectory;
     private String webDirectory;
@@ -26,7 +26,7 @@ public abstract class FileRestAction implements RestAction {
     }
 
     @Override
-    public String getActionName() {
+    public String getName() {
         if(actionName != null) return actionName;
         return getChildDirectory();
     }

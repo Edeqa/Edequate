@@ -1,5 +1,7 @@
 package com.edeqa.edequate.helpers;
 
+import com.edeqa.helpers.MimeType;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;

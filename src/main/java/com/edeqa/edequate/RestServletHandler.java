@@ -3,7 +3,7 @@ package com.edeqa.edequate;
 
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.RestAction;
+import com.edeqa.edequate.interfaces.NamedCall;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.Locales;
@@ -24,23 +24,23 @@ import java.util.Map;
 
 import javax.servlet.ServletException;
 
-import static com.edeqa.edequate.interfaces.RestAction.CALLBACK;
-import static com.edeqa.edequate.interfaces.RestAction.CODE;
-import static com.edeqa.edequate.interfaces.RestAction.CODE_REDIRECT;
-import static com.edeqa.edequate.interfaces.RestAction.CODE_DELAYED;
-import static com.edeqa.edequate.interfaces.RestAction.FALLBACK;
-import static com.edeqa.edequate.interfaces.RestAction.MESSAGE;
-import static com.edeqa.edequate.interfaces.RestAction.REQUEST;
-import static com.edeqa.edequate.interfaces.RestAction.STATUS;
-import static com.edeqa.edequate.interfaces.RestAction.STATUS_ERROR;
+import static com.edeqa.edequate.interfaces.NamedCall.CALLBACK;
+import static com.edeqa.edequate.interfaces.NamedCall.CODE;
+import static com.edeqa.edequate.interfaces.NamedCall.CODE_REDIRECT;
+import static com.edeqa.edequate.interfaces.NamedCall.CODE_DELAYED;
+import static com.edeqa.edequate.interfaces.NamedCall.FALLBACK;
+import static com.edeqa.edequate.interfaces.NamedCall.MESSAGE;
+import static com.edeqa.edequate.interfaces.NamedCall.REQUEST;
+import static com.edeqa.edequate.interfaces.NamedCall.STATUS;
+import static com.edeqa.edequate.interfaces.NamedCall.STATUS_ERROR;
 
 public class RestServletHandler extends AbstractServletHandler {
 
-    private Map<String, RestAction> actions;
+    private Map<String, NamedCall<RequestWrapper>> actions;
     private String webPrefix;
 
     public RestServletHandler() {
-        setActions(new LinkedHashMap<String, RestAction>());
+        setActions(new LinkedHashMap<String, NamedCall<RequestWrapper>>());
 
         setWebPrefix("/rest/");
 
@@ -65,8 +65,8 @@ public class RestServletHandler extends AbstractServletHandler {
         super.init();
     }
 
-    public void registerAction(RestAction actionHolder) {
-        String actionName = actionHolder.getActionName();
+    public void registerAction(NamedCall actionHolder) {
+        String actionName = actionHolder.getName();
 
         if(getActions().containsKey(getWebPrefix() + actionName)) {
             Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + getWebPrefix() + actionName + "]");
@@ -83,8 +83,8 @@ public class RestServletHandler extends AbstractServletHandler {
         for (Class item : classes) {
             try {
                 Object instance = item.newInstance();
-                if (instance instanceof RestAction) {
-                    registerAction((RestAction) instance);
+                if (instance instanceof NamedCall) {
+                    registerAction((NamedCall) instance);
                 }
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
@@ -100,9 +100,10 @@ public class RestServletHandler extends AbstractServletHandler {
         JSONObject json = new JSONObject();
         json.put(REQUEST, path);
 
+        String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
         try {
             if (getActions().containsKey(path)) {
-                Misc.log("Rest", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
+                Misc.log("Rest", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]", "[" + ipRemote + "]");
                 getActions().get(path).call(json, requestWrapper);
             }
         } catch(Exception e) {
@@ -110,7 +111,7 @@ public class RestServletHandler extends AbstractServletHandler {
         }
 
         if (!json.has(STATUS)) {
-            Misc.log("Rest", "perform:", Nothing.class.getSimpleName(), "[" + path + "]");
+            Misc.log("Rest", "perform:", Nothing.class.getSimpleName(), "[" + path + "]", "[" + ipRemote + "]");
             new Nothing().call(json, requestWrapper);
         }
 
@@ -190,11 +191,11 @@ public class RestServletHandler extends AbstractServletHandler {
         return Collections.emptyList();
     }
 
-    private Map<String, RestAction> getActions() {
+    private Map<String, NamedCall<RequestWrapper>> getActions() {
         return actions;
     }
 
-    private void setActions(Map<String, RestAction> actions) {
+    private void setActions(Map<String, NamedCall<RequestWrapper>> actions) {
         this.actions = actions;
     }
 

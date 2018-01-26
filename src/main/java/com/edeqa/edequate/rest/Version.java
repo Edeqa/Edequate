@@ -1,15 +1,15 @@
 package com.edeqa.edequate.rest;
 
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.RestAction;
+import com.edeqa.edequate.interfaces.NamedCall;
 
 import org.json.JSONObject;
 
 @SuppressWarnings("unused")
-public class Version implements RestAction {
+public class Version implements NamedCall<RequestWrapper> {
 
     @Override
-    public String getActionName() {
+    public String getName() {
         return "version";
     }
 
