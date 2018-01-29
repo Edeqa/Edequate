@@ -16,7 +16,9 @@
 
 /* TAGS */
 html, body {
-    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+    height: auto;
     width: 100%;
     margin: 0;
     padding: 0;

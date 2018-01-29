@@ -169,7 +169,7 @@ function Edequate(options) {
         if(!div.classList.contains("hidden")) return;
         clearTimeout(div.hideTask);
         div.isHidden = false;
-        if(animatedType) {
+        if(animatedType && (div.offsetWidth || div.offsetHeight)) {
             var height,width;
             switch(animatedType) {
                 case HIDING.SCALE_Y:
@@ -274,7 +274,7 @@ function Edequate(options) {
         if(div.classList.contains("hidden")) return;
         clearTimeout(div.hideTask);
         div.isHidden = true;
-        if(animatedType) {
+        if(animatedType && div.offsetWidth) {
             var height,width;
             switch(animatedType) {
                 case HIDING.SCALE_Y:
@@ -2214,7 +2214,7 @@ function Edequate(options) {
         var actionbar = create(HTML.DIV, {
             className:"actionbar changeable" + optionalClassName(options.className),
             toggleSize: function(force){
-                var cvollapsed = actionbar.classList.contains("actionbar-collapsed");
+                var collapsed = actionbar.classList.contains("actionbar-collapsed");
                 if(force !== undefined) collapsed = force;
                 actionbar.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
 //                actionbarHolder.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
@@ -2773,7 +2773,7 @@ function Edequate(options) {
 //        progress.show(options.label);
     }
     Progress.prototype.show = function(label) {
-        progressHolder.items[1].innerHTML = label || "Loading...";
+        progressHolder.items[1].innerHTML = label.innerHTML || label || "Loading...";
         progressHolder.open();
     };
     Progress.prototype.hide = function() {

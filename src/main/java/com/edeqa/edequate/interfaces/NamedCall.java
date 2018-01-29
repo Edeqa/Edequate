@@ -1,13 +1,9 @@
 package com.edeqa.edequate.interfaces;
 
-import com.edeqa.edequate.helpers.RequestWrapper;
-
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
-
 @SuppressWarnings("unused")
-public interface NamedCall<T> {
+public interface NamedCall<T> /*extends Runnable2<JSONObject, T>*/{
 
     String BODY = "body";
     String CALLBACK = "callback";

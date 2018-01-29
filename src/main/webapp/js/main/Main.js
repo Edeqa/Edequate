@@ -1,6 +1,5 @@
 /**
- * Part of Edeqa <http://www.edeqa.com>
- * Copyright (C) 2017-18 Edeqa
+ * Edequate. Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * Created 12/27/17.
  *
@@ -33,7 +32,6 @@ function Main(u) {
         self.selectLang = u.create(HTML.SELECT, { className: "actionbar-select-lang changeable", value: u.load("lang"), onchange: function(e, event) {
             var lang = (this.value || navigator.language).toLowerCase().slice(0,2);
             u.save("lang", lang);
-//            window.location = window.location.href;
             self.loadResources("main.json");
             self.holder.resume();
         }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
@@ -51,6 +49,27 @@ function Main(u) {
         });
 
         this.loadResources("main.json", function() {
+            var dialogAbout = u.dialog({
+                className: "about-dialog",
+                itemsClassName: "about-dialog-items",
+                buttonsClassName: "about-dialog-buttons",
+                items: [
+                    { innerHTML: "Edequate" },
+                    { innerHTML: "&nbsp;" },
+                    { content: [
+                        u.create(HTML.IMG, {src: "/images/edeqa-logo.svg", className: "about-dialog-edeqa-logo"}),
+                        u.create(HTML.DIV)
+                            .place(HTML.DIV, { innerHTML: "Copyright &copy;2017-18 Edeqa" })
+                            .place(HTML.A, {className: "about-dialog-edeqa-link", href: "http://www.edeqa.com", target: "_blank", rel:"noopener", innerHTML: "http://www.edeqa.com" })
+                    ]
+                    },
+                    { enclosed: true, label: u.lang.legal_information || "Legal information", body: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+                ],
+                positive: {
+                    label: u.lang.ok
+                }
+            });
+
             self.drawer = new u.drawer({
                 title: u.lang.title || "Title",
                 collapsed: u.load("drawer:collapsed"),
@@ -63,12 +82,8 @@ function Main(u) {
                 footer: {
                     className: "drawer-footer-label",
                     content: [
-                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: u.lang.copyright}),
-                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: u.lang.copyright, onclick: function(e){
-                            //dialogAbout.open();
-                            e.preventDefault();
-                            e.stopPropagation();
-                            return false;
+                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: "Powered with Edequate", onclick: function(e){
+                            dialogAbout.open();
                         }})
                     ]
                 },
@@ -84,7 +99,6 @@ function Main(u) {
                     "8": u.lang.drawer_help,
                     "9": u.lang.drawer_last
                 }
-
             }, document.body);
 
             u.getJSON("/rest/" + type).then(function(json){
@@ -105,13 +119,10 @@ function Main(u) {
                             var holder = u.eventBus.holders[x];
                             if(holder.menu) {
                                 self.drawer.add(holder.category, holder.type, holder.menu, holder.icon, function(){
-                                    u.progress.show("Loading...");
                                     self.drawer.toggleSize(false);
                                     self.actionbar.toggleSize(false);
-                                    self.actionbar.setTitle(this.title);
 
                                     self.content.scrollTop = 0;
-                                    u.progress.hide();
                                     window.history.pushState({}, null, "/main/" + this.type);
 
                                     self.drawer.close();
@@ -119,6 +130,8 @@ function Main(u) {
                                     if(this.resume) {
                                         this.resume();
                                     }
+
+                                    self.actionbar.setTitle(this.title);
                                     return false;
                                 }.bind(holder));
                             }
@@ -126,7 +139,7 @@ function Main(u) {
 
                         if(info) {
                             self.content.innerHTML = info;
-                            self.actionbar.setTitle("Info");
+                            self.actionbar.setTitle(u.lang.info);
                             u.byId("loading-dialog").hide();
                         } else {
                             var urlPath = new URL(window.location);
@@ -150,39 +163,37 @@ function Main(u) {
                 });
             });
 
-
             var switchFullDrawer = function(){
-                if(self.content.scrollTop) {
+                if(self.content.scrollTop > 200) {
+
                     self.drawer.toggleSize(true);
                     self.actionbar.toggleSize(true);
-                    self.buttonScrollTop.show(HIDING.OPACITY);
-                    clearTimeout(self.buttonScrollTop.hideTimeout);
-                    self.buttonScrollTop.hideTimeout = setTimeout(function(){
-                        self.buttonScrollTop.hide(HIDING.OPACITY);
-                    }, 1500);
+//                    clearTimeout(self.buttonScrollTop.hideTimeout);
+                    if(!self.buttonScrollTop.offsetHeight) {
+                        self.buttonScrollTop.hideTimeout = setTimeout(function(){
+                            self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
+                        }, 1500);
+                    }
+                    self.buttonScrollTop.show(/*HIDING.OPACITY*/);
                 } else {
                     self.drawer.toggleSize(false);
                     self.actionbar.toggleSize(false);
-                    self.buttonScrollTop.hide(HIDING.OPACITY);
+                    if(self.buttonScrollTop.offsetHeight) {
+                        self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
+                    }
                 }
             };
-            self.content = u.create(HTML.DIV, {className:"content", onwheel: switchFullDrawer, ontouchmove: switchFullDrawer}, self.layout);
-
+            self.content = u.create(HTML.DIV, {className:"content", onscroll: switchFullDrawer}, self.layout);
 
             self.buttonScrollTop = u.create(HTML.BUTTON, {
                 className: "icon button-scroll-top changeable hidden",
                 onclick: function() {
                     self.content.scrollTop = 0;
-    //                self.content.scrollIntoView({block:"start", behaviour: "smooth"});
                     switchFullDrawer.call(self.content);
                 },
                 innerHTML: "keyboard_arrow_up"
             }, self.layout);
         });
-
-
-
-
     };
 
     this.loadResources = function(resource, callback) {

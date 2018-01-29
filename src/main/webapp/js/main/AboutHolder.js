@@ -19,6 +19,10 @@ function AboutHolder(main) {
     this.resume = function() {
         console.log("Resuming HomeHolder");
         u.progress.show(u.lang.loading);
+
+        this.title = u.lang.about;
+        this.menu = u.lang.about;
+
         u.clear(main.content);
         u.post("/rest/content", {resource: "main-about.html", locale: main.selectLang.value}).then(function(xhr){
             u.create(HTML.DIV, {className: "content-normal", innerHTML: xhr.response}, main.content);
