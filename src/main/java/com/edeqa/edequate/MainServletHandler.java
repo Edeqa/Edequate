@@ -100,14 +100,14 @@ public class MainServletHandler extends AbstractServletHandler {
             Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[403 - suspected path traversal attack]", (referer != null ? "referer: " + referer : ""));
             resultCode = 403;
             webPath = new WebPath(getWebDirectory(), "403.html");
-//                Utils.sendResult.call(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
+//                Utils.sendResult.onEvent(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
         } else if (webPath.path().isDirectory()) {
             webPath = webPath.webPath("index.html");
             Misc.log("Main", "[" + ipRemote + "]", "->", webPath.web(), "[" + (webPath.path().exists() ? webPath.path().length() + " byte(s)" : "not found") + "]", (referer != null ? "referer: " + referer : ""));
 //            } else if (etag.equals(ifModifiedSince)) {
 //                resultCode = 304;
 //                file = new File(root + "/304.html");
-//                Utils.sendResult.call(exchange, 304, null, "304 Not Modified\n".getBytes());
+//                Utils.sendResult.onEvent(exchange, 304, null, "304 Not Modified\n".getBytes());
 //        } else if (!uri.getPath().endsWith("/") && !webPath.path().exists()) {
 //            Misc.log("Main", "-> " + uri.getPath() + "/" + (referer != null ? ", referer: " + referer : ""));
 //            requestWrapper.sendRedirect(uri.getPath() + "/");

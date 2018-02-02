@@ -16,14 +16,14 @@ public class Content extends FileRestAction {
     }
 
     @Override
-    public void call(JSONObject json, RequestWrapper request) {
+    public boolean onEvent(JSONObject json, RequestWrapper request) {
         String body = request.getBody();
         if(Misc.isEmpty(body)) {
             Misc.err("Content", "not performed, arguments not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
             json.put(MESSAGE, "Arguments not defined.");
-            return;
+            return true;
         }
 
         JSONObject options = new JSONObject(body);
@@ -75,7 +75,7 @@ public class Content extends FileRestAction {
             json.put(CODE, ERROR_GONE);
             json.put(MESSAGE, options);
         }
-
+        return true;
     }
 }
 

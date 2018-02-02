@@ -1,15 +1,12 @@
 package com.edeqa.edequate.abstracts;
 
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.NamedCall;
-
-import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
 @SuppressWarnings("WeakerAccess")
-public abstract class FileRestAction implements NamedCall<RequestWrapper> {
+public abstract class FileRestAction extends AbstractAction<RequestWrapper> {
 
     private String childDirectory;
     private String webDirectory;
@@ -26,13 +23,10 @@ public abstract class FileRestAction implements NamedCall<RequestWrapper> {
     }
 
     @Override
-    public String getName() {
+    public String getType() {
         if(actionName != null) return actionName;
         return getChildDirectory();
     }
-
-    @Override
-    abstract public void call(JSONObject json, RequestWrapper request);
 
     public String getChildDirectory() {
         return childDirectory;

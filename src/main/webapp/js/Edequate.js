@@ -2474,9 +2474,6 @@ function Edequate(options) {
                         onclick: function(e){
                             var cell = this.parentNode;
 
-                            e.stopPropagation();
-                            e.preventDefault();
-
                             progressHolder.show();
 
                             setTimeout(function() {

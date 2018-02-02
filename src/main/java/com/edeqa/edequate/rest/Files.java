@@ -28,7 +28,7 @@ public class Files extends FileRestAction {
     }
 
     @Override
-    public void call(JSONObject json, RequestWrapper request) {
+    public boolean onEvent(JSONObject json, RequestWrapper request) {
         Misc.log("Files", "list for:", getWebDirectory() + "/" + getChildDirectory(), "[", isIncludeDirectories() ? "directories" : "", isIncludeFiles() ? "files" : "", "]");
 
         WebPath webPath = new WebPath(getWebDirectory(), getChildDirectory());
@@ -54,11 +54,11 @@ public class Files extends FileRestAction {
                 }
             }
         }
-
         json.put(STATUS, STATUS_SUCCESS);
         json.put(CODE, CODE_LIST);
         json.put(MESSAGE, files);
         json.put(EXTRA, webPath.web());
+        return true;
     }
 
     private boolean isIncludeDirectories() {

@@ -1,14 +1,16 @@
 package com.edeqa.edequate;
 
 
+import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.NamedCall;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
 import com.edeqa.edequate.rest.Version;
+import com.edeqa.eventbus.EntityHolder;
+import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 
 import org.json.JSONObject;
@@ -24,37 +26,28 @@ import java.util.Map;
 
 import javax.servlet.ServletException;
 
-import static com.edeqa.edequate.interfaces.NamedCall.CALLBACK;
-import static com.edeqa.edequate.interfaces.NamedCall.CODE;
-import static com.edeqa.edequate.interfaces.NamedCall.CODE_REDIRECT;
-import static com.edeqa.edequate.interfaces.NamedCall.CODE_DELAYED;
-import static com.edeqa.edequate.interfaces.NamedCall.FALLBACK;
-import static com.edeqa.edequate.interfaces.NamedCall.MESSAGE;
-import static com.edeqa.edequate.interfaces.NamedCall.REQUEST;
-import static com.edeqa.edequate.interfaces.NamedCall.STATUS;
-import static com.edeqa.edequate.interfaces.NamedCall.STATUS_ERROR;
+import static com.edeqa.edequate.abstracts.AbstractAction.CODE;
+import static com.edeqa.edequate.abstracts.AbstractAction.FALLBACK;
+import static com.edeqa.edequate.abstracts.AbstractAction.STATUS;
+import static com.edeqa.edequate.abstracts.AbstractAction.STATUS_ERROR;
 
 public class RestServletHandler extends AbstractServletHandler {
 
-    private Map<String, NamedCall<RequestWrapper>> actions;
-    private String webPrefix;
+    private Map<String, AbstractAction<RequestWrapper>> actions;
 
     public RestServletHandler() {
-        setActions(new LinkedHashMap<String, NamedCall<RequestWrapper>>());
-
-        setWebPrefix("/rest/");
-
+        setActions(new LinkedHashMap<String, AbstractAction<RequestWrapper>>());
     }
 
     public void useDefault() {
         registerAction(new Content());
-        registerAction(new Content().setChildDirectory("resources"));
+        registerAction(new Content().setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
                 return name.contains("Holder");
             }
-        }).setChildDirectory("js/main").setActionName("main"));
+        }).setChildDirectory("js/main").setActionName("/rest/main"));
         registerAction(new Locales());
         registerAction(new Version());
         registerAction(new Nothing());
@@ -65,15 +58,18 @@ public class RestServletHandler extends AbstractServletHandler {
         super.init();
     }
 
-    public void registerAction(NamedCall actionHolder) {
-        String actionName = actionHolder.getName();
+    public void registerAction(AbstractAction<RequestWrapper> actionHolder) {
+        String actionName = actionHolder.getType();
 
-        if(getActions().containsKey(getWebPrefix() + actionName)) {
-            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + getWebPrefix() + actionName + "]");
+        EventBus<EntityHolder> restBus = (EventBus<EntityHolder>) EventBus.getOrCreateEventBus("rest");
+        restBus.registerOrUpdate(actionHolder);
+
+        if(getActions().containsKey(actionName)) {
+            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + actionName + "]");
         } else {
-            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + getWebPrefix() + actionName + "]");
+            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + actionName + "]");
         }
-        getActions().put(getWebPrefix() + actionName, actionHolder);
+        getActions().put(actionName, actionHolder);
     }
 
     protected void populateRestActions(String packageName) {
@@ -83,8 +79,8 @@ public class RestServletHandler extends AbstractServletHandler {
         for (Class item : classes) {
             try {
                 Object instance = item.newInstance();
-                if (instance instanceof NamedCall) {
-                    registerAction((NamedCall) instance);
+                if (instance instanceof AbstractAction) {
+                    registerAction((AbstractAction<RequestWrapper>) instance);
                 }
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
@@ -98,37 +94,37 @@ public class RestServletHandler extends AbstractServletHandler {
         Map<String, List<String>> arguments = requestWrapper.getParameterMap();
 
         JSONObject json = new JSONObject();
-        json.put(REQUEST, path);
+        json.put(AbstractAction.REQUEST, path);
 
         String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
         try {
             if (getActions().containsKey(path)) {
                 Misc.log("Rest", "[" + ipRemote + "]", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
-                getActions().get(path).call(json, requestWrapper);
+                getActions().get(path).onEvent(json, requestWrapper);
             }
         } catch(Exception e) {
-            new Nothing().setThrowable(e).call(json, requestWrapper);
+            new Nothing().setThrowable(e).onEvent(json, requestWrapper);
         }
 
         if (!json.has(STATUS)) {
             Misc.log("Rest", "[" + ipRemote + "]", "perform:", Nothing.class.getSimpleName(), "[" + path + "]");
-            new Nothing().call(json, requestWrapper);
+            new Nothing().onEvent(json, requestWrapper);
         }
 
         if(json.has(CODE)) {
-            if (json.getInt(CODE) == CODE_REDIRECT && json.has(MESSAGE)) {
-                Misc.log("Rest", "redirect:", json.getString(MESSAGE));
-                requestWrapper.sendRedirect(json.getString(MESSAGE));
+            if (json.getInt(CODE) == AbstractAction.CODE_REDIRECT && json.has(AbstractAction.MESSAGE)) {
+                Misc.log("Rest", "redirect:", json.getString(AbstractAction.MESSAGE));
+                requestWrapper.sendRedirect(json.getString(AbstractAction.MESSAGE));
                 return;
-            } else if(json.getInt(CODE) == CODE_DELAYED) {
+            } else if(json.getInt(CODE) == AbstractAction.CODE_DELAYED) {
                 return;
             }
         }
 
         String callback = null;
         String fallback = null;
-        if (arguments.containsKey(CALLBACK)) {
-            callback = arguments.get(CALLBACK).get(0);
+        if (arguments.containsKey(AbstractAction.CALLBACK)) {
+            callback = arguments.get(AbstractAction.CALLBACK).get(0);
         }
         if (arguments.containsKey(FALLBACK)) {
             fallback = arguments.get(FALLBACK).get(0);
@@ -158,7 +154,7 @@ public class RestServletHandler extends AbstractServletHandler {
             System.out.println("LOADER:"+ClassPath.from(loader).getTopLevelClasses());
             for (final ClassPath.ClassInfo info : ClassPath.from(loader).getTopLevelClasses()) {
             System.out.println("CLASSINFO:"+info);
-                if (info.getName().startsWith(pckgname)) {
+                if (info.getType().startsWith(pckgname)) {
                     final Class<?> clazz = info.load();
                     classes.add(clazz);
                     // do something with your clazz
@@ -191,19 +187,12 @@ public class RestServletHandler extends AbstractServletHandler {
         return Collections.emptyList();
     }
 
-    private Map<String, NamedCall<RequestWrapper>> getActions() {
+    private Map<String, AbstractAction<RequestWrapper>> getActions() {
         return actions;
     }
 
-    private void setActions(Map<String, NamedCall<RequestWrapper>> actions) {
+    private void setActions(Map<String, AbstractAction<RequestWrapper>> actions) {
         this.actions = actions;
     }
 
-    public String getWebPrefix() {
-        return webPrefix;
-    }
-
-    public void setWebPrefix(String webPrefix) {
-        this.webPrefix = webPrefix;
-    }
 }

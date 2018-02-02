@@ -1,13 +1,15 @@
 package com.edeqa.edequate.rest;
 
+import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.interfaces.NamedCall;
 import com.edeqa.helpers.Misc;
 
 import org.json.JSONObject;
 
 @SuppressWarnings("unused")
-public class Nothing implements NamedCall<RequestWrapper> {
+public class Nothing extends AbstractAction<RequestWrapper> {
+
+    public static final String TYPE = "/rest/nothing";
 
     private String message;
     private Throwable throwable;
@@ -17,12 +19,12 @@ public class Nothing implements NamedCall<RequestWrapper> {
     }
 
     @Override
-    public String getName() {
-        return "nothing";
+    public String getType() {
+        return TYPE;
     }
 
     @Override
-    public void call(JSONObject json, RequestWrapper request) {
+    public boolean onEvent(JSONObject json, RequestWrapper request) {
         json.put(STATUS, STATUS_ERROR);
         json.put(MESSAGE, getMessage());
         json.put(CODE, ERROR_NOT_EXTENDED);
@@ -34,6 +36,7 @@ public class Nothing implements NamedCall<RequestWrapper> {
         if (!Misc.isEmpty(body)) {
             json.put(BODY, request.getBody());
         }
+        return true;
     }
 
     public Nothing setMessage(String message) {

@@ -12,12 +12,12 @@ public class Locales extends Files {
         setIncludeDirectories(true);
         setIncludeFiles(false);
         setChildDirectory("content");
-        setActionName("locales");
+        setActionName("/rest/locales");
     }
 
     @Override
-    public void call(JSONObject json, RequestWrapper request) {
-        super.call(json, request);
+    public boolean onEvent(JSONObject json, RequestWrapper request) {
+        super.onEvent(json, request);
         if (json.getString(STATUS).equals(STATUS_SUCCESS) && json.getInt(CODE) == CODE_LIST) {
             JSONArray list = json.getJSONArray(MESSAGE);
             JSONObject map = new JSONObject();
@@ -43,6 +43,7 @@ public class Locales extends Files {
             json.put(CODE, CODE_JSON);
             json.put(MESSAGE, map);
         }
+        return true;
     }
 }
 
