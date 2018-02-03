@@ -40,7 +40,7 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     public void useDefault() {
-        registerAction(new Content());
+        registerAction(new Content().setChildDirectory("content").setActionName("/rest/content"));
         registerAction(new Content().setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
@@ -61,6 +61,7 @@ public class RestServletHandler extends AbstractServletHandler {
     public void registerAction(AbstractAction<RequestWrapper> actionHolder) {
         String actionName = actionHolder.getType();
 
+        EventBus.setMainRunner(EventBus.RUNNER_SAME_THREAD);
         EventBus<EntityHolder> restBus = (EventBus<EntityHolder>) EventBus.getOrCreateEventBus("rest");
         restBus.registerOrUpdate(actionHolder);
 
