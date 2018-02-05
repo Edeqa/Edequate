@@ -7,6 +7,8 @@ import org.json.JSONObject;
 @SuppressWarnings("WeakerAccess")
 public abstract class AbstractAction<T> extends AbstractEntityHolder {
 
+    public static final String EVENTBUS = "rest";
+
     public static final String BODY = "body";
     public static final String CALLBACK = "callback";
     public static final String CODE = "code";

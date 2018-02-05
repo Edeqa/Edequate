@@ -25,6 +25,7 @@ import java.util.Map;
 import javax.servlet.ServletException;
 
 import static com.edeqa.edequate.abstracts.AbstractAction.CODE;
+import static com.edeqa.edequate.abstracts.AbstractAction.EVENTBUS;
 import static com.edeqa.edequate.abstracts.AbstractAction.FALLBACK;
 import static com.edeqa.edequate.abstracts.AbstractAction.STATUS;
 import static com.edeqa.edequate.abstracts.AbstractAction.STATUS_ERROR;
@@ -34,8 +35,8 @@ public class RestServletHandler extends AbstractServletHandler {
     private EventBus<AbstractAction> restBus;
 
     public RestServletHandler() {
-        EventBus.setMainRunner(EventBus.RUNNER_SAME_THREAD);
-        restBus = (EventBus<AbstractAction>) EventBus.getOrCreateEventBus("rest");
+        EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);
+        restBus = (EventBus<AbstractAction>) EventBus.getOrCreate(EVENTBUS);
     }
 
     public void useDefault() {
