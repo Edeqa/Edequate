@@ -16,7 +16,7 @@ public class Locales extends Files {
     }
 
     @Override
-    public boolean call(JSONObject json, RequestWrapper request) {
+    public void call(JSONObject json, RequestWrapper request) {
         super.call(json, request);
         if (json.getString(STATUS).equals(STATUS_SUCCESS) && json.getInt(CODE) == CODE_LIST) {
             JSONArray list = json.getJSONArray(MESSAGE);
@@ -43,7 +43,6 @@ public class Locales extends Files {
             json.put(CODE, CODE_JSON);
             json.put(MESSAGE, map);
         }
-        return true;
     }
 }
 

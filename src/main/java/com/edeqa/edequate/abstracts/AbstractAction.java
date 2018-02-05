@@ -31,7 +31,7 @@ public abstract class AbstractAction<T> extends AbstractEntityHolder {
     public static final int ERROR_GONE = 410;
     public static final int ERROR_NOT_EXTENDED = 510;
 
-    public abstract boolean call(JSONObject event, T object) throws Exception;
+    public abstract void call(JSONObject event, T object) throws Exception;
 
 
 }

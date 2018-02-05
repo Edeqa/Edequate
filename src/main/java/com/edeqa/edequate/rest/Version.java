@@ -16,11 +16,10 @@ public class Version extends AbstractAction<RequestWrapper> {
     }
 
     @Override
-    public boolean call(JSONObject json, RequestWrapper request) {
+    public void call(JSONObject json, RequestWrapper request) {
         json.put(STATUS, STATUS_SUCCESS);
         json.put(CODE, com.edeqa.edequate.helpers.Version.getVersionCode());
         json.put(MESSAGE, com.edeqa.edequate.helpers.Version.getVersionName());
         json.put(EXTRA, com.edeqa.edequate.helpers.Version.getVersion());
-        return true;
     }
 }

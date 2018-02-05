@@ -24,7 +24,7 @@ public class Nothing extends AbstractAction<RequestWrapper> {
     }
 
     @Override
-    public boolean call(JSONObject json, RequestWrapper request) {
+    public void call(JSONObject json, RequestWrapper request) {
         json.put(STATUS, STATUS_ERROR);
         json.put(MESSAGE, getMessage());
         json.put(CODE, ERROR_NOT_EXTENDED);
@@ -36,7 +36,6 @@ public class Nothing extends AbstractAction<RequestWrapper> {
         if (!Misc.isEmpty(body)) {
             json.put(BODY, request.getBody());
         }
-        return true;
     }
 
     public Nothing setMessage(String message) {
