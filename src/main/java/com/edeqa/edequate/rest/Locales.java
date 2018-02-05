@@ -16,8 +16,8 @@ public class Locales extends Files {
     }
 
     @Override
-    public boolean onEvent(JSONObject json, RequestWrapper request) {
-        super.onEvent(json, request);
+    public boolean call(JSONObject json, RequestWrapper request) {
+        super.call(json, request);
         if (json.getString(STATUS).equals(STATUS_SUCCESS) && json.getInt(CODE) == CODE_LIST) {
             JSONArray list = json.getJSONArray(MESSAGE);
             JSONObject map = new JSONObject();

@@ -5,7 +5,7 @@ import com.edeqa.eventbus.AbstractEntityHolder;
 import org.json.JSONObject;
 
 @SuppressWarnings("WeakerAccess")
-public abstract class AbstractAction<T> extends AbstractEntityHolder<Object, JSONObject, T> {
+public abstract class AbstractAction<T> extends AbstractEntityHolder {
 
     public static final String BODY = "body";
     public static final String CALLBACK = "callback";
@@ -30,6 +30,9 @@ public abstract class AbstractAction<T> extends AbstractEntityHolder<Object, JSO
     public static final int ERROR_NOT_FOUND = 404;
     public static final int ERROR_GONE = 410;
     public static final int ERROR_NOT_EXTENDED = 510;
+
+    public abstract boolean call(JSONObject event, T object) throws Exception;
+
 
 }
 

@@ -24,7 +24,7 @@ public class Nothing extends AbstractAction<RequestWrapper> {
     }
 
     @Override
-    public boolean onEvent(JSONObject json, RequestWrapper request) {
+    public boolean call(JSONObject json, RequestWrapper request) {
         json.put(STATUS, STATUS_ERROR);
         json.put(MESSAGE, getMessage());
         json.put(CODE, ERROR_NOT_EXTENDED);

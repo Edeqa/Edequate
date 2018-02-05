@@ -28,7 +28,7 @@ public class Files extends FileRestAction {
     }
 
     @Override
-    public boolean onEvent(JSONObject json, RequestWrapper request) {
+    public boolean call(JSONObject json, RequestWrapper request) {
         Misc.log("Files", "list for:", getWebDirectory() + "/" + getChildDirectory(), "[", isIncludeDirectories() ? "directories" : "", isIncludeFiles() ? "files" : "", "]");
 
         WebPath webPath = new WebPath(getWebDirectory(), getChildDirectory());

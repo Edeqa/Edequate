@@ -9,7 +9,6 @@ import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
 import com.edeqa.edequate.rest.Version;
-import com.edeqa.eventbus.EntityHolder;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 
@@ -20,7 +19,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,10 +31,11 @@ import static com.edeqa.edequate.abstracts.AbstractAction.STATUS_ERROR;
 
 public class RestServletHandler extends AbstractServletHandler {
 
-    private Map<String, AbstractAction<RequestWrapper>> actions;
+    private EventBus<AbstractAction> restBus;
 
     public RestServletHandler() {
-        setActions(new LinkedHashMap<String, AbstractAction<RequestWrapper>>());
+        EventBus.setMainRunner(EventBus.RUNNER_SAME_THREAD);
+        restBus = (EventBus<AbstractAction>) EventBus.getOrCreateEventBus("rest");
     }
 
     public void useDefault() {
@@ -61,16 +60,12 @@ public class RestServletHandler extends AbstractServletHandler {
     public void registerAction(AbstractAction<RequestWrapper> actionHolder) {
         String actionName = actionHolder.getType();
 
-        EventBus.setMainRunner(EventBus.RUNNER_SAME_THREAD);
-        EventBus<EntityHolder> restBus = (EventBus<EntityHolder>) EventBus.getOrCreateEventBus("rest");
-        restBus.registerOrUpdate(actionHolder);
-
-        if(getActions().containsKey(actionName)) {
+        if(restBus.getHolder(actionName) != null) {
             Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + actionName + "]");
         } else {
             Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + actionName + "]");
         }
-        getActions().put(actionName, actionHolder);
+        restBus.registerOrUpdate(actionHolder);
     }
 
     protected void populateRestActions(String packageName) {
@@ -99,17 +94,17 @@ public class RestServletHandler extends AbstractServletHandler {
 
         String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
         try {
-            if (getActions().containsKey(path)) {
-                Misc.log("Rest", "[" + ipRemote + "]", "perform:", getActions().get(path).getClass().getSimpleName(), "[" + path + "]");
-                getActions().get(path).onEvent(json, requestWrapper);
+            if (restBus.getHolder(path) != null) {
+                Misc.log("Rest", "[" + ipRemote + "]", "perform:", restBus.getHolder(path).getClass().getSimpleName(), "[" + path + "]");
+                restBus.getHolder(path).call(json, requestWrapper);
             }
         } catch(Exception e) {
-            new Nothing().setThrowable(e).onEvent(json, requestWrapper);
+            new Nothing().setThrowable(e).call(json, requestWrapper);
         }
 
         if (!json.has(STATUS)) {
             Misc.log("Rest", "[" + ipRemote + "]", "perform:", Nothing.class.getSimpleName(), "[" + path + "]");
-            new Nothing().onEvent(json, requestWrapper);
+            new Nothing().call(json, requestWrapper);
         }
 
         if(json.has(CODE)) {
@@ -186,14 +181,6 @@ public class RestServletHandler extends AbstractServletHandler {
             Misc.err("Rest", e);
         }
         return Collections.emptyList();
-    }
-
-    private Map<String, AbstractAction<RequestWrapper>> getActions() {
-        return actions;
-    }
-
-    private void setActions(Map<String, AbstractAction<RequestWrapper>> actions) {
-        this.actions = actions;
     }
 
 }

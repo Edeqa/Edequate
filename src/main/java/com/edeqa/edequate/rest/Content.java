@@ -16,7 +16,7 @@ public class Content extends FileRestAction {
     }
 
     @Override
-    public boolean onEvent(JSONObject json, RequestWrapper request) {
+    public boolean call(JSONObject json, RequestWrapper request) {
         String body = request.getBody();
         if(Misc.isEmpty(body)) {
             Misc.err("Content", "not performed, arguments not defined");

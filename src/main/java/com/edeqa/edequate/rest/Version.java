@@ -16,7 +16,7 @@ public class Version extends AbstractAction<RequestWrapper> {
     }
 
     @Override
-    public boolean onEvent(JSONObject json, RequestWrapper request) {
+    public boolean call(JSONObject json, RequestWrapper request) {
         json.put(STATUS, STATUS_SUCCESS);
         json.put(CODE, com.edeqa.edequate.helpers.Version.getVersionCode());
         json.put(MESSAGE, com.edeqa.edequate.helpers.Version.getVersionName());
