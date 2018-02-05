@@ -28,8 +28,9 @@ public class RequestFilter implements Filter {
 
         String path = ((HttpServletRequest) request).getRequestURI();
         String query = ((HttpServletRequest) request).getQueryString();
+        String ipRemote = request.getRemoteAddr();
 
-        Misc.log("Request", path, query != null ? query : "");
+        Misc.log("RequestFilter", "[" + ipRemote + "]", path, query != null ? query : "");
 
 //        if (path.toLowerCase().startsWith("/rest")) {
 //            request.getRequestDispatcher(path).forward(request, response);
