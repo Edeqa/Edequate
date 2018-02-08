@@ -5,6 +5,8 @@ import com.edeqa.helpers.Misc;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Arrays;
+import java.util.List;
 
 public class WebPath {
 
@@ -13,7 +15,8 @@ public class WebPath {
 
     public WebPath(String directory, String child) {
         this.child = Misc.isEmpty(child) ? "" : child;
-        if("/".equals(this.child)) this.child = "";
+        this.child = this.child.replaceAll("^/", "");
+//        if("/".equals(this.child)) this.child = "";
         this.directory = directory;
     }
 
@@ -50,6 +53,13 @@ public class WebPath {
 
     public String web(String child) {
         return "/" + (Misc.isEmpty(this.child) ? "": this.child + "/") + child;
+    }
+
+    public String web(Integer trim) {
+        List<String> parts = Arrays.asList(child.split("/"));
+        if(trim > parts.size()) trim = parts.size();
+        parts = parts.subList(0, trim);
+        return "/" + Misc.join("/", parts);
     }
 
     public String toString() {

@@ -67,9 +67,15 @@ public class MainServletHandler extends AbstractServletHandler {
 
         WebPath webPath = new WebPath(getWebDirectory(), uri.getPath());
         if(!webPath.path().exists()) {
-            webPath = new WebPath(getWebDirectory(), "index.html");
-            if(!webPath.path().exists()) {
-                requestWrapper.sendResult(200, Mime.TEXT_HTML, fetchDefaultIndex().build().getBytes());
+            String beginWeb = webPath.web(1);
+            if("/main".startsWith(beginWeb) || "/rest".startsWith(beginWeb) || "/admin".startsWith(beginWeb)) {
+                webPath = new WebPath(getWebDirectory(), "index.html");
+                if (!webPath.path().exists()) {
+                    requestWrapper.sendResult(200, Mime.TEXT_HTML, fetchDefaultIndex().build().getBytes());
+                    return;
+                }
+            } else {
+                requestWrapper.sendError(404, "File not found");
                 return;
             }
         }
