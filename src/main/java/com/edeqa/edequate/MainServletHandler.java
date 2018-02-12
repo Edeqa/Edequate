@@ -201,9 +201,6 @@ public class MainServletHandler extends AbstractServletHandler {
 
 
                 String string = new String(bytes, charset);
-//                for(Map.Entry<String,String> x: substitutions.entrySet()) {
-//                    string = string.replaceAll(x.getKey(), x.getValue());
-//                }
                 string = getReplacements().process(string, mimeType);
 
                 requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
