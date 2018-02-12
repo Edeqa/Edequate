@@ -1,12 +1,6 @@
 {
-  "title": "Edequate Example",
-  "copyright": "Edequate &copy;2017-18 Edeqa",
-
-  "home": "Главная",
-  "privacy_policy": "Политика конфиденциальности",
-  "loading": "Загрузка...",
   "about": "О сайте",
-
+  "copyright": "Edequate &copy;2017-18 Edeqa",
   "drawer_primary": "Главная",
   "drawer_summary": "Сводка",
   "drawer_main": "Главная",
@@ -16,5 +10,12 @@
   "drawer_miscellaneous": "Разное",
   "drawer_settings": "Параметры",
   "drawer_help": "Справка",
-  "drawer_last": "Последняя"
+  "drawer_last": "Последняя",
+  "error": "Ошибка",
+  "home": "Главная",
+  "info": "Информация",
+  "loading": "Загрузка...",
+  "page_not_found": "Страница не найдена",
+  "privacy_policy": "Политика конфиденциальности",
+  "title": "Edequate Example"
 }

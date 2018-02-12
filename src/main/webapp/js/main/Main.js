@@ -150,6 +150,7 @@ function Main(u) {
                                 path = "home";
                            }
                            var holder = u.eventBus.holders[path.toLowerCase()];
+                           if(!holder) holder = u.eventBus.holders[404];
                            self.actionbar.setTitle(holder.title);
                            self.holder = holder;
                            holder.resume();

@@ -27,7 +27,7 @@ function PrivacyPolicyHolder(main) {
             u.progress.hide();
         }).catch(function(error, json) {
             console.error(json);
-            u.create(HTML.DIV, {className: "content-centered", innerHTML: "Error"}, main.content);
+            u.create(HTML.DIV, {className: "content-centered", innerHTML: u.lang.error}, main.content);
             u.progress.hide();
         });
     }

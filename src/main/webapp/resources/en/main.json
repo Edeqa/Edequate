@@ -1,13 +1,6 @@
 {
-  "title": "Edequate Example",
-  "copyright": "Edequate &copy;2017-18 Edeqa",
-
-  "home": "Home",
-  "privacy_policy": "Privacy policy",
-  "loading": "Loading...",
   "about": "About",
-  "info": "Information",
-
+  "copyright": "Edequate &copy;2017-18 Edeqa",
   "drawer_primary": "Main",
   "drawer_summary": "Summary",
   "drawer_main": "Main",
@@ -17,5 +10,12 @@
   "drawer_miscellaneous": "Miscellaneous",
   "drawer_settings": "Settings",
   "drawer_help": "Help",
-  "drawer_last": "Last"
+  "drawer_last": "Last",
+  "error": "Error",
+  "home": "Home",
+  "info": "Information",
+  "loading": "Loading...",
+  "page_not_found": "Page not found",
+  "privacy_policy": "Privacy policy",
+  "title": "Edequate Example"
 }

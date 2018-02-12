@@ -3013,14 +3013,15 @@ function Edequate(options) {
     }
     if(node) {
         window.addEventListener("load", function() {
-            var variable = node.getAttribute("variable");
+            var data = node.dataset || {};
+            var variable = data.variable;
             if(variable) {
-                var origin = node.getAttribute("origin");
-                var context = node.getAttribute("context");
-                var exportConstants = node.getAttribute("exportConstants") == "true";
+                var origin = data.origin;
+                var context = data.context;
+                var exportConstants = data.exportConstants == "true";
                 window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
             }
-            var callback = node.getAttribute("callback");
+            var callback = data.callback;
             if(callback) {
                 try {
                     (new Function(callback))();
