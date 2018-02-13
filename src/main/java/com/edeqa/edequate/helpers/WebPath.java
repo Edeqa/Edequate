@@ -8,9 +8,10 @@ import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class WebPath {
 
-    private String directory;
+    private final String directory;
     private String child;
 
     public WebPath(String directory, String child) {

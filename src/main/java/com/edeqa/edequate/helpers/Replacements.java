@@ -6,10 +6,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class Replacements {
-    private Map<String, Replacement> mapDefault;
-    private Map<String, Map<String, Replacement>> mapMime;
-    private Map<String, MimeType> disabled;
+    private final Map<String, Replacement> mapDefault;
+    private final Map<String, Map<String, Replacement>> mapMime;
+    private final Map<String, MimeType> disabled;
 
     public Replacements() {
         mapDefault = new LinkedHashMap<>();

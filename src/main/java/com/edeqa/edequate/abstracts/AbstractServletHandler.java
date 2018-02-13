@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,11 +28,6 @@ abstract public class AbstractServletHandler extends HttpServlet implements Http
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
     }
 
     @Override

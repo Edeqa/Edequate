@@ -16,9 +16,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
  * Created 6/9/2017.
  */
 
+@SuppressWarnings("unused")
 public class RequestWrapper {
 
     protected final static int MODE_SERVLET = 0;
@@ -260,6 +263,30 @@ public class RequestWrapper {
             }
         }
         return null;
+    }
+
+    public String getRequestedHost() {
+        String host = null;
+        if(mode == MODE_SERVLET) {
+            Thread.dumpStack();
+            return null;
+        } else if(mode == MODE_EXCHANGE) {
+            host = httpExchange.getRequestHeaders().getFirst(HttpHeaders.HOST);
+            if(host == null) {
+                host = httpExchange.getLocalAddress().getHostName();
+            }
+            if(host == null) {
+                try {
+                    host = InetAddress.getLocalHost().getHostAddress();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(host != null) {
+                host = host.split(":")[0];
+            }
+        }
+        return host;
     }
 
     public String getRequestMethod() {

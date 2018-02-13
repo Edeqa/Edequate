@@ -3,7 +3,6 @@ package com.edeqa.edequate;
 import com.edeqa.helpers.Misc;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -15,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class RequestFilter implements Filter {
 
-    private final static Logger LOGGER = Logger.getLogger(RequestFilter.class.getSimpleName());
+//    private final static Logger LOGGER = Logger.getLogger(RequestFilter.class.getSimpleName());
 
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {

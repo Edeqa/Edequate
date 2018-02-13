@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class ContentTest {
+public class ResourceTest {
 
     @Before
     public void setUp() throws Exception {

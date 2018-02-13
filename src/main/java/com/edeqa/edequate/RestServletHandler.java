@@ -4,7 +4,7 @@ package com.edeqa.edequate;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.rest.Content;
+import com.edeqa.edequate.rest.Resource;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
@@ -32,7 +32,7 @@ import static com.edeqa.edequate.abstracts.AbstractAction.STATUS_ERROR;
 
 public class RestServletHandler extends AbstractServletHandler {
 
-    private EventBus<AbstractAction> restBus;
+    private final EventBus<AbstractAction> restBus;
 
     public RestServletHandler() {
         EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);
@@ -40,8 +40,8 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     public void useDefault() {
-        registerAction(new Content().setChildDirectory("content").setActionName("/rest/content"));
-        registerAction(new Content().setChildDirectory("resources").setActionName("/rest/resources"));
+        registerAction(new Resource().setChildDirectory("content").setActionName("/rest/content"));
+        registerAction(new Resource().setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -69,6 +69,7 @@ public class RestServletHandler extends AbstractServletHandler {
         restBus.registerOrUpdate(actionHolder);
     }
 
+    @SuppressWarnings("unused")
     protected void populateRestActions(String packageName) {
         Misc.log("Rest", "automatic register actions within", packageName);
         List<Class> classes = getAllClasses( packageName);

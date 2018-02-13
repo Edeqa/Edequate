@@ -4,7 +4,7 @@ import com.edeqa.eventbus.AbstractEntityHolder;
 
 import org.json.JSONObject;
 
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings("unused")
 public abstract class AbstractAction<T> extends AbstractEntityHolder {
 
     public static final String EVENTBUS = "rest";
