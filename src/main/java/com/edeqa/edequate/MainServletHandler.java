@@ -68,7 +68,6 @@ public class MainServletHandler extends AbstractServletHandler {
                     return;
                 }
             } else {
-                System.out.println("F");
                 requestWrapper.sendError(404, "File not found");
                 return;
             }

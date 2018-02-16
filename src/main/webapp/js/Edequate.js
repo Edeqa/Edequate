@@ -671,6 +671,81 @@ function Edequate(options) {
         return keys;
     }
 
+    function require2(names, context) {
+        if(names.constructor === String) {
+            names = [names];
+        }
+        var instanceNames = [];
+        var instances = {};
+        var returned = new EPromise();
+        var count = 0;
+        var max = names.length;
+        while(names.length) {
+            var name = names.shift();
+
+            var origin = name;
+            var parts = name.split("/");
+            var filename = parts[parts.length-1];
+            var onlyname = filename.split(".")[0];
+            instanceNames.push(onlyname);
+            var needInstantiate = false;
+            if(filename == onlyname && parts[1] === "js") {
+                needInstantiate = true;
+                name += ".js";
+            }
+
+            var options = {
+                src: name,
+                origin: origin,
+                module: name,
+                instance: needInstantiate ? onlyname : null,
+                async: true,
+                defer: true,
+                onload: function(e) {
+                    count++;
+                    var a;
+                    if(this.instance && window[this.instance] && window[this.instance].constructor === Function) {
+                        try {
+                            a = new window[this.instance](context);
+                            a.moduleName = this.instance;
+                            a.module = this.module;
+                            a.origin = this.origin;
+                            instances[this.instance] = a;
+                        } catch(e) {
+                            returned.onRejected(ERRORS.INVALID_MODULE, this.instance, e);
+                        }
+//                    } else {
+//                        returned.onRejected(ERRORS.NOT_AN_OBJECT, this.instance, e);
+//                        return;
+                    }
+                    if(count == max) {
+                        if(Object.keys(instances).length == 1) {
+                            returned.onResolved(instances[instanceNames[0]]);
+                        } else {
+                            var values = [];
+                            for(var i in instanceNames) {
+                                if(instances[instanceNames[i]]) {
+                                    values.push(instances[instanceNames[i]]);
+                                } else {
+                                    break;
+                                }
+                            }
+                            returned.onResolved(...values);
+                        }
+                    }
+                },
+                onerror: function(e) {
+                    returned.onRejected(ERRORS.NOT_EXISTS, this.instance, e);
+                }
+            }
+            create(HTML.SCRIPT, options, document.head);
+        }
+
+        return returned;
+    }
+
+
+
     function require(name, context) {
         var origin = name;
         var returned = new EPromise();
@@ -2993,6 +3068,7 @@ function Edequate(options) {
     this.progress = new Progress();
     this.put = put;
     this.require = require;
+    this.require2 = require2;
     this.save = save;
     this.saveForContext = saveForContext;
     this.table = Table;

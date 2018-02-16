@@ -12,7 +12,7 @@ function Main(u) {
     var self = this;
 
     this.start = function(startOptions) {
-        startOptions = startOptions || {};
+        self.startOptions = startOptions = startOptions || {};
 
         var info = startOptions.info;
         var type = startOptions.type || "main";
@@ -32,7 +32,7 @@ function Main(u) {
         self.selectLang = u.create(HTML.SELECT, { className: "actionbar-select-lang changeable", value: u.load("lang"), onchange: function(e, event) {
             var lang = (this.value || navigator.language).toLowerCase().slice(0,2);
             u.save("lang", lang);
-            self.loadResources("main.json");
+            self.loadResources(type + ".json");
             self.holder.resume();
         }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
@@ -48,7 +48,7 @@ function Main(u) {
             }
         });
 
-        this.loadResources("main.json", function() {
+        this.loadResources(type + ".json", function() {
             var dialogAbout = u.dialog({
                 className: "about-dialog",
                 itemsClassName: "about-dialog-items",
@@ -123,7 +123,7 @@ function Main(u) {
                                     self.actionbar.toggleSize(false);
 
                                     self.content.scrollTop = 0;
-                                    window.history.pushState({}, null, "/main/" + this.type);
+                                    window.history.pushState({}, null, "/"+type+"/" + this.type);
 
                                     self.drawer.close();
                                     self.holder = this;
@@ -144,7 +144,7 @@ function Main(u) {
                         } else {
                             var urlPath = new URL(window.location);
                             var path = urlPath.path.split("/");
-                            if(path.length > 2 && path[1].toLowerCase() == "main") {
+                            if(path.length > 2 && path[1].toLowerCase() == type) {
                                 path = path[2];
                             } else {
                                 path = "home";
