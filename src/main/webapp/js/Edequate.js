@@ -5,6 +5,7 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
+ * 6 - Drawer.headerSubtitle
  * 5 - onload initialization; DRAWER constants
  * 4 - table#options#caption.selectable=true/false
  * 3 - sprintf redesigned; table#options.sort=true/false; table#options.filter=true/false;
@@ -671,7 +672,7 @@ function Edequate(options) {
         return keys;
     }
 
-    function require2(names, context) {
+    function require(names, context) {
         if(names.constructor === String) {
             names = [names];
         }
@@ -746,7 +747,7 @@ function Edequate(options) {
 
 
 
-    function require(name, context) {
+    function require2(name, context) {
         var origin = name;
         var returned = new EPromise();
         var parts = name.split("/");
@@ -2100,7 +2101,7 @@ function Edequate(options) {
             if(options.onprimaryclick) options.onprimaryclick();
         }}, layout.header);
         layout.headerTitle = create(HTML.DIV, {className:"drawer-header-title changeable", innerHTML:options.title}, layout.header);
-        create(HTML.DIV, {className:"drawer-header-subtitle changeable", innerHTML: options.subtitle }, layout.header);
+        layout.headerSubtitle = create(HTML.DIV, {className:"drawer-header-subtitle changeable", innerHTML: options.subtitle }, layout.header);
 
 
         layout.menu = create(HTML.DIV, {className:"drawer-menu changeable"}, layout);
@@ -2144,11 +2145,12 @@ function Edequate(options) {
             var th = create(HTML.DIV, {
                 className:"drawer-menu-item",
                 onclick: function (event) {
-                    var self = this;
-                    setTimeout(function () {
-                        callback.call(self,event);
-                        layout.blur();
-                    }, 100);
+                    callback.call(this,event);
+                    layout.blur();
+//                    setTimeout(function () {
+//                        callback.call(self,event);
+//                        layout.blur();
+//                    }, 100);
                 },
                 hide: function() {
                     this.classList.add("hidden");

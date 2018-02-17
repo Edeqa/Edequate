@@ -11,11 +11,11 @@
 function Main(u) {
     var self = this;
 
-    this.start = function(startOptions) {
-        self.startOptions = startOptions = startOptions || {};
+    this.start = function(arguments) {
+        self.arguments = arguments = arguments || {};
 
-        var info = startOptions.info;
-        var type = startOptions.type || "main";
+        var info = arguments.info;
+        var type = arguments.type || "main";
 
         self.layout = u.create(HTML.DIV, {className:"layout"}, document.body);
         self.actionbar = u.actionBar({
@@ -48,6 +48,40 @@ function Main(u) {
             }
         });
 
+        this.turn = function(holderType, options) {
+            self.drawer.toggleSize(false);
+            self.actionbar.toggleSize(false);
+
+            self.content.scrollTop = 0;
+
+            self.drawer.close();
+            if(u.eventBus.holders[holderType]) {
+                self.holder = u.eventBus.holders[holderType];
+                if(!self.holder.preventState) {
+                    window.history.pushState({}, null, "/"+type+"/" + holderType);
+                }
+            } else {
+                console.error("Holder not defined:", holderType);
+                self.holder = u.eventBus.holders[404];
+            }
+
+            if(self.holder && self.holder.resume) {
+                if(options && options instanceof Array) {
+                    self.holder.resume(...options);
+                } else if(options && options.constructor === String) {
+                    self.holder.resume(options);
+                } else {
+                    self.holder.resume();
+                }
+                if(!self.holder.preventState) {
+                    self.actionbar.setTitle(self.holder.title);
+                    self.drawer.headerPrimary.innerHTML = self.holder.title;
+                }
+            } else {
+                window.location = "/";
+            }
+        }
+
         this.loadResources(type + ".json", function() {
             var dialogAbout = u.dialog({
                 className: "about-dialog",
@@ -61,9 +95,21 @@ function Main(u) {
                         u.create(HTML.DIV)
                             .place(HTML.DIV, { innerHTML: "Copyright &copy;2017-18 Edeqa" })
                             .place(HTML.A, {className: "about-dialog-edeqa-link", href: "http://www.edeqa.com", target: "_blank", rel:"noopener", innerHTML: "http://www.edeqa.com" })
-                    ]
-                    },
-                    { enclosed: true, label: u.lang.legal_information || "Legal information", body: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+                    ]},
+                    {
+                        enclosed: true,
+                        label: u.lang.legal_information || "Legal information",
+                        body: u.lang.loading.outerHTML,
+                        className: "dialog-about-terms",
+                        onopen: function(e) {
+                            var lang = (u.load("lang") || navigator.language).toLowerCase().slice(0,2);
+                            u.post("/rest/content", {resource: "legal-information.html", locale: lang}).then(function(xhr){
+                                e.body.innerHTML = xhr.response;
+                            }).catch(function(error, json) {
+                                e.body.innerHTML = u.lang.error;
+                            });
+                        }
+                    }
                 ],
                 positive: {
                     label: u.lang.ok
@@ -102,7 +148,6 @@ function Main(u) {
             }, document.body);
 
             u.getJSON("/rest/" + type).then(function(json){
-                console.log("holders", json);
                 for(var i in json.message) {
                     json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
                 }
@@ -112,26 +157,14 @@ function Main(u) {
                         u.byId("loading-dialog-progress").innerHTML = Math.ceil(loaded / json.message.length * 100) + "%";
                     },
                     onstart: function () {
-                        console.log(u.eventBus.holders)
+                        console.log("Holders started:", u.eventBus.holders);
                     },
                     onsuccess: function () {
                         for(var x in u.eventBus.holders) {
                             var holder = u.eventBus.holders[x];
                             if(holder.menu) {
                                 self.drawer.add(holder.category, holder.type, holder.menu, holder.icon, function(){
-                                    self.drawer.toggleSize(false);
-                                    self.actionbar.toggleSize(false);
-
-                                    self.content.scrollTop = 0;
-                                    window.history.pushState({}, null, "/"+type+"/" + this.type);
-
-                                    self.drawer.close();
-                                    self.holder = this;
-                                    if(this.resume) {
-                                        this.resume();
-                                    }
-
-                                    self.actionbar.setTitle(this.title);
+                                    self.turn(this.type);
                                     return false;
                                 }.bind(holder));
                             }
@@ -144,16 +177,17 @@ function Main(u) {
                         } else {
                             var urlPath = new URL(window.location);
                             var path = urlPath.path.split("/");
+                            var holderType;
                             if(path.length > 2 && path[1].toLowerCase() == type) {
-                                path = path[2];
-                            } else {
-                                path = "home";
-                           }
-                           var holder = u.eventBus.holders[path.toLowerCase()];
-                           if(!holder) holder = u.eventBus.holders[404];
-                           self.actionbar.setTitle(holder.title);
-                           self.holder = holder;
-                           holder.resume();
+                                path.shift();path.shift();
+                                holderType = path.shift();
+                            }
+                            holderType = holderType || "home";
+                           self.turn(holderType, path);
+//                           self.actionbar.setTitle(holder.title);
+//                           self.holder = holder;
+//
+//                           holder.resume(path);
                         }
                         u.byId("loading-dialog").hide();
 
