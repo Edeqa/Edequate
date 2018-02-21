@@ -57,7 +57,7 @@ and into your build.gradle:
        data-export-constants="true">
     </script>
 
-`data-variable` [optional] defines the global variable that will be defined with `new Edequate()` after loading.
+`data-variable` [optional] defines the global variable that will be defined with `new Edequate()` after loading. Default value is `edequate`. I.e. you may access to this instantiated object using `window.edequate` (or by your choice) variable.
 
 `data-callback` [optional] defines the function that will be called after loading; it may use `data-variable`.
 
