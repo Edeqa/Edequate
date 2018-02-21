@@ -163,10 +163,10 @@ function Main(u) {
                         for(var x in u.eventBus.holders) {
                             var holder = u.eventBus.holders[x];
                             if(holder.menu) {
-                                self.drawer.add(holder.category, holder.type, holder.menu, holder.icon, function(){
+                                self.drawer.add({section: holder.category, id: holder.type, name: holder.menu, icon: holder.icon, priority: holder.priority, callback: function(){
                                     self.turn(this.type);
                                     return false;
-                                }.bind(holder));
+                                }.bind(holder)});
                             }
                         }
 

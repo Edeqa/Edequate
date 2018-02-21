@@ -745,56 +745,6 @@ function Edequate(options) {
         return returned;
     }
 
-
-
-    function require2(name, context) {
-        var origin = name;
-        var returned = new EPromise();
-        var parts = name.split("/");
-        var filename = parts[parts.length-1];
-        var onlyname = filename.split(".")[0];
-        var needInstantiate = false;
-        if(!filename.match(/\.js$/) && parts[1] === "js") {
-            needInstantiate = true;
-            name += ".js";
-        }
-
-        var options = {
-            src: name,
-            origin:origin,
-            module:name,
-            instance: needInstantiate ? onlyname : null,
-            async: true,
-            defer: true,
-            onload: function(e) {
-                var a;
-                if(needInstantiate) {
-                    if(this.instance && window[this.instance] && window[this.instance].constructor === Function) {
-                        try {
-                            a = new window[this.instance](context);
-                            a.moduleName = this.instance;
-                            a.module = this.module;
-                            a.origin = this.origin;
-                        } catch(e) {
-                            returned.onRejected(ERRORS.INVALID_MODULE, this.instance, e);
-                        }
-                    } else {
-                        returned.onRejected(ERRORS.NOT_AN_OBJECT, this.instance, e);
-                        return;
-                    }
-                }
-                returned.onResolved(a);
-            },
-            onerror: function(e) {
-                returned.onRejected(ERRORS.NOT_EXISTS, this.instance, e);
-            }
-        };
-
-        create(HTML.SCRIPT, options, document.head);
-
-        return returned;
-    }
-
     function _stringify(key, value) {
         return typeof value === "function" ? value.toString() : value;
     }
@@ -1613,7 +1563,6 @@ function Edequate(options) {
                 className:"dialog-resize",
                 onmousedown: function(e) {
                     if(e.button != 0) return;
-//                    var position = dialog.getBoundingClientRect();
                     var position = { left: dialog.offsetLeft, top: dialog.offsetTop, width: dialog.offsetWidth, height: dialog.offsetHeight };
                     var offset = [ e.clientX, e.clientY ];
                     var moved = false;
@@ -1650,40 +1599,6 @@ function Edequate(options) {
 
         return dialog;
     }
-
-    /*
-        function sprintf() {
-            var a = this, b;
-            if(arguments[0].constructor === Array || arguments[0].constructor === Object) {
-                arguments = arguments[0];
-            }
-            var args = [];
-            for(var i = 0; i < arguments.length; i++) {
-                args.push(arguments[i]);
-            }
-            return this.replace(/%[\d\.]*[sdf]/g, function(pattern){
-                var value = args.shift();
-                var tokens = pattern.match(/^%(0)?([\d\.]*)(.)$/);
-                switch(tokens[3]) {
-                case "d":
-                    if(tokens[1] == "0") {
-                        var length = +tokens[2];
-                        var string = value.toString();
-                        value = "0".repeat(length - string.length) + string;
-                    }
-                    break;
-                case "f":
-                    break;
-                case "s":
-                    break;
-                default:
-                    console.error("Unknown pattern: " + tokens[0]);
-                }
-                return value;
-            });
-        }
-        this.sprintf = sprintf;
-    */
 
     function cloneAsObject(object) {
         var o = {};
@@ -1761,9 +1676,6 @@ function Edequate(options) {
                 var nodes = document.getElementsByTagName(HTML.SPAN);
                 console.warn("Switching to resources \""+(options.locale || options.resources)+"\".");
                 for(var x in json) {
-//                            if(Lang.$origin[x]) {
-//                                console.warn("Overrided resources: " + x + ":", json[x] ? (json[x].length > 30 ? json[x].substr(0,30)+"..." : json[x]) : "" );
-//                            }
                     Lang(x, json[x]);
                 }
                 for(var i = 0; i < nodes.length; i++) {
@@ -1806,9 +1718,6 @@ function Edequate(options) {
 
         } else if(options.resources.resources) {
             for(var x in options.resources.resources) {
-                if(Lang[x]) {
-//                    console.warn("Overrided resources: " + x + ":", holder.resources[x] ? (holder.resources[x].length > 30 ? holder.resources[x].substr(0,30)+"..." : holder.resources[x]) : "" );
-                }
                 Lang(x, options.resources.resources[x]);
             }
         }
@@ -1941,7 +1850,6 @@ function Edequate(options) {
         };
 
         var swipeHolder = function(e){
-
             var touch;
             if(e.changedTouches) touch = e.changedTouches[0];
 
@@ -1972,7 +1880,6 @@ function Edequate(options) {
 
                 if(delta <= -10) {
                     layout.style.left = delta + "px";
-//                    e.preventDefault();
                     e.stopPropagation();
                 }
             };
@@ -2036,7 +1943,6 @@ function Edequate(options) {
         }, {passive: true});
 
         var swipeRightHolder = function(e){
-
             var touch;
             if(e.changedTouches) touch = e.changedTouches[0];
 
@@ -2136,11 +2042,18 @@ function Edequate(options) {
             }
         }
 
-        layout.add = function(section,id,name,icon,callback) {
-            layout.items[id] = {
-                name:name,
-                icon:icon,
-                callback:callback
+        layout.add = function(options) {
+            options = options || {};
+            options.section = options.section || DRAWER.SECTION_PRIMARY;
+            if(!options.id) throw Error("ID is not defined for drawer item:", options);
+            if(!options.name) throw Error("ID is not defined for drawer item:", options);
+            var callback = options.callback || function() {console.warn("Callback is not defined for drawer item:", options);}
+            options.priority = options.priority || 0;
+
+            layout.items[options.id] = {
+                name: options.name,
+                icon: options.icon,
+                callback: callback
             };
             var th = create(HTML.DIV, {
                 className:"drawer-menu-item",
@@ -2193,24 +2106,37 @@ function Edequate(options) {
                 hideBadge: function() {
                     this.badge.hide();
                     this.badge.innerHTML = "0";
-                }
-            }, layout.sections[section].lastChild);
+                },
+                priority: options.priority
+            });
 
-            if(icon) {
-                if(icon.constructor === String) {
-                    create(HTML.DIV, { className:"icon drawer-menu-item-icon notranslate", innerHTML: icon }, th);
+            var added = false;
+            for(var i = 0; i < layout.sections[options.section].lastChild.childNodes.length; i++) {
+                var node = layout.sections[options.section].lastChild.childNodes[i];
+                if(node.priority < options.priority) {
+                    node.parentNode.insertBefore(th, node);
+                    added = true;
+                }
+            }
+            if(!added) {
+                layout.sections[options.section].lastChild.appendChild(th);
+            }
+
+            if(options.icon) {
+                if(options.icon.constructor === String) {
+                    create(HTML.DIV, { className:"icon drawer-menu-item-icon notranslate", innerHTML: options.icon }, th);
                 } else {
-                    th.appendChild(icon);
+                    th.appendChild(options.icon);
                 }
             }
             if(callback) {
                 create(HTML.DIV, {
                     className: "drawer-menu-item-label",
-                    innerHTML: name
+                    innerHTML: options.name
                 }, th);
             }
             th.badge = create(HTML.DIV, { className:"drawer-menu-item-badge hidden", innerHTML: "0" }, th);
-            layout.sections[section].show();
+            layout.sections[options.section].show();
 
             return th;
         };
@@ -3070,7 +2996,6 @@ function Edequate(options) {
     this.progress = new Progress();
     this.put = put;
     this.require = require;
-    this.require2 = require2;
     this.save = save;
     this.saveForContext = saveForContext;
     this.table = Table;
@@ -3092,13 +3017,11 @@ function Edequate(options) {
     if(node) {
         window.addEventListener("load", function() {
             var data = node.dataset || {};
-            var variable = data.variable;
-            if(variable) {
-                var origin = data.origin;
-                var context = data.context;
-                var exportConstants = data.exportConstants == "true";
-                window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
-            }
+            var variable = data.variable || "edequate";
+            var origin = data.origin;
+            var context = data.context;
+            var exportConstants = data.exportConstants == "true";
+            window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
             var callback = data.callback;
             if(callback) {
                 try {
