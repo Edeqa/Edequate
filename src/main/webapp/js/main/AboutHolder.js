@@ -11,6 +11,7 @@ function AboutHolder(main) {
     this.title = u.lang.about;
     this.menu = u.lang.about;
     this.icon = "info_outline";
+    this.priority = -10;
 
     this.start = function() {
         console.log("Starting HomeHolder");

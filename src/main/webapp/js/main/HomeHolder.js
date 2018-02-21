@@ -11,6 +11,7 @@ function HomeHolder(main) {
     this.title = u.lang.home;
     this.menu = u.lang.home;
     this.icon = "home";
+    this.priority = 10;
 
     this.start = function() {
         console.log("Starting HomeHolder");
