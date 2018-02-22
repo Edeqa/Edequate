@@ -17,6 +17,11 @@ function Main(u) {
         var info = arguments.info;
         var type = arguments.type || "main";
 
+        self.history = new HoldersHistory(type);
+        window.addEventListener("popstate", function(event) {
+            self.history.goBack();
+        });
+
         self.layout = u.create(HTML.DIV, {className:"layout"}, document.body);
         self.actionbar = u.actionBar({
             title: "Loading...",
@@ -66,7 +71,7 @@ function Main(u) {
             }
 
             if(self.holder && self.holder.resume) {
-                if(options && options instanceof Array) {
+                if(options && options instanceof Array && options.length > 0) {
                     self.holder.resume(...options);
                 } else if(options && options.constructor === String) {
                     self.holder.resume(options);
@@ -74,6 +79,7 @@ function Main(u) {
                     self.holder.resume();
                 }
                 if(!self.holder.preventState) {
+                    self.history.add(holderType, options);
                     self.actionbar.setTitle(self.holder.title);
                     self.drawer.headerPrimary.innerHTML = self.holder.title;
                 }
@@ -183,7 +189,7 @@ function Main(u) {
                                 holderType = path.shift();
                             }
                             holderType = holderType || "home";
-                           self.turn(holderType, path);
+                            self.turn(holderType, path);
 //                           self.actionbar.setTitle(holder.title);
 //                           self.holder = holder;
 //
@@ -242,4 +248,32 @@ function Main(u) {
         });
     }
 
+    function HoldersHistory(type) {
+        var history = u.load("history:" + type) || [];
+
+        this.add = function(holderType, options) {
+            var previousState = history[history.length - 1] || {};
+            var newState = {h: holderType, o:options};
+            if(JSON.stringify(newState) != JSON.stringify(previousState)) {
+                history.push(newState);
+                while(history.length > 100) {
+                    history.shift();
+                }
+                u.save("history:" + type, history);
+            }
+        }
+
+        this.goBack = function() {
+            history.pop();
+            var state = history.pop();
+            if(state) {
+                self.turn(state.h, state.o);
+            }
+        }
+
+        this.clear = function() {
+            history = [];
+            u.save("history:" + type);
+        }
+    }
 }

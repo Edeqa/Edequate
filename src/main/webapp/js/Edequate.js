@@ -695,7 +695,7 @@ function Edequate(options) {
                 name += ".js";
             }
 
-            var options = {
+            create(HTML.SCRIPT, {
                 src: name,
                 origin: origin,
                 module: name,
@@ -738,10 +738,8 @@ function Edequate(options) {
                 onerror: function(e) {
                     returned.onRejected(ERRORS.NOT_EXISTS, this.instance, e);
                 }
-            }
-            create(HTML.SCRIPT, options, document.head);
+            }, document.head);
         }
-
         return returned;
     }
 
