@@ -81,7 +81,7 @@ function Main(u) {
                 if(!self.holder.preventState) {
                     self.history.add(holderType, options);
                     self.actionbar.setTitle(self.holder.title);
-                    self.drawer.headerPrimary.innerHTML = self.holder.title;
+                    u.lang.updateNode(self.drawer.headerPrimary, self.holder.title);
                 }
             } else {
                 window.location = "/";

@@ -1899,7 +1899,9 @@ function Edequate(options) {
                 this.style.left = "";
                 this.scrollTop = 0;
                 this.menu.scrollTop = 0;
-                this.focus();
+                setTimeout(function() {
+                    this.focus();
+                }.bind(this), 0);
             },
             close: function(){
                 this.classList.remove("drawer-open");
@@ -1979,11 +1981,6 @@ function Edequate(options) {
             window.addEventListener("touchmove", moveHolder, {passive: true});
 
         };
-        //var layoutSwipeCatcher = create(HTML.DIV, {
-        //    className: "drawer-catcher",
-        //    ontouchstart: swipeRightHolder
-        //});
-        //layout.parentNode.insertBefore(layoutSwipeCatcher, layout);
 
         var layoutHeaderHolder = create(HTML.DIV, {
             className: "drawer-header-holder changeable",

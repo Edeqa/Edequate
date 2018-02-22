@@ -276,6 +276,20 @@ body {
         bottom: 16px;
     }
 
+    .drawer-header-holder {
+        position: fixed;
+        left: 0;
+        top: 0;
+        background: transparent !important;
+        width: 10px !important;
+        min-width: 10px !important;
+        max-width: 10px !important;
+        height: 100%;
+        z-index: 10000;
+        display: block;
+        visibility: visible;
+    }
+
     .content {
         max-width: 100%;
     }

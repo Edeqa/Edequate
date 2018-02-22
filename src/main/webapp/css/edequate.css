@@ -515,9 +515,6 @@ button:active {
     z-index: 10000;
     flex: 0 0 240px;
 }
-.drawer-catcher {
-    display: none;
-}
 .drawer-collapsed {
     max-width: 40px;
     min-width: 40px;
@@ -1165,7 +1162,7 @@ button:active {
         display: none;
         z-index: 10000;
     }
-    .drawer-catcher, .drawer-header-holder {
+    .drawer-header-holder {
         position: fixed;
         left: 0;
         top: 0;
