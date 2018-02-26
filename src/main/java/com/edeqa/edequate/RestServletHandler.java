@@ -30,6 +30,7 @@ import static com.edeqa.edequate.abstracts.AbstractAction.FALLBACK;
 import static com.edeqa.edequate.abstracts.AbstractAction.STATUS;
 import static com.edeqa.edequate.abstracts.AbstractAction.STATUS_ERROR;
 
+@SuppressWarnings("unchecked")
 public class RestServletHandler extends AbstractServletHandler {
 
     private final EventBus<AbstractAction> restBus;

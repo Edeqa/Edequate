@@ -18,7 +18,7 @@ function Main(u) {
         var type = arguments.type || "main";
 
         self.history = new HoldersHistory(type);
-        window.addEventListener("popstate", function(event) {
+        window.addEventListener("popstate", function() {
             self.history.goBack();
         });
 
@@ -34,7 +34,7 @@ function Main(u) {
             }
         }, document.body);
 
-        self.selectLang = u.create(HTML.SELECT, { className: "actionbar-select-lang changeable", value: u.load("lang"), onchange: function(e, event) {
+        self.selectLang = u.create(HTML.SELECT, { className: "actionbar-select-lang changeable", value: u.load("lang"), onchange: function() {
             var lang = (this.value || navigator.language).toLowerCase().slice(0,2);
             u.save("lang", lang);
             self.loadResources(type + ".json");
@@ -47,6 +47,7 @@ function Main(u) {
             var count = 1;
             self.selectLang.place(HTML.OPTION, { innerHTML: "Default", value: "en" });
             for(var x in json.message) {
+                // noinspection JSUnfilteredForInLoop
                 self.selectLang.place(HTML.OPTION, { innerHTML: json.message[x], value: x });
                 if(u.load("lang") === x) self.selectLang.selectedIndex = count;
                 count++;
@@ -62,6 +63,7 @@ function Main(u) {
             self.drawer.close();
             if(u.eventBus.holders[holderType]) {
                 self.holder = u.eventBus.holders[holderType];
+                /** @namespace self.holder.preventState */
                 if(!self.holder.preventState) {
                     window.history.pushState({}, null, "/"+type+"/" + holderType);
                 }
@@ -72,7 +74,7 @@ function Main(u) {
 
             if(self.holder && self.holder.resume) {
                 if(options && options instanceof Array && options.length > 0) {
-                    self.holder.resume(...options);
+                    self.holder.resume.apply(self.holder, options);
                 } else if(options && options.constructor === String) {
                     self.holder.resume(options);
                 } else {
@@ -86,7 +88,7 @@ function Main(u) {
             } else {
                 window.location = "/";
             }
-        }
+        };
 
         this.loadResources(type + ".json", function() {
             var dialogAbout = u.dialog({
@@ -112,6 +114,7 @@ function Main(u) {
                             u.post("/rest/content", {resource: "legal-information.html", locale: lang}).then(function(xhr){
                                 e.body.innerHTML = xhr.response;
                             }).catch(function(error, json) {
+                                console.error(error, json);
                                 e.body.innerHTML = u.lang.error;
                             });
                         }
@@ -134,7 +137,7 @@ function Main(u) {
                 footer: {
                     className: "drawer-footer-label",
                     content: [
-                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: "Powered with Edequate", onclick: function(e){
+                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: "Powered with Edequate", onclick: function(){
                             dialogAbout.open();
                         }})
                     ]
@@ -155,6 +158,8 @@ function Main(u) {
 
             u.getJSON("/rest/" + type).then(function(json){
                 for(var i in json.message) {
+                    // noinspection JSUnfilteredForInLoop
+                    /** @namespace json.extra */
                     json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
                 }
                 u.eventBus.register(json.message, {
@@ -184,7 +189,7 @@ function Main(u) {
                             var urlPath = new URL(window.location);
                             var path = urlPath.path.split("/");
                             var holderType;
-                            if(path.length > 2 && path[1].toLowerCase() == type) {
+                            if(path.length > 2 && path[1].toLowerCase() === type) {
                                 path.shift();path.shift();
                                 holderType = path.shift();
                             }
@@ -224,6 +229,7 @@ function Main(u) {
                     }
                 }
             };
+            // noinspection JSUnusedGlobalSymbols
             self.content = u.create(HTML.DIV, {className:"content", onscroll: switchFullDrawer}, self.layout);
 
             self.buttonScrollTop = u.create(HTML.BUTTON, {
@@ -246,7 +252,7 @@ function Main(u) {
             locale: lang,
             callback: callback
         });
-    }
+    };
 
     function HoldersHistory(type) {
         var history = u.load("history:" + type) || [];
@@ -254,14 +260,14 @@ function Main(u) {
         this.add = function(holderType, options) {
             var previousState = history[history.length - 1] || {};
             var newState = {h: holderType, o:options};
-            if(JSON.stringify(newState) != JSON.stringify(previousState)) {
+            if(JSON.stringify(newState) !== JSON.stringify(previousState)) {
                 history.push(newState);
                 while(history.length > 100) {
                     history.shift();
                 }
                 u.save("history:" + type, history);
             }
-        }
+        };
 
         this.goBack = function() {
             history.pop();
@@ -269,7 +275,7 @@ function Main(u) {
             if(state) {
                 self.turn(state.h, state.o);
             }
-        }
+        };
 
         this.clear = function() {
             history = [];

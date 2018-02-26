@@ -5,7 +5,7 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
- * 6 - Drawer.headerSubtitle
+ * 6 - Drawer.headerSubtitle; require with caching
  * 5 - onload initialization; DRAWER constants
  * 4 - table#options#caption.selectable=true/false
  * 3 - sprintf redesigned; table#options.sort=true/false; table#options.filter=true/false;
@@ -21,10 +21,10 @@
 function Edequate(options) {
     var self = this;
 
-    this.version = 5;
+    this.version = 6;
 
     var HTML = {
-        DIV: "div",
+        DIV:"div",
         LINK:"link",
         A:"a",
         IMG:"img",
@@ -103,13 +103,6 @@ function Edequate(options) {
         INVALID_MODULE: 32
     };
 
-    /*var DRAWER = {
-        SECTION_COMMUNICATION: 2,
-        SECTION_NAVIGATION: 5,
-        SECTION_VIEWS: 6,
-        SECTION_MAP: 7,
-        SECTION_MISCELLANEOUS: 8,
-    };*/
     var DRAWER = {
         SECTION_PRIMARY: 0,
         SECTION_SUMMARY: 1,
@@ -151,6 +144,7 @@ function Edequate(options) {
         this.hostname = h.shift();
         this.port = h.shift();
         if(!this.port) this.port = "";
+        // noinspection JSPotentiallyInvalidUsageOfThis
         this.origin = this.protocol + "//" + this.host;
 
         p = p.split("#");
@@ -162,7 +156,6 @@ function Edequate(options) {
         this.path = p.join("?");
         this.password = "";
         this.username = "";
-
     };
 
     HTMLElement.prototype.show = function(animatedType) {
@@ -333,6 +326,7 @@ function Edequate(options) {
         clearTimeout(this._updateTask);
         options = options || {};
         this.innerHTML = update;
+        /** @namespace options.noflick */
         if(!options.noflick) {
             this.classList.add("changed");
             this._updateTask = setTimeout(function(){this.classList.remove("changed")}.bind(this), 5000);
@@ -378,8 +372,8 @@ function Edequate(options) {
         Object.defineProperty(String.prototype, "sprintf", {
             enumerable: false,
             value: function() {
-                var a = this, b;
                 if(arguments[0].constructor === Array || arguments[0].constructor === Object) {
+                    // noinspection JSUnusedAssignment
                     arguments = arguments[0];
                 }
                 var args = [];
@@ -466,7 +460,7 @@ function Edequate(options) {
     };
 
     function create(name, properties, appendTo, position) {
-        var el,namespace,replace = false;
+        var el,replace = false;
         if(name && typeof name === "object") {
             position = appendTo;
             appendTo = properties;
@@ -478,7 +472,7 @@ function Edequate(options) {
 
         if(properties && properties.xmlns) {
             el = document.createElementNS(properties.xmlns, name);
-            namespace = properties.xmlns;
+            // namespace = properties.xmlns;
         } else {
             el = document.createElement(name);
         }
@@ -550,19 +544,23 @@ function Edequate(options) {
                     } else if(x.toLowerCase() === "onlongclick" && properties[x]) {
                         var mousedown,mouseup;
                         el.longclickFunction = properties[x];
+                        mouseup = function(){
+                            clearTimeout(el.longTask);
+                        };
                         mousedown = function(evt){
                             clearTimeout(el.longTask);
+                            // noinspection JSReferencingMutableVariableFromClosure
                             el.addEventListener("mouseup", mouseup, {passive: true});
+                            // noinspection JSReferencingMutableVariableFromClosure
                             el.addEventListener("touchend", mouseup, {passive: true});
                             el.longTask = setTimeout(function(){
+                                // noinspection JSReferencingMutableVariableFromClosure
                                 el.removeEventListener("mouseup", mouseup, {passive: true});
+                                // noinspection JSReferencingMutableVariableFromClosure
                                 el.removeEventListener("touchend", mouseup, {passive: true});
                                 el.longTask = -1;
                                 el.longclickFunction(evt);
                             }, 500);
-                        };
-                        mouseup = function(){
-                            clearTimeout(el.longTask);
                         };
                         el.addEventListener("mousedown", mousedown, {passive: true});
                         el.addEventListener("touchstart", mousedown, {passive: true});
@@ -582,7 +580,7 @@ function Edequate(options) {
                         }
                     } else if(x.indexOf("on") === 0) {
                         var action = x.substr(2).toLowerCase();
-                        var call = properties[x];
+                        call = properties[x];
                         if(call) {
                             el.addEventListener(action, call, {passive: true});
                         }
@@ -596,6 +594,7 @@ function Edequate(options) {
                             if(value.constructor === Object) {
                                 var v = "";
                                 for(var y in value) {
+                                    // noinspection JSUnfilteredForInLoop
                                     v += normalizeName(y) + ": " + value[y] + "; ";
                                 }
                                 value = v;
@@ -627,7 +626,6 @@ function Edequate(options) {
                 appendTo.appendChild(el);
             }
         }
-
         return el;
     }
     create.variables = {};
@@ -646,7 +644,8 @@ function Edequate(options) {
             element = element.replace(/<.*?>/g, "");
             return element;
         } else if(element instanceof Array || element instanceof Object) {
-            for(var i in element) {
+            for(i in element) {
+                // noinspection JSUnfilteredForInLoop
                 element[i] = clear(element[i])
             }
             return element;
@@ -667,6 +666,7 @@ function Edequate(options) {
     function keys(o) {
         var keys = [];
         for(var x in o) {
+            // noinspection JSUnfilteredForInLoop
             keys.push(x);
         }
         return keys;
@@ -681,6 +681,42 @@ function Edequate(options) {
         var returned = new EPromise();
         var count = 0;
         var max = names.length;
+
+        function instantiate() {
+            count++;
+            if(this.instance && window[this.instance] && window[this.instance].constructor === Function) {
+                try {
+                    var self = this;
+                    var a = new window[this.instance](context);
+                    a.moduleName = self.instance;
+                    a.module = self.module;
+                    a.origin = self.origin;
+                    instances[self.instance] = a;
+                } catch(e) {
+                    returned.onRejected(ERRORS.INVALID_MODULE, this.instance, e);
+                }
+//            } else {
+//                returned.onRejected(ERRORS.NOT_AN_OBJECT, this.instance, e);
+//                return;
+            }
+            if(count === max) {
+                if(Object.keys(instances).length === 1) {
+                    returned.onResolved(instances[instanceNames[0]]);
+                } else {
+                    var values = [];
+                    for(var i in instanceNames) {
+                        if(instances[instanceNames[i]]) {
+                            values.push(instances[instanceNames[i]]);
+                        } else {
+                            break;
+                        }
+                    }
+                    returned.onResolved.apply(returned, values);
+                }
+            }
+            return true;
+        }
+
         while(names.length) {
             var name = names.shift();
 
@@ -690,55 +726,29 @@ function Edequate(options) {
             var onlyname = filename.split(".")[0];
             instanceNames.push(onlyname);
             var needInstantiate = false;
-            if(filename == onlyname && parts[1] === "js") {
+            if(filename === onlyname && parts[1] === "js") {
                 needInstantiate = true;
                 name += ".js";
             }
-
-            create(HTML.SCRIPT, {
+            var options = {
                 src: name,
                 origin: origin,
                 module: name,
                 instance: needInstantiate ? onlyname : null,
                 async: true,
                 defer: true,
-                onload: function(e) {
-                    count++;
-                    var a;
-                    if(this.instance && window[this.instance] && window[this.instance].constructor === Function) {
-                        try {
-                            a = new window[this.instance](context);
-                            a.moduleName = this.instance;
-                            a.module = this.module;
-                            a.origin = this.origin;
-                            instances[this.instance] = a;
-                        } catch(e) {
-                            returned.onRejected(ERRORS.INVALID_MODULE, this.instance, e);
-                        }
-//                    } else {
-//                        returned.onRejected(ERRORS.NOT_AN_OBJECT, this.instance, e);
-//                        return;
-                    }
-                    if(count == max) {
-                        if(Object.keys(instances).length == 1) {
-                            returned.onResolved(instances[instanceNames[0]]);
-                        } else {
-                            var values = [];
-                            for(var i in instanceNames) {
-                                if(instances[instanceNames[i]]) {
-                                    values.push(instances[instanceNames[i]]);
-                                } else {
-                                    break;
-                                }
-                            }
-                            returned.onResolved(...values);
-                        }
-                    }
+                onload: function() {
+                    instantiate.call(this);
                 },
                 onerror: function(e) {
                     returned.onRejected(ERRORS.NOT_EXISTS, this.instance, e);
                 }
-            }, document.head);
+            };
+            if(needInstantiate && window[onlyname]) {
+                setTimeout(instantiate.bind(options), 0);
+            } else {
+                create(HTML.SCRIPT, options, document.head);
+            }
         }
         return returned;
     }
@@ -966,12 +976,13 @@ function Edequate(options) {
                 }
 
                 x = create(HTML.SELECT, {
-                    type:item.type,
-                    className:"dialog-item-input-select" + optionalClassName(item.className),
-                    tabindex: i,
-                    value:item.value || ""
+                    type: item.type,
+                    className: "dialog-item-input-select" + optionalClassName(item.className),
+                    tabindex: item.tabindex || -1,
+                    value: item.value || ""
                 }, div);
                 for(var y in item.values) {
+                    // noinspection JSUnfilteredForInLoop
                     create(HTML.OPTION, {value:y, innerHTML:item.values[y], selected: item.default == y}, x);
                 }
             } else {
@@ -979,6 +990,7 @@ function Edequate(options) {
                 div = create(HTML.DIV, {className:item.itemClassName, onclick: function(){this.lastChild.click();}});
 
                 if(item.label) {
+                    /** @namespace item.labelClassName */
                     labelOptions = {
                         className:"dialog-item-label" + optionalClassName(item.labelClassName)
                     };
@@ -997,7 +1009,7 @@ function Edequate(options) {
                 if(item.type.toLowerCase() === HTML.TEXTAREA) type = HTML.TEXTAREA;
                 else if(item.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
 
-                item.tabindex = i;
+                item.tabindex = item.tabindex || -1;
                 item.className = "dialog-item-input-"+item.type + optionalClassName(item.className);
                 if(item.onclick && item.type !== HTML.BUTTON) {
                     var a = item.onclick;
@@ -1127,6 +1139,7 @@ function Edequate(options) {
         dialog.open = function(event){
             var dialog = this;
             if(dialog.opened) return;
+            /** @namespace dialog.options.queue */
             if(dialog.options.queue) {
                 if(performingDialogInQueue) {
                     if(dialog.options.priority) {
@@ -1159,7 +1172,6 @@ function Edequate(options) {
             if(dialog.options.onopen) dialog.options.onopen.call(dialog,dialog.items,event);
             if(dialog.offsetHeight) {
                 if(dialog.options.timeout) {
-                    var atom = dialog.options.timeout / 16;
                     var current = 0;
                     dialog.intervalTask = setInterval(function(){
                         current += 16;
@@ -1173,8 +1185,6 @@ function Edequate(options) {
             } else {
                 dialog.close();
             }
-
-//            window.history.pushState(null, document.title, location.href);
             if(options.title && options.title.button == defaultCloseButton) {
                 window.addEventListener("popstate", backButtonAction, {passive: true});
             }
@@ -1200,7 +1210,7 @@ function Edequate(options) {
 
             window.removeEventListener("popstate", backButtonAction);
 
-            if(dialog.options.onclose) dialog.options.onclose.call(dialog,dialog.items,event);
+            if(dialog.options.onclose) dialog.options.onclose.call(dialog, dialog.items, event);
 
             if(dialog.options.queue) {
                 performingDialogInQueue = null;
@@ -1209,7 +1219,6 @@ function Edequate(options) {
                     dialog.open();
                 }
             }
-
         };
         dialog.addEventListener("keyup", function(e) {
             if(e.keyCode === 27) {
@@ -1225,7 +1234,7 @@ function Edequate(options) {
         var defaultCloseButton = {
             icon: " ",
             className: "",
-            onclick: function(e){
+            onclick: function(){
                 dialog.close();
                 if(options.negative && options.negative.onclick) options.negative.onclick.call(dialog,dialog.items);
             }
@@ -1247,12 +1256,12 @@ function Edequate(options) {
             var titleLayout = create(HTML.DIV, {
                 className:"dialog-title" + optionalClassName(options.title.className),
                 onmousedown: function(e) {
-                    if(e.button != 0) return;
+                    if(e.button !== 0) return;
 //                    var position = dialog.getBoundingClientRect();
                     var position = { left: dialog.offsetLeft, top: dialog.offsetTop, width: dialog.offsetWidth, height: dialog.offsetHeight };
                     var offset = [ e.clientX, e.clientY ];
                     var moved = false;
-                    function mouseup(e){
+                    function mouseup(){
                         window.removeEventListener(HTML.MOUSEUP, mouseup, false);
                         window.removeEventListener(HTML.MOUSEMOVE, mousemove, false);
                         var id = options.id || (options.title.label && (options.title.label.dataset.lang ? options.title.label.dataset.lang : options.title.label));
@@ -1274,9 +1283,8 @@ function Edequate(options) {
                     }
                     window.addEventListener(HTML.MOUSEUP, mouseup, {passive: true});
                     window.addEventListener(HTML.MOUSEMOVE, mousemove, {passive: true});
-                    // e.preventDefault();
                 },
-                ondblclick: function(e) {
+                ondblclick: function() {
                     var id = options.id || (options.title.label && (options.title.label.dataset.lang ? options.title.label.dataset.lang : options.title.label));
                     save("dialog:"+id+":left");
                     save("dialog:"+id+":top");
@@ -1309,7 +1317,7 @@ function Edequate(options) {
                 dialog.filterButton = create(HTML.DIV, {
                     className: "icon dialog-filter-button notranslate",
                     innerHTML: "search",
-                    onclick: function(evt) {
+                    onclick: function() {
                         dialog.filterButton.hide();
                         dialog.filterInput.classList.remove("hidden");
                         dialog.filterInput.focus();
@@ -1535,6 +1543,7 @@ function Edequate(options) {
             item._onclick = item.onclick;
             item.onclick = function(event){
                 if(item._onclick) item._onclick.call(dialog,dialog.items,event);
+                /** @namespace item.dismiss */
                 if(item.dismiss === undefined || item.dismiss) dialog.close();
             };
             item.innerHTML = item.label;
@@ -1553,18 +1562,20 @@ function Edequate(options) {
             dialog.setNegative(options.negative);
         }
 
+        /** @namespace options.help */
         if(options.help) {
             create(HTML.BUTTON, {className:"dialog-help-button icon", onclick:options.help, innerHTML:"help_outline"}, dialog);
         }
+        /** @namespace options.resizeable */
         if(options.resizeable) {
             create(HTML.DIV, {
                 className:"dialog-resize",
                 onmousedown: function(e) {
-                    if(e.button != 0) return;
+                    if(e.button !== 0) return;
                     var position = { left: dialog.offsetLeft, top: dialog.offsetTop, width: dialog.offsetWidth, height: dialog.offsetHeight };
                     var offset = [ e.clientX, e.clientY ];
                     var moved = false;
-                    function mouseup(e){
+                    function mouseup(){
                         window.removeEventListener(HTML.MOUSEUP, mouseup, false);
                         window.removeEventListener(HTML.MOUSEMOVE, mousemove, false);
                         if((options.id || options.title.label) && moved) {
@@ -1601,9 +1612,12 @@ function Edequate(options) {
     function cloneAsObject(object) {
         var o = {};
         for(var x in object) {
+            // noinspection JSUnfilteredForInLoop
             if(!object[x] || object[x].constructor === String || object[x].constructor === Number) {
+                // noinspection JSUnfilteredForInLoop
                 o[x] = object[x] || "";
             } else {
+                // noinspection JSUnfilteredForInLoop
                 o[x] = cloneAsObject(object[x]);
             }
         }
@@ -1674,6 +1688,7 @@ function Edequate(options) {
                 var nodes = document.getElementsByTagName(HTML.SPAN);
                 console.warn("Switching to resources \""+(options.locale || options.resources)+"\".");
                 for(var x in json) {
+                    // noinspection JSUnfilteredForInLoop
                     Lang(x, json[x]);
                 }
                 for(var i = 0; i < nodes.length; i++) {
@@ -1716,6 +1731,7 @@ function Edequate(options) {
 
         } else if(options.resources.resources) {
             for(var x in options.resources.resources) {
+                // noinspection JSUnfilteredForInLoop
                 Lang(x, options.resources.resources[x]);
             }
         }
@@ -1782,7 +1798,7 @@ function Edequate(options) {
      */
     function getJSON(url, body) {
         var callbacks = {
-            then: function(json,xhr) { console.warn("Define .then(callback(json,xhr){...})")},
+            then: function(json,xhr) { console.warn("Define .then(callback(json,xhr){...}) for", json, xhr)},
             "catch": function(code, xhr) { console.error(code, xhr); }
         };
         var catchFunction = function(callback) {
@@ -1820,32 +1836,6 @@ function Edequate(options) {
         } else {
             collapsed = load(options.collapsed);
         }
-
-        var footerButtonCollapseDiv;
-        var footerButtonExpandDiv;
-
-        var footerButtonSvg = {
-            xmlns:"http://www.w3.org/2000/svg",
-            viewbox:"2 2 14 14",
-            fit: "",
-            version:"1.1",
-            width: 24,
-            height: 24,
-            preserveAspectRatio: "xMidYMid meet",
-            className: "icon drawer-menu-item-icon drawer-footer-button",
-            onclick: function(e) {
-                save(options.collapsed, !collapsed);
-                this.replaceChild(collapsed ? footerButtonExpandDiv : footerButtonCollapseDiv, this.firstChild);
-            }
-        };
-        var footerButtonCollapsePath = {
-            xmlns:"http://www.w3.org/2000/svg",
-            d: "M5.46 8.846l3.444-3.442-1.058-1.058-4.5 4.5 4.5 4.5 1.058-1.057L5.46 8.84zm7.194 4.5v-9h-1.5v9h1.5z"
-        };
-        var footerButtonExpandPath = {
-            xmlns:"http://www.w3.org/2000/svg",
-            d: "M5.46 8.846l3.444-3.442-1.058-1.058-4.5 4.5 4.5 4.5 1.058-1.057L5.46 8.84zm7.194 4.5v-9h-1.5v9h1.5z"
-        };
 
         var swipeHolder = function(e){
             var touch;
@@ -1895,13 +1885,14 @@ function Edequate(options) {
                 return true;
             },
             open: function() {
-                this.classList.add("drawer-open");
-                this.style.left = "";
-                this.scrollTop = 0;
-                this.menu.scrollTop = 0;
+                var self = this;
+                self.classList.add("drawer-open");
+                self.style.left = "";
+                self.scrollTop = 0;
+                self.menu.scrollTop = 0;
                 setTimeout(function() {
                     this.focus();
-                }.bind(this), 0);
+                }.bind(self), 0);
             },
             close: function(){
                 this.classList.remove("drawer-open");
@@ -1922,6 +1913,7 @@ function Edequate(options) {
                 layout.toggleButton.innerHTML = collapsed ? "last_page" : "first_page";
                 layout.classList[collapsed ? "add" : "remove"]("drawer-collapsed");
                 layoutHeaderHolder.classList[collapsed ? "add" : "remove"]("drawer-collapsed");
+                /** @namespace options.ontogglesize */
                 if(options.ontogglesize) options.ontogglesize(force);
             },
             ontouchstart: swipeHolder
@@ -1947,7 +1939,6 @@ function Edequate(options) {
             if(e.changedTouches) touch = e.changedTouches[0];
 
             var startX = e.pageX || touch.pageX;
-            var lastX = startX;
             var lastDelta = 0;
 
             layout.style.transition = "none";
@@ -1997,7 +1988,7 @@ function Edequate(options) {
                 onclick: options.logo.onclick
             }, layout.header);
         }
-        layout.headerPrimary = create(HTML.DIV, {className:"drawer-header-name changeable", onclick: function(evt){
+        layout.headerPrimary = create(HTML.DIV, {className:"drawer-header-name changeable", onclick: function(){
             layout.blur();
             if(options.onprimaryclick) options.onprimaryclick();
         }}, layout.header);
@@ -2015,6 +2006,7 @@ function Edequate(options) {
                 layout.sections[i].firstChild.place({className: "drawer-menu-section-label", innerHTML: options.sections[i]});
             }
 
+            /** @namespace options.collapsible */
             if(options.collapsible && options.collapsible.indexOf(i) >= 0) {
                 var sectionCollapsed = load("drawer:section:collapsed:"+i);
                 if(sectionCollapsed) layout.sections[i].lastChild.hide();
@@ -2042,7 +2034,7 @@ function Edequate(options) {
             options.section = options.section || DRAWER.SECTION_PRIMARY;
             if(!options.id) throw Error("ID is not defined for drawer item:", options);
             if(!options.name) throw Error("ID is not defined for drawer item:", options);
-            var callback = options.callback || function() {console.warn("Callback is not defined for drawer item:", options);}
+            var callback = options.callback || function() {console.warn("Callback is not defined for drawer item:", options);};
             options.priority = options.priority || 0;
 
             layout.items[options.id] = {
@@ -2138,10 +2130,7 @@ function Edequate(options) {
 
         layout.footer = create(HTML.DIV, { className:"drawer-footer"}, layout);
 
-        footerButtonCollapseDiv = create(HTML.PATH, footerButtonCollapsePath);
-        footerButtonExpandDiv = create(HTML.PATH, footerButtonExpandPath);
-
-        layout.toggleButton = create(HTML.DIV, {className: "icon drawer-menu-item-icon drawer-footer-button notranslate", innerHTML: collapsed ? "last_page" : "first_page", onclick: function(e){
+        layout.toggleButton = create(HTML.DIV, {className: "icon drawer-menu-item-icon drawer-footer-button notranslate", innerHTML: collapsed ? "last_page" : "first_page", onclick: function(){
             layout.toggleSize();
         }}, layout.footer);
         if(options.footer) {
@@ -2170,6 +2159,7 @@ function Edequate(options) {
     }
 
     function notification(options) {
+        /** @namespace options.persistent */
         if(!options.persistent && !document.hidden) return;
         if(load("main:disable_notification")) return;
         if (!("Notification" in window)) {
@@ -2184,7 +2174,7 @@ function Edequate(options) {
                         notif = new Notification(title, options);
                     } catch (e) {
                         if(e.name === "TypeError") {
-                            navigator.serviceWorker.register("/sw.js").then(function(e){
+                            navigator.serviceWorker.register("/sw.js").then(function(){
                                 navigator.serviceWorker.ready.then(function(registration) {
                                     notif = registration.showNotification(title, options);
                                 });
@@ -2307,7 +2297,9 @@ function Edequate(options) {
                     for(var i in table.rows) {
                         var valid = true;
                         for(var j in table.filter.options) {
+                            // noinspection JSUnfilteredForInLoop
                             if(table.filter.options[j]) {
+                                // noinspection JSUnfilteredForInLoop
                                 valid = table.filter.options[j].call(table,table.rows[i]);
                             }
                             if(!valid) break;
@@ -2343,6 +2335,7 @@ function Edequate(options) {
                 res.table = table;
 
                 for(var i in row.cells) {
+                    // noinspection JSUnfilteredForInLoop
                     var item = row.cells[i];
                     item.className = "td" + optionalClassName(item.className);
                     item.innerHTML = item.innerHTML || item.label;
@@ -2361,7 +2354,9 @@ function Edequate(options) {
                     table.filter();
                     for(var i in table._sorts) {
                         try{
+                            // noinspection JSUnfilteredForInLoop
                             var index = table._sorts[i].index;
+                            // noinspection JSUnfilteredForInLoop
                             table.head.cells[index].sort = table._sorts[i].mode;
                             table.sort(index);
                         } catch(e) {
@@ -2397,8 +2392,10 @@ function Edequate(options) {
             sorts: function(options) {
                 if(!options) return table._sorts;
                 for(var i in table._sorts) {
+                    // noinspection JSUnfilteredForInLoop
                     if(table._sorts[i].index == options.index) {
-                        table._sorts.splice(i,1);
+                        // noinspection JSUnfilteredForInLoop
+                        table._sorts.splice(i, 1);
                         break;
                     }
                 }
@@ -2431,9 +2428,9 @@ function Edequate(options) {
 //            var div = create(HTML.DIV, {className:"tr"}, table.head);
             var selectable = false;
             for(var i in options.caption.items) {
+                // noinspection JSUnfilteredForInLoop
                 var item = options.caption.items[i];
                 item.className = "th" + optionalClassName(item.className);
-                var innerHTML = item.innerHTML;
                 delete item.innerHTML;
                 if(options.sort === undefined || options.sort) {
                     item.index = i;
@@ -2455,7 +2452,7 @@ function Edequate(options) {
                     };
                 }
                 if(item.selectable) {
-                    item.onlongclick = function(e) {
+                    item.onlongclick = function() {
                         this.selectButton.click();
                     }
                 }
@@ -2469,11 +2466,9 @@ function Edequate(options) {
                     cell.selectButton = create(HTML.DIV, {
                         className:"icon table-select notranslate",
                         innerHTML:"expand_more",
-                        onclick: function(e){
+                        onclick: function(){
                             var cell = this.parentNode;
-
                             progressHolder.show();
-
                             setTimeout(function() {
                                 var selected = {};
                                 var index = this.parentNode.index;
@@ -2487,13 +2482,17 @@ function Edequate(options) {
                                 var menuItems = [{
                                     type: HTML.DIV,
                                     innerHTML: "&#150;",
-                                    onclick: function(e) {
+                                    onclick: function() {
                                         table.saveOption("selectable");
                                         delete table.selectable;
                                         for(var i in table.head.cells) {
+                                            // noinspection JSUnfilteredForInLoop
                                             if (table.head.cells[i].selectButton) {
+                                                // noinspection JSUnfilteredForInLoop
                                                 table.head.cells[i].selectButton.classList.remove("table-select-active");
+                                                // noinspection JSUnfilteredForInLoop
                                                 table.filter.remove(table.head.cells[i].filter);
+                                                // noinspection JSUnfilteredForInLoop
                                                 delete table.head.cells[i].filter;
                                             }
                                         }
@@ -2504,15 +2503,15 @@ function Edequate(options) {
                                     menuItems.push({
                                         type: HTML.DIV,
                                         innerHTML: x,
-                                        onclick: function(e) {
-
+                                        onclick: function() {
+                                            var self = this;
                                             if(table.selectable) {
                                                 table.head.cells[table.selectable.index].selectButton.classList.remove("table-select-active");
                                             }
                                             table.selectable = { index: index, string: this.innerHTML};
                                             table.saveOption("selectable", table.selectable);
 
-                                            if(cell.filter) table.filter.remove(this.parentNode.filter);
+                                            if(cell.filter) table.filter.remove(self.parentNode.filter);
                                             var filterSelected = function(row) {
                                                 if(row.table && row.table.selectable) {
                                                     return row.cells[row.table.selectable.index].innerHTML == row.table.selectable.string;
@@ -2568,7 +2567,6 @@ function Edequate(options) {
             }
 
             if(options.filter === undefined || options.filter) {
-
                 table.filterLayout = create(HTML.DIV, {
                     className: "table-filter"
                 }, table);
@@ -2612,8 +2610,8 @@ function Edequate(options) {
                         this.focus();
                     },
                     _filter: function(row) {
-                        var contains = false;
                         for(var i in row.cells) {
+                            // noinspection JSUnfilteredForInLoop
                             if(row.cells[i].innerText.toLowerCase().indexOf(this.filterInput.value.toLowerCase()) >= 0) return true;
                         }
                         return false;
@@ -2624,7 +2622,6 @@ function Edequate(options) {
                         } else {
                             table.filterClear.hide();
                         }
-                        var counter = 0;
                         table.filter.add(table.filterInput._filter);
                         table.filter();
                     }
@@ -2650,7 +2647,11 @@ function Edequate(options) {
             function checkIfFilterInList(filter) {
                 if(!filter) return true;
                 for(var i in table.filter.options) {
-                    if(table.filter.options[i].toString() == filter.toString()) return i;
+                    // noinspection JSUnfilteredForInLoop
+                    if(table.filter.options[i].toString() === filter.toString()) {
+                        // noinspection JSUnfilteredForInLoop
+                        return i;
+                    }
                 }
                 return -1;
             }
@@ -2691,6 +2692,7 @@ function Edequate(options) {
             }
         }
 
+        /** @namespace options.bodyClassName */
         table.body = create(HTML.DIV, {className:"tbody" + optionalClassName(options.bodyClassName)}, table);
 
         table.placeholder = create(HTML.DIV, {
@@ -2799,6 +2801,7 @@ function Edequate(options) {
     function EventBus() {
         this.events = window.EVENTS = window.EVENTS || {};
 
+        // noinspection JSUnusedGlobalSymbols
         this.eventHolder = function() {
             return {
                 onEvent:function(){console.warn("DEFINE onEvent(event, object)")},
@@ -2812,16 +2815,14 @@ function Edequate(options) {
         this.modules = [];
         this.holders = {};
         this.register = function(module, options) {
-            var promise = new EPromise();
-            if(module.constructor == Array) {
+            if(module.constructor === Array) {
                 for(var i in module) {
+                    // noinspection JSUnfilteredForInLoop
                     self.eventBus.register(module[i], options);
                 }
             } else {
                 self.eventBus.origins.push(module);
-                var file = module;
-
-                require(file, options.context).then(function(e) {
+                require(module, options.context).then(function(e) {
                     loaded++;
                     if(e && e.moduleName && e.type) {
 //                        self.eventBus.holders[e.type.toLowerCase()] = e;
@@ -2886,6 +2887,7 @@ function Edequate(options) {
             }
         };
 
+        // noinspection JSUnusedGlobalSymbols
         this.chain = function(callback) {
             for(var i in self.eventBus.modules) {
                 try{
@@ -2951,6 +2953,7 @@ function Edequate(options) {
     }
 
     this.HTML = HTML;
+    // noinspection JSUnusedGlobalSymbols
     this.ERRORS = ERRORS;
     this.DRAWER = DRAWER;
     this.HIDING = HIDING;
@@ -3015,6 +3018,7 @@ function Edequate(options) {
             var variable = data.variable || "edequate";
             var origin = data.origin;
             var context = data.context;
+            // noinspection EqualityComparisonWithCoercionJS
             var exportConstants = data.exportConstants == "true";
             window[variable] = new Edequate({exportConstants:exportConstants, origin:origin, context:context});
             var callback = data.callback;

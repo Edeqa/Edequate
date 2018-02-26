@@ -14,11 +14,11 @@ function AboutHolder(main) {
     this.priority = -10;
 
     this.start = function() {
-        console.log("Starting HomeHolder");
+        console.log("Starting AboutHolder");
     };
 
     this.resume = function() {
-        console.log("Resuming HomeHolder");
+        console.log("Resuming AboutHolder");
         u.progress.show(u.lang.loading);
 
         this.title = u.lang.about;
@@ -34,18 +34,4 @@ function AboutHolder(main) {
             u.progress.hide();
         });
     }
-
-    this.onEvent = function(event, object) {
-        console.log("onEvent", event, object);
-//        switch(event) {
-//            case EVENTS.API:
-//                console.log("INDEX HOME");
-//                u.byId("content").innerHTML = u.lang.api_body.innerHTML;
-//                u.byId("content").classList.add("content-api");
-//                if(object) object();
-//                break;
-//        }
-        return true;
-    }
-
 }

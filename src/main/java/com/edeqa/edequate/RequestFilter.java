@@ -17,7 +17,7 @@ public class RequestFilter implements Filter {
 //    private final static Logger LOGGER = Logger.getLogger(RequestFilter.class.getSimpleName());
 
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
+    public void init(final FilterConfig filterConfig) {
         Misc.log("Request", "initialized");
     }
 
