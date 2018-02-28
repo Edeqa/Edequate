@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    compile "com.github.edeqa:helpers:1.5"
+    compile "com.github.edeqa:helpers:+"
 //    compile fileTree(dir: 'libs', include: ['*.jar'])
     providedCompile 'javax.servlet:javax.servlet-api:+'
     compile 'org.json:json:20171018'

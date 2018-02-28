@@ -195,13 +195,8 @@ function Main(u) {
                             }
                             holderType = holderType || "home";
                             self.turn(holderType, path);
-//                           self.actionbar.setTitle(holder.title);
-//                           self.holder = holder;
-//
-//                           holder.resume(path);
                         }
                         u.byId("loading-dialog").hide();
-
                     },
                     onerror: function (code, origin, error) {
                         console.error(code, origin, error);
@@ -211,7 +206,6 @@ function Main(u) {
 
             var switchFullDrawer = function(){
                 if(self.content.scrollTop > 200) {
-
                     self.drawer.toggleSize(true);
                     self.actionbar.toggleSize(true);
 //                    clearTimeout(self.buttonScrollTop.hideTimeout);

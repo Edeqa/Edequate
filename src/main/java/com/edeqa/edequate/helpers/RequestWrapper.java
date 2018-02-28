@@ -268,8 +268,8 @@ public class RequestWrapper {
     public String getRequestedHost() {
         String host = null;
         if(mode == MODE_SERVLET) {
-            Thread.dumpStack();
-            return null;
+            System.out.println("REQUESTEDHOST:"+httpServletRequest.getLocalAddr()+":"+httpServletRequest.getRemoteHost());
+            return httpServletRequest.getLocalAddr();
         } else if(mode == MODE_EXCHANGE) {
             host = httpExchange.getRequestHeaders().getFirst(HttpHeaders.HOST);
             if(host == null) {

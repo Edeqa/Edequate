@@ -15,7 +15,6 @@ import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -57,8 +56,11 @@ public class Content extends FileRestAction {
                 String lastModified = dateFormat.format(getWebPath().path().lastModified());
                 requestWrapper.setHeader(HttpHeaders.LAST_MODIFIED, lastModified);
             }
-//            requestWrapper.setHeader(HttpHeaders.CACHE_CONTROL, OPTIONS.isDebugMode() ? "max-age=10" : "max-age=60");
-            requestWrapper.setHeader(HttpHeaders.CACHE_CONTROL, "max-age=10");
+            int maxAge = 10;
+//            if(mimeType.fetchStatic()) {
+//                maxAge = 1800;
+//            }
+            requestWrapper.setHeader(HttpHeaders.CACHE_CONTROL, "public, max-age=" + maxAge);
 
             if(getWebPath() != null) {
                 String etag = "W/1976-" + Math.abs(("" + getWebPath().path().lastModified()).hashCode());
