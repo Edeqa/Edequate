@@ -1,4 +1,4 @@
-package com.edeqa.edequate.rest;
+package com.edeqa.edequate.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
