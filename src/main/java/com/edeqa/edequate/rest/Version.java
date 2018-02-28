@@ -6,6 +6,7 @@ import com.edeqa.edequate.helpers.RequestWrapper;
 import org.json.JSONObject;
 
 @SuppressWarnings("unused")
+@RestAction(web="/rest/version")
 public class Version extends AbstractAction<RequestWrapper> {
 
     public static final String TYPE = "/rest/version";

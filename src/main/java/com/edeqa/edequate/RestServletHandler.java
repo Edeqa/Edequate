@@ -4,10 +4,11 @@ package com.edeqa.edequate;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.rest.Resource;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
+import com.edeqa.edequate.rest.Resource;
+import com.edeqa.edequate.rest.RestAction;
 import com.edeqa.edequate.rest.Version;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
@@ -52,6 +53,9 @@ public class RestServletHandler extends AbstractServletHandler {
         registerAction(new Locales());
         registerAction(new Version());
         registerAction(new Nothing());
+
+        populateRestActions("com.edeqa.edequate.rest");
+
     }
 
     @Override
@@ -77,6 +81,9 @@ public class RestServletHandler extends AbstractServletHandler {
 
         for (Class item : classes) {
             try {
+                System.out.println("ANNOTATION:"+item.isAnnotationPresent(RestAction.class));
+
+
                 Object instance = item.newInstance();
                 if (instance instanceof AbstractAction) {
                     registerAction((AbstractAction<RequestWrapper>) instance);
