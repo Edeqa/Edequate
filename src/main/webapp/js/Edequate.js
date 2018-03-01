@@ -1264,7 +1264,7 @@ function Edequate(options) {
                     function mouseup(){
                         window.removeEventListener(HTML.MOUSEUP, mouseup, false);
                         window.removeEventListener(HTML.MOUSEMOVE, mousemove, false);
-                        var id = options.id || (options.title.label && (options.title.label.dataset.lang ? options.title.label.dataset.lang : options.title.label));
+                        var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
                         if(id && moved) {
                             if(dialog.style.left) save("dialog:"+id+":left", dialog.style.left);
                             if(dialog.style.top) save("dialog:"+id+":top", dialog.style.top);
@@ -1285,7 +1285,7 @@ function Edequate(options) {
                     window.addEventListener(HTML.MOUSEMOVE, mousemove, {passive: true});
                 },
                 ondblclick: function() {
-                    var id = options.id || (options.title.label && (options.title.label.dataset.lang ? options.title.label.dataset.lang : options.title.label));
+                    var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
                     save("dialog:"+id+":left");
                     save("dialog:"+id+":top");
                     save("dialog:"+id+":width");
@@ -1579,7 +1579,7 @@ function Edequate(options) {
                         window.removeEventListener(HTML.MOUSEUP, mouseup, false);
                         window.removeEventListener(HTML.MOUSEMOVE, mousemove, false);
                         if((options.id || options.title.label) && moved) {
-                            var id = options.id || (options.title.label && (options.title.label.dataset.lang ? options.title.label.dataset.lang : options.title.label));
+                            var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
                             if(dialog.style.width) save("dialog:"+id+":width", dialog.style.width);
                             if(dialog.style.height) save("dialog:"+id+":height", dialog.style.height);
                         }
