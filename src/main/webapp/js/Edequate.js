@@ -2611,7 +2611,6 @@ function Edequate(options) {
                     },
                     _filter: function(row) {
                         for(var i in row.cells) {
-                            // noinspection JSUnfilteredForInLoop
                             if(row.cells[i].innerText.toLowerCase().indexOf(this.filterInput.value.toLowerCase()) >= 0) return true;
                         }
                         return false;
