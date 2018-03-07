@@ -43,6 +43,7 @@ public class RestServletHandler extends AbstractServletHandler {
     public void useDefault() {
         registerAction(new Resource().setChildDirectory("content").setActionName("/rest/content"));
         registerAction(new Resource().setChildDirectory("resources").setActionName("/rest/resources"));
+        registerAction(new Resource().setChildDirectory("data").setActionName("/rest/data"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {

@@ -69,7 +69,7 @@ function Main(u) {
                 }
             } else {
                 console.error("Holder not defined:", holderType);
-                self.holder = u.eventBus.holders[404];
+                self.holder = u.eventBus.holders.pages;//[404];
             }
 
             if(self.holder && self.holder.resume) {
@@ -171,6 +171,7 @@ function Main(u) {
                         console.log("Holders started:", u.eventBus.holders);
                     },
                     onsuccess: function () {
+                        u.eventBus.fire("loaded");
                         for(var x in u.eventBus.holders) {
                             var holder = u.eventBus.holders[x];
                             if(holder.menu) {

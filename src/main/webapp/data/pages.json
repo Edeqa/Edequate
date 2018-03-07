@@ -1,0 +1,32 @@
+[
+  [
+    {
+      "category": 0,
+      "icon": "home",
+      "menu": "Home",
+      "priority": 10,
+      "resource": "main-home.html",
+      "title": "Home",
+      "type": "home"
+    }
+  ],
+  [
+    {
+      "category": 9,
+      "icon": "help",
+      "menu": "Privacy Policy",
+      "resource": "privacy-policy.html",
+      "title": "Privacy Policy",
+      "type": "privacy"
+    },
+    {
+      "category": 9,
+      "icon": "info_outline",
+      "menu": "About",
+      "priority": -10,
+      "resource": "main-about.html",
+      "title": "About",
+      "type": "about"
+    }
+  ]
+]

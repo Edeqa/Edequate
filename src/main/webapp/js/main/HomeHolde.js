@@ -15,7 +15,7 @@ function HomeHolder(main) {
 
     this.start = function() {
         console.log("Starting HomeHolder");
-    }
+    };
 
     this.resume = function() {
         console.log("Resuming HomeHolder");
