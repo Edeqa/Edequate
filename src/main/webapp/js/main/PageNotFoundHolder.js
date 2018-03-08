@@ -14,10 +14,9 @@ function PageNotFoundHolder(main) {
 
     this.start = function() {
         console.log("Starting PageNotFoundHolder");
-    }
+    };
 
     this.resume = function() {
-        console.log("Resuming PageNotFoundHolder");
         u.progress.show(u.lang.loading);
 
         this.title = u.lang.page_not_found;

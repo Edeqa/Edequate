@@ -15,9 +15,9 @@ function Main(u) {
         self.arguments = arguments = arguments || {};
 
         var info = arguments.info;
-        var type = arguments.type || "main";
+        self.mainType = arguments.type || "main";
 
-        self.history = new HoldersHistory(type);
+        self.history = new HoldersHistory(self.mainType);
         window.addEventListener("popstate", function() {
             self.history.goBack();
         });
@@ -37,7 +37,7 @@ function Main(u) {
         self.selectLang = u.create(HTML.SELECT, { className: "actionbar-select-lang changeable", value: u.load("lang"), onchange: function() {
             var lang = (this.value || navigator.language).toLowerCase().slice(0,2);
             u.save("lang", lang);
-            self.loadResources(type + ".json");
+            self.loadResources(self.mainType + ".json");
             self.holder.resume();
         }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
@@ -65,11 +65,12 @@ function Main(u) {
                 self.holder = u.eventBus.holders[holderType];
                 /** @namespace self.holder.preventState */
                 if(!self.holder.preventState) {
-                    window.history.pushState({}, null, "/"+type+"/" + holderType);
+                    window.history.pushState({}, null, "/" + self.mainType + "/" + holderType);
                 }
             } else {
-                console.error("Holder not defined:", holderType);
-                self.holder = u.eventBus.holders.pages;//[404];
+                console.log("Passing '" + holderType + "' to PagesHolder");
+                self.holder = u.eventBus.holders["$pages"];//[404];
+                options = [holderType];
             }
 
             if(self.holder && self.holder.resume) {
@@ -90,7 +91,7 @@ function Main(u) {
             }
         };
 
-        this.loadResources(type + ".json", function() {
+        this.loadResources(self.mainType + ".json", function() {
             var dialogAbout = u.dialog({
                 className: "about-dialog",
                 itemsClassName: "about-dialog-items",
@@ -156,11 +157,14 @@ function Main(u) {
                 }
             }, document.body);
 
-            u.getJSON("/rest/" + type).then(function(json){
+            u.getJSON("/rest/" + self.mainType).then(function(json){
                 for(var i in json.message) {
                     // noinspection JSUnfilteredForInLoop
                     /** @namespace json.extra */
                     json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
+                }
+                if(json.message.indexOf("/js/main/PagesHolder") < 0) {
+                    json.message.push("/js/main/PagesHolder");
                 }
                 u.eventBus.register(json.message, {
                     context: self,
@@ -190,7 +194,7 @@ function Main(u) {
                             var urlPath = new URL(window.location);
                             var path = urlPath.path.split("/");
                             var holderType;
-                            if(path.length > 2 && path[1].toLowerCase() === type) {
+                            if(path.length > 2 && path[1].toLowerCase() === self.mainType) {
                                 path.shift();path.shift();
                                 holderType = path.shift();
                             }

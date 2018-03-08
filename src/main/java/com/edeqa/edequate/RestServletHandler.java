@@ -50,6 +50,12 @@ public class RestServletHandler extends AbstractServletHandler {
                 return name.contains("Holder");
             }
         }).setChildDirectory("js/main").setActionName("/rest/main"));
+        registerAction(new Files().setFilenameFilter(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.contains("pages-");
+            }
+        }).setChildDirectory("data").setActionName("/rest/data/types"));
         registerAction(new Locales());
         registerAction(new Version());
         registerAction(new Nothing());

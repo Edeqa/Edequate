@@ -8,20 +8,21 @@ function PagesHolder(main) {
 
     var self = this;
     this.category = DRAWER.SECTION_PRIMARY;
-    this.type = "pages";
+    this.type = "$pages";
     // this.title = "Pages";
     // this.menu = "Pages";
     // this.icon = "home";
 
-    this.pages = [];
-    this.structure = {};
+    this.origin = [];
+    this.pages = null;
     this.isInstalled = false;
+    this.currentType = null;
 
 
     this.start = function() {
         console.log("Starting PagesHolder");
-        u.getJSON("/rest/data", {resource: "pages.json"}).then(function(json){
-            self.pages = json;
+        u.getJSON("/rest/data", {resource: "pages-" + main.mainType + ".json"}).then(function(json){
+            self.origin = json;
             setUpPages(json);
         }).catch(function(e,x){
             console.error(e,x);
@@ -29,18 +30,22 @@ function PagesHolder(main) {
     };
 
     this.resume = function(type) {
-        console.log("Resuming PagesHolder");
         u.progress.show(u.lang.loading);
-
-        if(self.structure[type]) {
-            processPage(type);
+        if(type) {
+            this.currentType = type;
         } else {
-            u.getJSON("/rest/data", {resource: "pages.json"}).then(function(json){
-                setUpPages(json, true);
+            type = this.currentType;
+        }
+
+        if(!self.pages) {
+            u.getJSON("/rest/data", {resource: "pages-" + main.mainType + ".json", locale: main.selectLang.value}).then(function(json){
+                setUpPages(json);
                 processPage(type);
             }).catch(function(e,x){
                 console.error(e,x);
             });
+        } else if(self.pages[type]) {
+            processPage(type);
         }
     };
 
@@ -58,23 +63,24 @@ function PagesHolder(main) {
             if (self.isInstalled) return;
             if (pages.constructor === Object) {
                 if (pages.menu) {
-                    console.log("page", pages);
-                    self.structure[pages.type] = pages;
-                    if (!onlyBuildStructure) {
+                    self.pages = self.pages || {};
+                    if(!self.pages[pages.type]) {
+                        self.pages[pages.type] = pages;
                         main.drawer.add({
                             section: pages.category,
                             id: pages.type,
-                            name: pages.menu,
+                            name: u.lang[pages.menu],
                             icon: pages.icon,
                             priority: pages.priority,
                             callback: function () {
+                                main.holder = self;
                                 main.drawer.toggleSize(false);
                                 main.actionbar.toggleSize(false);
 
                                 main.content.scrollTop = 0;
 
                                 main.drawer.close();
-                                window.history.pushState({}, null, "/main/" + this.type);
+                                window.history.pushState({}, null, "/" + main.mainType + "/" + this.type);
                                 self.resume(this.type);
                                 return false;
                             }.bind(pages)
@@ -93,7 +99,26 @@ function PagesHolder(main) {
 
     function processPage(type) {
         try {
-            var page = self.structure[type];
+            var page = self.pages[type];
+            if(!page) {
+                main.holder = u.eventBus.holders[404];
+                // main.turn(404, type);
+                if(main.holder) {
+                    if(type) {
+                        main.holder.resume(type);
+                    } else {
+                        main.holder.resume();
+                    }
+                    // if(!main.holder.preventState) {
+                    //     main.history.add(holderType, options);
+                        main.actionbar.setTitle(main.holder.title);
+                        u.lang.updateNode(main.drawer.headerPrimary, main.holder.title);
+                    // }
+                } else {
+                    window.location = "/";
+                }
+                return;
+            }
 
             u.clear(main.content);
             u.post("/rest/content", {
@@ -114,8 +139,8 @@ function PagesHolder(main) {
                 u.progress.hide();
             });
             main.history.add(self.type, [type]);
-            main.actionbar.setTitle(page.title);
-            u.lang.updateNode(main.drawer.headerPrimary, page.title);
+            main.actionbar.setTitle(u.lang[page.title]);
+            u.lang.updateNode(main.drawer.headerPrimary, u.lang[page.title]);
         } catch(e) {
             console.error(e);
         }

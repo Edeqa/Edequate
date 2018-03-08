@@ -1,17 +1,6 @@
 [
   [
     {
-      "category": 0,
-      "icon": "home",
-      "menu": "Home",
-      "priority": 10,
-      "resource": "main-home.html",
-      "title": "Home",
-      "type": "home"
-    }
-  ],
-  [
-    {
       "category": 9,
       "icon": "help",
       "menu": "Privacy Policy",
