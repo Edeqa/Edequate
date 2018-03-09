@@ -2946,6 +2946,56 @@ function Edequate(options) {
         return menu;
     }
 
+    function Tree(options, appendTo) {
+        options = options || {};
+        options.className = "tree" + optionalClassName(options.className);
+        var items = options.items || [];
+
+        var tree = create(HTML.DIV, {
+            className: options.className,
+            structure: [],
+            raw: {},
+            add: function(leaf) {
+                leaf = leaf || {};
+                leaf.add = function(innerLeaf) {
+                    innerLeaf = innerLeaf || {};
+                    innerLeaf.id = leaf.id + ":" + innerLeaf.id;
+                    return tree.add(innerLeaf);
+                };
+
+                var div = create(HTML.DIV, leaf);
+                if(tree.raw[leaf.id]) {
+                    console.warn("Tree leaf with id '" + leaf.id + "' already exists.");
+                }
+                tree.raw[leaf.id] = div;
+
+                if(leaf.parent) {
+                    tree.raw[leaf.parent].appendChild(div);
+                } else {
+                    tree.appendChild(div);
+                }
+                return div;
+            }
+        });
+        if(appendTo) appendTo.appendChild(tree);
+
+        for(var i in items) {
+            tree.add(items[i])
+        }
+        return tree;
+    }
+
+    function DataSource() {
+        this.json = [];
+        this.owner = null;
+        this.add = function(item) {
+
+        };
+        this.getItem = function() {
+
+        };
+    }
+
 
     function optionalClassName(className) {
         return className ? " " + className : "";
@@ -2997,6 +3047,7 @@ function Edequate(options) {
     this.saveForContext = saveForContext;
     this.table = Table;
     this.toast = new Toast();
+    this.tree = Tree;
 
 }
 (function() {
