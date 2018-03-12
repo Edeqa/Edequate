@@ -333,6 +333,7 @@ button:active {
     padding-top: 5px;
     padding-bottom: 5px;
     width: 50%;
+    flex: 1 1 auto;
     background-color: antiquewhite;
 }
 .dialog-item-input-button {
@@ -353,6 +354,10 @@ button:active {
     padding-bottom: 5px;
     height: 50px;
     width: 50%;
+    flex: 1 1 auto;
+}
+.dialog-item-input-select {
+    flex: 1 1 auto;
 }
 .dialog-item-input-checkbox {
 }
@@ -890,6 +895,39 @@ button:active {
 .td.option input {
     width: 250px;
 }
+
+.tree {
+
+}
+.tree-item {
+    cursor: default;
+}
+.tree-item-icon {
+    display: inline-block;
+    min-width: 20px;
+}
+.tree-item-collapsed .tree-item-icon {
+    transform: rotate(-90deg);
+}
+.tree-item-title {
+    display: inline-flex;
+    align-items: center;
+}
+.tree-item-title div {
+    display: inline-flex;
+    align-items: center;
+}
+.tree-item-indent {
+    display: inline-block;
+    width: 20px;
+    min-width: 20px;
+    max-width: 20px;
+}
+.tree-item-leaves {
+
+}
+
+
 .about-dialog {
     width: 300px;
     max-width: 80%;
@@ -1274,6 +1312,10 @@ button:active {
     }
     .td.th {
         min-width: 40%;
+    }
+
+    .tree-item-title {
+        height: 35px;
     }
 
     /* media specific classes */

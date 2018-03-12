@@ -5,7 +5,8 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
- * 6 - Drawer.headerSubtitle; require with caching
+ * 7 - create(options#content) - if content is defined then just uses it as current HTMLElement; new component - tree
+ * 6 - drawer.headerSubtitle; require with caching
  * 5 - onload initialization; DRAWER constants
  * 4 - table#options#caption.selectable=true/false
  * 3 - sprintf redesigned; table#options.sort=true/false; table#options.filter=true/false;
@@ -470,7 +471,9 @@ function Edequate(options) {
             name = HTML.DIV;
         }
 
-        if(properties && properties.xmlns) {
+        if(properties && properties.content && properties.content instanceof HTMLElement) {
+            el = properties.content;
+        } else if(properties && properties.xmlns) {
             el = document.createElementNS(properties.xmlns, name);
             // namespace = properties.xmlns;
         } else {
@@ -522,8 +525,8 @@ function Edequate(options) {
                         for(var i = 0; i < properties[x].length; i++) {
                             el.appendChild(properties[x][i]);
                         }
-                    } else if(x === "content" && properties[x].constructor !== String) {
-                        el.appendChild(properties[x]);
+                    } else if(x === "content" && properties[x] instanceof HTMLElement) {
+                    //     el.appendChild(properties[x]);
                     } else if(x === "children" && properties[x]) {
                         var nodes = [];
                         if(properties[x] instanceof HTMLElement) {
@@ -613,6 +616,7 @@ function Edequate(options) {
                 el.innerHTML = properties;
             }
         }
+        if(el.classList.contains("hidden")) el.isHidden = true;
         if(appendTo) {
             if(replace) {
                 appendTo.parentNode.replaceChild(el, appendTo);
@@ -1298,7 +1302,7 @@ function Edequate(options) {
                     dialog.style.bottom = "";
                     dialog.adjustPosition();
                 },
-                oncontextmenu: function(e){e.stopPropagation(); e.preventDefault(); return false;}
+                oncontextmenu: function(e){e.stopPropagation(); return false;}
         }, dialog);
             dialog.titleLayout = create(HTML.DIV, {className:"dialog-title-label", innerHTML: options.title.label }, titleLayout);
             dialog.setTitle = function(title) {
@@ -2950,11 +2954,131 @@ function Edequate(options) {
         options = options || {};
         options.className = "tree" + optionalClassName(options.className);
         var items = options.items || [];
+        var hideRoot = options.hideRoot;
+        var expandedInitial = options.expanded;
 
-        var tree = create(HTML.DIV, {
-            className: options.className,
-            structure: [],
-            raw: {},
+        var root = new Leaf(options);
+        root.raw = {};
+
+        function Leaf(options) {
+            options = options || {};
+            var leafOptions = {};
+            leafOptions.id = options.id;
+            delete options.id;
+
+            options.level = options.level || 0;
+            if(hideRoot) options.level --;
+
+            var hidden = !expandedInitial && options.level >= 0;
+            var forced = load("tree:" + leafOptions.id);
+            if(forced) {
+                hidden = forced === 2;
+            }
+
+            leafOptions.className = "tree-item" + optionalClassName(options.className);
+            if(hidden) leafOptions.className += " tree-item-collapsed";
+            delete options.className;
+            leafOptions.level = options.level;
+            leafOptions.priority = options.priority;
+
+            leafOptions.onclick = function(event) {
+                event.stopPropagation();
+                if(this.itemsNode.isHidden) {
+                    this.open();
+                } else {
+                    this.close();
+                }
+            };
+            var leaf = create(HTML.DIV, leafOptions);
+
+            if(options.level >= 0) {
+                var div = create(HTML.DIV, {className:"tree-item-title" + optionalClassName(options.titleClassName)}, leaf);
+                for(var i = 0; i < options.level; i++) {
+                    create(HTML.DIV, {className:"tree-item-indent"}, div);
+                }
+                delete options.level;
+                leaf.iconNode = create(HTML.DIV, {
+                    innerHTML: "",
+                    className: "tree-item-icon icon notranslate"
+                }, div);
+                leaf.titleNode = create(HTML.DIV, options, div);
+                leaf.titleNode.item = leaf;
+            }
+
+            leaf.itemsNode = create(HTML.DIV, {className:"tree-item-leaves" + (hidden ? " hidden" : "")}, leaf);
+
+            leaf.add = function (options) {
+                try {
+                    if (options.id === undefined) {
+                        console.error("Id for leaf is not defined", options);
+                    }
+
+                    var ids = [];
+                    if (leaf.id) ids = leaf.id.split(":");
+                    ids.push(options.id);
+                    var oldId = options.id;
+                    var id = ids.join(":");
+                    options.id = id;
+
+                    options.level = ids.length;
+                    options.priority = options.priority || 0;
+                    var subLeaf = new Leaf(options);
+
+                    var added = false;
+                    for(var i = 0; i < leaf.itemsNode.childNodes.length; i++) {
+                        if((leaf.itemsNode.childNodes[i].priority || 0) < options.priority) {
+                            leaf.itemsNode.insertBefore(subLeaf, leaf.itemsNode.childNodes[i]);
+                            added = true;
+                            break;
+                        }
+                    }
+                    if(!added) {
+                        leaf.itemsNode.appendChild(subLeaf);
+                    }
+
+                    if(leaf.iconNode) leaf.iconNode.innerHTML = "arrow_drop_down";
+
+                    root.raw[id] = subLeaf;
+                    leaf.items[oldId] = subLeaf;
+                    return subLeaf;
+                } catch(e) {
+                    console.error(e);
+                }
+            };
+            leaf.remove = function () {
+
+            };
+            leaf.open = function() {
+                save("tree:" + this.id, 1);
+                this.classList.remove("tree-item-collapsed");
+                this.itemsNode.show();
+            };
+            leaf.close = function() {
+                save("tree:" + this.id, 2);
+                this.classList.add("tree-item-collapsed");
+                if(this.level >= 0) {
+                    this.itemsNode.hide();
+                }
+            };
+            leaf.expand = function () {
+                this.open();
+                for(var i in this.items) {
+                    this.items[i].expand();
+                }
+            };
+            leaf.collapse = function () {
+                this.close();
+                for(var i in this.items) {
+                    this.items[i].collapse();
+                }
+            };
+            leaf.items = {};
+            return leaf;
+        }
+
+
+
+        /*var tree = create(HTML.DIV, {
             add: function(leaf) {
                 leaf = leaf || {};
                 leaf.add = function(innerLeaf) {
@@ -2976,13 +3100,13 @@ function Edequate(options) {
                 }
                 return div;
             }
-        });
-        if(appendTo) appendTo.appendChild(tree);
+        });*/
+        if(appendTo) appendTo.appendChild(root);
 
         for(var i in items) {
-            tree.add(items[i])
+            root.add(items[i])
         }
-        return tree;
+        return root;
     }
 
     function DataSource() {
