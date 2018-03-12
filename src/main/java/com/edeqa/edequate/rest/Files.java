@@ -4,6 +4,7 @@ import com.edeqa.edequate.abstracts.FileRestAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.helpers.Misc;
+import com.edeqa.helpers.interfaces.Callable1;
 
 import org.json.JSONObject;
 
@@ -20,6 +21,12 @@ public class Files extends FileRestAction {
     private Comparator<File> comparator;
     private boolean includeDirectories;
     private boolean includeFiles;
+    private Callable1<String,String> filenameProcess = new Callable1<String, String>() {
+        @Override
+        public String call(String name) {
+            return name;
+        }
+    };
 
     public Files() {
         super();
@@ -50,7 +57,7 @@ public class Files extends FileRestAction {
                     files.add(file.getName());
                 }
                 if (isIncludeFiles() && file.isFile()) {
-                    files.add(file.getName());
+                    files.add(getFilenameProcess().call(file.getName()));
                 }
             }
         }
@@ -93,6 +100,15 @@ public class Files extends FileRestAction {
 
     public Files setComparator(Comparator<File> comparator) {
         this.comparator = comparator;
+        return this;
+    }
+
+    public Callable1<String, String> getFilenameProcess() {
+        return filenameProcess;
+    }
+
+    public Files setFilenameProcess(Callable1<String, String> filenameProcess) {
+        this.filenameProcess = filenameProcess;
         return this;
     }
 }

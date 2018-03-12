@@ -11,6 +11,7 @@ import com.edeqa.edequate.rest.Resource;
 import com.edeqa.edequate.rest.Version;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
+import com.edeqa.helpers.interfaces.Callable1;
 
 import org.json.JSONObject;
 
@@ -54,6 +55,11 @@ public class RestServletHandler extends AbstractServletHandler {
             @Override
             public boolean accept(File dir, String name) {
                 return name.contains("pages-");
+            }
+        }).setFilenameProcess(new Callable1<String, String>() {
+            @Override
+            public String call(String s) {
+                return s.replaceAll("pages-(.*?)\\.json", "$1");
             }
         }).setChildDirectory("data").setActionName("/rest/data/types"));
         registerAction(new Locales());

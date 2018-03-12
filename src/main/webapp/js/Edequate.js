@@ -959,18 +959,21 @@ function Edequate(options) {
             } else if(item.type === HTML.HIDDEN) {
                 div = x = create(HTML.INPUT, {type:HTML.HIDDEN, value:item.value || ""});
             } else if(item.type === HTML.SELECT) {
-                item.itemClassName = "dialog-item dialog-item-input" + optionalClassName(item.itemClassName);
-                div = create(HTML.DIV, {className: item.itemClassName, onclick: function(){this.firstChild.nextSibling.click();}});
+                var className = "dialog-item dialog-item-input" + optionalClassName(item.className);
+                delete item.className;
+                div = create(HTML.DIV, {className: className, onclick: function(){this.firstChild.nextSibling.click();}});
 
                 if(item.label) {
                     var labelOptions = {
                         className:"dialog-item-label" + optionalClassName(item.labelClassName)
                     };
+                    delete item.labelClassName;
                     if(item.label.constructor === String) {
                         labelOptions.innerHTML = item.label;
                     } else {
                         labelOptions.content = item.label;
                     }
+                    delete item.label;
                     if(item.id){
                         labelOptions["for"] = item.id;
 //                    } else {
@@ -979,16 +982,10 @@ function Edequate(options) {
                     create(HTML.LABEL, labelOptions , div);
                 }
 
-                x = create(HTML.SELECT, {
-                    type: item.type,
-                    className: "dialog-item-input-select" + optionalClassName(item.className),
-                    tabindex: item.tabindex || -1,
-                    value: item.value || ""
-                }, div);
-                for(var y in item.values) {
-                    // noinspection JSUnfilteredForInLoop
-                    create(HTML.OPTION, {value:y, innerHTML:item.values[y], selected: item.default == y}, x);
-                }
+                item.className = "dialog-item-input-select" + optionalClassName(item.itemClassName);
+                delete item.itemClassName;
+                item.tabindex = item.tabindex || -1;
+                x = new NodeSelect(item, div);
             } else {
                 item.itemClassName = "dialog-item dialog-item-input" + optionalClassName(item.itemClassName);
                 div = create(HTML.DIV, {className:item.itemClassName, onclick: function(){this.lastChild.click();}});
@@ -1009,19 +1006,8 @@ function Edequate(options) {
                     create(HTML.LABEL, labelOptions , div);
                 }
 
-                type = HTML.INPUT;
-                if(item.type.toLowerCase() === HTML.TEXTAREA) type = HTML.TEXTAREA;
-                else if(item.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
-
                 item.tabindex = item.tabindex || -1;
                 item.className = "dialog-item-input-"+item.type + optionalClassName(item.className);
-                if(item.onclick && item.type !== HTML.BUTTON) {
-                    var a = item.onclick;
-                    item.onclick = function(e) { this.focus(); a.call(this); e.stopPropagation(); };
-                } else if(item.onclick) {
-                } else{
-                    item.onclick = function(e) { this.focus(); e.stopPropagation(); };
-                }
                 item.onkeyup = function(e){
                     if(e.keyCode === 13 && this.type !== HTML.TEXTAREA) {
                         //dialog.close();
@@ -1031,11 +1017,10 @@ function Edequate(options) {
                         dialog.oncancel();
                     }
                 };
-                item.value = item.value || "";
                 delete item.label;
                 delete item.labelClassName;
 
-                x = create(type, item, div);
+                x = new NodeInput(item, div);
             }
             dialog.items.push(x);
 
@@ -1609,8 +1594,79 @@ function Edequate(options) {
             dialog.progress = create(HTML.DIV, {className:"dialog-progress-value"}, progressBar);
             dialog.progress.style.width = "0%";
         }
-
         return dialog;
+    }
+
+    function NodeInput(options, appendTo) {
+        options = options || {};
+
+        var type = options.type = options.type || HTML.INPUT;
+        if(options.type.toLowerCase() === HTML.TEXTAREA) type = HTML.TEXTAREA;
+        else if(options.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
+
+        if(options.onclick && options.type !== HTML.BUTTON) {
+            var a = options.onclick;
+            options.onclick = function(e) { this.focus(); a.call(this); e.stopPropagation(); };
+        } else if(options.onclick) {
+        } else{
+            options.onclick = function(e) { this.focus(); e.stopPropagation(); };
+        }
+        options.value = options.value || "";
+
+        var input = create(type, options);
+        if(appendTo) appendTo.appendChild(input);
+
+        return input;
+    }
+
+
+    function NodeSelect(options, appendTo) {
+        options = options || {};
+        var optionClassName = options.optionClassName;
+        delete options.optionClassName;
+        var values = options.values || options.options;
+        delete options.values;
+        delete options.options;
+        var defaultValue = options.value || "";
+        delete options.value;
+
+        var select = create(HTML.SELECT, options);
+        select.setOptions = function(values) {
+            clear(this);
+            if (values instanceof Array) {
+                for (var i in values) {
+                    // noinspection JSUnfilteredForInLoop
+                    var value = values[i];
+                    for (y in value) {
+                        // noinspection JSUnfilteredForInLoop
+                        var valueOptions = {
+                            value: y,
+                            innerHTML: value[y]
+                        };
+                        if(defaultValue == y) valueOptions.selected = true;
+                        if(optionClassName) valueOptions.className = optionClassName;
+                        create(HTML.OPTION, valueOptions, this);
+                    }
+                }
+            } else if (values instanceof Object) {
+                var keys = Object.keys(values).sort(function(a,b){return values[a].trim().toLowerCase() < values[b].trim().toLowerCase() ? -1 : values[a].trim().toLowerCase() > values[b].trim().toLowerCase() ? 1 : 0});
+                for (var i in keys) {
+                    // noinspection JSUnfilteredForInLoop
+                    var valueOptions = {
+                        value: keys[i],
+                        innerHTML: values[keys[i]]
+                    };
+                    if(defaultValue == keys[i]) valueOptions.selected = true;
+                    if(optionClassName) valueOptions.className = optionClassName;
+                    create(HTML.OPTION, valueOptions, this);
+                }
+            }
+        };
+        if(values) {
+            select.setOptions(values);
+        }
+        if(appendTo) appendTo.appendChild(select);
+        return select;
     }
 
     function cloneAsObject(object) {
@@ -2999,7 +3055,7 @@ function Edequate(options) {
                 delete options.level;
                 leaf.iconNode = create(HTML.DIV, {
                     innerHTML: "",
-                    className: "tree-item-icon icon notranslate"
+                    className: "tree-item-leaf-icon icon notranslate"
                 }, div);
                 leaf.titleNode = create(HTML.DIV, options, div);
                 leaf.titleNode.item = leaf;

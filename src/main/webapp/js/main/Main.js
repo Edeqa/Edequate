@@ -55,9 +55,8 @@ function Main(u) {
         });
 
         this.turn = function(holderType, options) {
-            switchFullDrawer.call(self.content);
-
             self.content.scrollTop = 0;
+            switchFullDrawer.call(self.content);
 
             self.drawer.close();
             if(u.eventBus.holders[holderType]) {

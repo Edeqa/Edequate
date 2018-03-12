@@ -905,8 +905,19 @@ button:active {
 .tree-item-icon {
     display: inline-block;
     min-width: 20px;
+    margin-left: 4px;
+    font-size: 14px;
+    border-width: 0;
+    text-decoration: none;
+    color: inherit;
 }
-.tree-item-collapsed .tree-item-icon {
+.tree-item-leaf-icon {
+    display: inline-block;
+    min-width: 20px;
+    border-width: 0;
+    color: inherit;
+}
+.tree-item-collapsed .tree-item-leaf-icon {
     transform: rotate(-90deg);
 }
 .tree-item-title {
@@ -925,6 +936,17 @@ button:active {
 }
 .tree-item-leaves {
 
+}
+
+.ql-formats button {
+    min-width: 28px;
+    max-width: 28px;
+}
+.page-item-textarea {
+    height: 300px;
+}
+.page-item-textarea .dialog-item-input-textarea {
+    height: 100%;
 }
 
 
@@ -1220,7 +1242,9 @@ button:active {
     .drawer:focus {
         display: block;
     }
-    .drawer-collapsed:hover {
+    .drawer-header-holder.drawer-collapsed:hover {
+        min-width: 10px;
+        max-width: 10px;
     }
     .drawer-collapsed .drawer-header {
         height: 150px;
@@ -1316,6 +1340,9 @@ button:active {
 
     .tree-item-title {
         height: 35px;
+    }
+    .tree-item-icon {
+        height: 30px;
     }
 
     /* media specific classes */
