@@ -35,11 +35,11 @@ function Main(u) {
         }, document.body);
 
         self.selectLang = u.create(HTML.SELECT, { className: "actionbar-select-lang changeable", value: u.load("lang"), onchange: function() {
-            var lang = (this.value || navigator.language).toLowerCase().slice(0,2);
-            u.save("lang", lang);
-            self.loadResources(self.mainType + ".json");
-            self.holder.resume();
-        }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
+                var lang = (this.value || navigator.language).toLowerCase().slice(0,2);
+                u.save("lang", lang);
+                self.loadResources(self.mainType + ".json");
+                self.holder.resume();
+            }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
         u.getJSON("/rest/locales").then(function(json){
             console.log("locales", json.message);
@@ -55,8 +55,7 @@ function Main(u) {
         });
 
         this.turn = function(holderType, options) {
-            self.drawer.toggleSize(false);
-            self.actionbar.toggleSize(false);
+            switchFullDrawer.call(self.content);
 
             self.content.scrollTop = 0;
 
@@ -70,7 +69,8 @@ function Main(u) {
             } else {
                 console.log("Passing '" + holderType + "' to PagesHolder");
                 self.holder = u.eventBus.holders["$pages"];//[404];
-                options = [holderType];
+                options = [holderType].concat(options)
+                // options = [holderType];
             }
 
             if(self.holder && self.holder.resume) {
@@ -100,11 +100,11 @@ function Main(u) {
                     { innerHTML: "Edequate" },
                     { innerHTML: "&nbsp;" },
                     { content: [
-                        u.create(HTML.IMG, {src: "/images/edeqa-logo.svg", className: "about-dialog-edeqa-logo"}),
-                        u.create(HTML.DIV)
-                            .place(HTML.DIV, { innerHTML: "Copyright &copy;2017-18 Edeqa" })
-                            .place(HTML.A, {className: "about-dialog-edeqa-link", href: "http://www.edeqa.com", target: "_blank", rel:"noopener", innerHTML: "http://www.edeqa.com" })
-                    ]},
+                            u.create(HTML.IMG, {src: "/images/edeqa-logo.svg", className: "about-dialog-edeqa-logo"}),
+                            u.create(HTML.DIV)
+                                .place(HTML.DIV, { innerHTML: "Copyright &copy;2017-18 Edeqa" })
+                                .place(HTML.A, {className: "about-dialog-edeqa-link", href: "http://www.edeqa.com", target: "_blank", rel:"noopener", innerHTML: "http://www.edeqa.com" })
+                        ]},
                     {
                         enclosed: true,
                         label: u.lang.legal_information || "Legal information",
@@ -128,7 +128,7 @@ function Main(u) {
 
             self.drawer = new u.drawer({
                 title: u.lang.title || "Title",
-                collapsed: u.load("drawer:collapsed"),
+                // collapsed: u.load("drawer:collapsed"),
                 logo: {
                     src: "/images/logo.svg"
                 },
@@ -139,8 +139,8 @@ function Main(u) {
                     className: "drawer-footer-label",
                     content: [
                         u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: "Powered with Edequate", onclick: function(){
-                            dialogAbout.open();
-                        }})
+                                dialogAbout.open();
+                            }})
                     ]
                 },
                 sections: {
@@ -180,9 +180,9 @@ function Main(u) {
                             var holder = u.eventBus.holders[x];
                             if(holder.menu) {
                                 self.drawer.add({section: holder.category, id: holder.type, name: holder.menu, icon: holder.icon, priority: holder.priority, callback: function(){
-                                    self.turn(this.type);
-                                    return false;
-                                }.bind(holder)});
+                                        self.turn(this.type);
+                                        return false;
+                                    }.bind(holder)});
                             }
                         }
 
@@ -209,25 +209,6 @@ function Main(u) {
                 });
             });
 
-            var switchFullDrawer = function(){
-                if(self.content.scrollTop > 200) {
-                    self.drawer.toggleSize(true);
-                    self.actionbar.toggleSize(true);
-//                    clearTimeout(self.buttonScrollTop.hideTimeout);
-                    if(!self.buttonScrollTop.offsetHeight) {
-                        self.buttonScrollTop.hideTimeout = setTimeout(function(){
-                            self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
-                        }, 1500);
-                    }
-                    self.buttonScrollTop.show(/*HIDING.OPACITY*/);
-                } else {
-                    self.drawer.toggleSize(false);
-                    self.actionbar.toggleSize(false);
-                    if(self.buttonScrollTop.offsetHeight) {
-                        self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
-                    }
-                }
-            };
             // noinspection JSUnusedGlobalSymbols
             self.content = u.create(HTML.DIV, {className:"content", onscroll: switchFullDrawer}, self.layout);
 
@@ -281,4 +262,26 @@ function Main(u) {
             u.save("history:" + type);
         }
     }
+
+    function switchFullDrawer(){
+        if(getComputedStyle(self.actionbar).display === "none") return;
+        if(self.content.scrollTop > 200) {
+            self.drawer.toggleSize(true);
+            self.actionbar.toggleSize(true);
+//                    clearTimeout(self.buttonScrollTop.hideTimeout);
+            if(!self.buttonScrollTop.offsetHeight) {
+                self.buttonScrollTop.hideTimeout = setTimeout(function(){
+                    self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
+                }, 1500);
+            }
+            self.buttonScrollTop.show(/*HIDING.OPACITY*/);
+        } else {
+            self.drawer.toggleSize(false);
+            self.actionbar.toggleSize(false);
+            if(self.buttonScrollTop.offsetHeight) {
+                self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
+            }
+        }
+    };
+
 }
