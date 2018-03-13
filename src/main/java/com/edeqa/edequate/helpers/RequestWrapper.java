@@ -374,8 +374,16 @@ public class RequestWrapper {
         return body;
     }
 
-    public void processBody(Runnable1<StringBuilder> callback, Runnable1<Exception> fallback) {
+    public String getUserName() {
+        if(mode == MODE_SERVLET) {
+            return null;
+        } else if(mode == MODE_EXCHANGE) {
+            return httpExchange.getPrincipal().getUsername();// + ":" + httpExchange.getPrincipal().getName();
+        }
+        return null;
+    }
 
+    public void processBody(Runnable1<StringBuilder> callback, Runnable1<Exception> fallback) {
         try {
             StringBuilder buf = new StringBuilder();
             InputStream is = this.getRequestBody();
