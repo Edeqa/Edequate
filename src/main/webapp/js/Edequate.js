@@ -29,6 +29,7 @@ function Edequate(options) {
         LINK:"link",
         A:"a",
         IMG:"img",
+        MAIN:"main",
         META:"meta",
         STYLE:"style",
         CLASS:"className",
@@ -96,12 +97,13 @@ function Edequate(options) {
     };
 
     var ERRORS = {
-        NOT_EXISTS: 1,
-        NOT_AN_OBJECT: 2,
-        INCORRECT_JSON: 4,
-        ERROR_LOADING: 8,
-        ERROR_SENDING_REQUEST: 16,
-        INVALID_MODULE: 32
+        NOT_EXISTS: "NOT_EXISTS",
+        NOT_AN_OBJECT: "NOT_AN_OBJECT",
+        INCORRECT_JSON: "INCORRECT_JSON",
+        ERROR_LOADING: "ERROR_LOADING",
+        ERROR_SENDING_REQUEST: "ERROR_SENDING_REQUEST",
+        INVALID_MODULE: "INVALID_MODULE",
+        CALLBACK_FAILED: "CALLBACK_FAILED"
     };
 
     var DRAWER = {
@@ -341,7 +343,7 @@ function Edequate(options) {
         } else if(!type) {
             type = HTML.DIV;
         }
-        create(type, args, this);
+        create(type, args || {}, this);
         return this;
     };
 
@@ -521,7 +523,7 @@ function Edequate(options) {
                         } else {
                             console.error("Property " + properties[x] + " can not be defined for null.")
                         }
-                    } else if(x === "content" && properties[x].constructor === Array) {
+                    } else if(x === "content" && properties[x] && properties[x].constructor === Array) {
                         for(var i = 0; i < properties[x].length; i++) {
                             el.appendChild(properties[x][i]);
                         }
@@ -677,7 +679,7 @@ function Edequate(options) {
     }
 
     function require(names, context) {
-        if(names.constructor === String) {
+        if(names.constructor !== Array) {
             names = [names];
         }
         var instanceNames = [];
@@ -686,22 +688,20 @@ function Edequate(options) {
         var count = 0;
         var max = names.length;
 
-        function instantiate() {
+        function instantiate(options) {
             count++;
-            if(this.instance && window[this.instance] && window[this.instance].constructor === Function) {
+            if(this.isScript && this.instance && window[this.instance] && window[this.instance].constructor === Function) {
                 try {
-                    var self = this;
-                    var a = new window[this.instance](context);
-                    a.moduleName = self.instance;
-                    a.module = self.module;
-                    a.origin = self.origin;
-                    instances[self.instance] = a;
+                    instances[this.instance] = new window[this.instance](context);
+                    instances[this.instance].moduleName = this.instance;
+                    instances[this.instance].origin = this.origin;
                 } catch(e) {
                     returned.onRejected(ERRORS.INVALID_MODULE, this.instance, e);
                 }
-//            } else {
-//                returned.onRejected(ERRORS.NOT_AN_OBJECT, this.instance, e);
-//                return;
+            } else if(options && options.isJSON) {
+                instances[options.instance] = this;
+            } else if(options && options.isText) {
+                instances[options.instance] = this.toString();
             }
             if(count === max) {
                 if(Object.keys(instances).length === 1) {
@@ -724,23 +724,58 @@ function Edequate(options) {
         while(names.length) {
             var name = names.shift();
 
-            var origin = name;
-            var parts = name.split("/");
-            var filename = parts[parts.length-1];
-            var onlyname = filename.split(".")[0];
-            instanceNames.push(onlyname);
-            var needInstantiate = false;
-            if(filename === onlyname && parts[1] === "js") {
-                needInstantiate = true;
-                name += ".js";
+            var origin;
+            var onlyname;
+            var type = "text";
+            var isJSON = false;
+            var isScript = false;
+            var isText = false;
+            var body;
+            if(name.constructor === String) {
+                origin = name;
+                var parts = name.split("/");
+                var filename = parts[parts.length-1];
+                // var onlyname = filename.split(".")[0];
+                var filenameParts = filename.split(".");
+                var extension = filenameParts.pop();
+                if(filenameParts.length === 0) {
+                    filenameParts.push(extension);
+                    extension = null;
+                }
+                onlyname = filenameParts.join(".");
+                instanceNames.push(onlyname);
+                isScript = extension === "js";
+                isJSON = extension === "json";
+                isText = !isScript && !isJSON;
+            } else if(name instanceof Object) {
+                isScript = !!name.isScript;
+                isJSON = !!name.isJSON;
+                isText = !!name.isText;
+                body = name.body;
+                name = name.src;
+                origin = name;
+
+                parts = name.split("/");
+                filename = parts[parts.length-1];
+                // var onlyname = filename.split(".")[0];
+                filenameParts = filename.split(".");
+                extension = filenameParts.pop();
+                if(filenameParts.length === 0) {
+                    filenameParts.push(extension);
+                    extension = null;
+                }
+                onlyname = filenameParts.join(".");
+                instanceNames.push(onlyname);
             }
             var options = {
                 src: name,
                 origin: origin,
-                module: name,
-                instance: needInstantiate ? onlyname : null,
+                instance: onlyname,
                 async: true,
                 defer: true,
+                isScript: isScript,
+                isJSON: isJSON,
+                isText: isText,
                 onload: function() {
                     instantiate.call(this);
                 },
@@ -748,10 +783,30 @@ function Edequate(options) {
                     returned.onRejected(ERRORS.NOT_EXISTS, this.instance, e);
                 }
             };
-            if(needInstantiate && window[onlyname]) {
-                setTimeout(instantiate.bind(options), 0);
+            if(isScript) {
+                if(window[onlyname]) {
+                    setTimeout(instantiate.bind(options), 0);
+                } else {
+                    create(HTML.SCRIPT, options, document.head);
+                }
+            } else if(isJSON) {
+                getJSON(name, body).then(function(json){
+                    instantiate.call(json, this);
+                }.bind(options)).catch(function(e,json){
+                    returned.onRejected(ERRORS.ERROR_LOADING, e, json);
+                });
+            } else if(body) {
+                post(name, body).then(function(result){
+                    instantiate.call(result.response, this);
+                }.bind(options)).catch(function(e,result){
+                    returned.onRejected(ERRORS.ERROR_LOADING, e, result);
+                });
             } else {
-                create(HTML.SCRIPT, options, document.head);
+                get(name).then(function(result){
+                    instantiate.call(result.response, this);
+                }.bind(options)).catch(function(e,result){
+                    returned.onRejected(ERRORS.ERROR_LOADING, e, result);
+                });
             }
         }
         return returned;
@@ -1702,11 +1757,7 @@ function Edequate(options) {
                     textarea.editor = new Quill(textarea.editNode, {
                         theme: "snow"
                     });
-
-                    // textarea.editor.setText("");
-                    // textarea.editor.clipboard.dangerouslyPasteHTML(5, value);
                 };
-                // textarea.setValue(value);
             });
         } else {
             textarea = create(HTML.TEXTAREA, options);
@@ -1866,6 +1917,9 @@ function Edequate(options) {
         var xhr = new XMLHttpRequest();
 
         xhr.open(method, url, true);
+        if(this.isJSON) {
+            xhr.setRequestHeader("Content-type", "application/json");
+        }
         xhr.onreadystatechange = function() {
             if (xhr.readyState !== 4) return;
             if (xhr.status !== 200) {
@@ -1891,15 +1945,15 @@ function Edequate(options) {
     }
 
     function get(url) {
-        return rest("GET",url);
+        return rest.call(this, "GET",url);
     }
 
     function post(url, body) {
-        return rest("POST", url, body);
+        return rest.call(this, "POST", url, body);
     }
 
     function put(url) {
-        return rest("PUT",url);
+        return rest.call(this, "PUT",url);
     }
 
     /**
@@ -1921,7 +1975,11 @@ function Edequate(options) {
                     var text = xhr.responseText;
                     text = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/[\r\n]+/gm, " ");
                     var json = JSON.parse(text);
-                    callback(json, xhr);
+                    try {
+                        callback(json, xhr);
+                    } catch(e) {
+                        callbacks.catch(ERRORS.CALLBACK_FAILED, e, json);
+                    }
                 } catch(e) {
                     callbacks.catch(ERRORS.INCORRECT_JSON, xhr, e);
                 }
@@ -1929,8 +1987,8 @@ function Edequate(options) {
             return { "catch": catchFunction };
         };
         setTimeout(function(){
-            if(body) post(url, body).then(callbacks.then).catch(callbacks.catch);
-            else get(url).then(callbacks.then).catch(callbacks.catch);
+            if(body) post.bind({isJSON:true})(url, body).then(callbacks.then).catch(callbacks.catch);
+            else get.bind({isJSON:true})(url).then(callbacks.then).catch(callbacks.catch);
         },0);
         return { then: thenFunction, "catch": catchFunction };
     }

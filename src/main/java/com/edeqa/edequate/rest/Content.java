@@ -56,9 +56,13 @@ public class Content extends FileRestAction {
                 String lastModified = dateFormat.format(getWebPath().path().lastModified());
                 requestWrapper.setHeader(HttpHeaders.LAST_MODIFIED, lastModified);
             }
-            int maxAge = 10;
+            String maxAge = "public, max-age=10";
 //            if(mimeType.fetchStatic()) {
-//                maxAge = 1800;
+//                maxAge = 86400;
+//                maxAge = "public, max-age=86400";
+//            }
+//            if(Mime.APPLICATION_JSON.equals(mimeType.getMime())) {
+//                maxAge = "private, max-age=86400";
 //            }
             requestWrapper.setHeader(HttpHeaders.CACHE_CONTROL, "public, max-age=" + maxAge);
 
@@ -109,6 +113,8 @@ public class Content extends FileRestAction {
 
                 if(getReplacements() != null) string = getReplacements().process(string, getMimeType());
                 requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+                requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+                requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
                 requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, getMimeType().fetchContentType());
                 if (!getMimeType().isGzip())
                     requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(string.length()));

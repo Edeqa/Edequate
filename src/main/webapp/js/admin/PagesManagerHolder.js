@@ -92,7 +92,10 @@ function PagesManagerHolder(main) {
                             }
                         })
                 });
-                u.getJSON("/rest/data", {resource: "pages-" + id + ".json"}).then(function(json){
+                u.require([
+                    {src:"/rest/data", body: {resource: "pages-" + id + ".json"}, isJSON:true},
+                    {src:"/rest/" + id, isJSON:true}
+                ]).then(function(json, json1){
                     var structure = parsePages(json);
                     for(var x in structure) {
                         var category = this.items[x] || this.add({
@@ -142,30 +145,11 @@ function PagesManagerHolder(main) {
                             main.content.scrollTop = self.scrollTop;
                         }
                     }
-                }.bind(branch)).catch(function(e,x){
-                    console.error(e,x);
-                });
-                u.getJSON("/rest/" + id).then(function(json){
-                    for(var i in json.message) {
-                        u.require(json.extra + "/" + json.message[i].replace(".js", "")).then(function(holder) {
+                    for(var i in json1.message) {
+                        u.require(json1.extra + "/" + json1.message[i]).then(function(holder) {
                             var category = holder && holder.category;
-                            if(category !== undefined && "menu" in holder) {
-                                category = this.items[""+category] || this.add({
-                                    id: ""+category,
-                                    priority: -category,
-                                    content: u.create(HTML.DIV, {className:"tree-pages-category"})
-                                        .place(HTML.DIV, {innerHTML:sectionsNames[holder.category]})
-                                        .place(HTML.BUTTON, {
-                                            innerHTML:"add",
-                                            className:"icon notranslate tree-item-icon",
-                                            onclick: function (e) {
-                                                e.stopPropagation();
-                                                console.log("add page to", this.parentNode.item.id);
-                                                self.scrollTop = main.content.scrollTop;
-                                                main.turn("page", ["add",this.parentNode.item.id]);
-                                            }
-                                        })
-                                });
+                            category = this.items[""+category]
+                            if(category && "menu" in holder) {
                                 category.add({
                                     id: holder.type,
                                     priority: holder.priority,

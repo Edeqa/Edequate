@@ -22,7 +22,7 @@ function Main(u) {
             self.history.goBack();
         });
 
-        self.layout = u.create(HTML.DIV, {className:"layout"}, document.body);
+        self.layout = u.create(HTML.DIV, {className:"layout", role:"main"}, document.body);
         self.actionbar = u.actionBar({
             title: "Loading...",
             onbuttonclick: function(){
@@ -41,7 +41,7 @@ function Main(u) {
                 self.holder.resume();
             }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
-        u.getJSON("/rest/locales").then(function(json){
+        u.require({src:"/rest/locales",isJSON:true}).then(function(json){
             console.log("locales", json.message);
             u.clear(self.selectLang);
             var count = 1;
@@ -160,10 +160,10 @@ function Main(u) {
                 for(var i in json.message) {
                     // noinspection JSUnfilteredForInLoop
                     /** @namespace json.extra */
-                    json.message[i] = json.extra + "/" + json.message[i].replace(".js","");
+                    json.message[i] = json.extra + "/" + json.message[i];
                 }
-                if(json.message.indexOf("/js/main/PagesHolder") < 0) {
-                    json.message.push("/js/main/PagesHolder");
+                if(json.message.indexOf("/js/main/PagesHolder.js") < 0) {
+                    json.message.push("/js/main/PagesHolder.js");
                 }
                 u.eventBus.register(json.message, {
                     context: self,
@@ -281,6 +281,6 @@ function Main(u) {
                 self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
             }
         }
-    };
+    }
 
 }
