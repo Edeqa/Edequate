@@ -332,8 +332,7 @@ button:active {
     font-size: 12px;
     padding-top: 5px;
     padding-bottom: 5px;
-    width: 50%;
-    flex: 1 1 auto;
+    flex: 1 1 60%;
     background-color: antiquewhite;
 }
 .dialog-item-input-button {
@@ -352,12 +351,18 @@ button:active {
     font-size: 12px;
     padding-top: 5px;
     padding-bottom: 5px;
-    height: 50px;
-    width: 50%;
-    flex: 1 1 auto;
+    height: 300px;
+    max-height: 300px;
+    flex: 1 1 60%;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+}
+.dialog-item-input-textarea .ql-container {
+    overflow: auto;
 }
 .dialog-item-input-select {
-    flex: 1 1 auto;
+    flex: 1 1 60%;
 }
 .dialog-item-input-checkbox {
 }
@@ -939,9 +944,26 @@ button:active {
 }
 
 .ql-formats button {
-    min-width: 28px;
-    max-width: 28px;
+    min-width: 24px;
+    max-width: 24px;
+    max-height: 20px;
 }
+.ql-formats {
+    max-height: 20px;
+}
+.ql-toolbar.ql-snow {
+    padding: 2px !important;
+}
+.ql-snow .ql-picker.ql-header {
+    max-height: 20px;
+}
+.ql-snow .ql-picker-label {
+    font-size: 12px;
+}
+.ql-snow .ql-picker-label::before {
+    line-height: initial !important;
+}
+
 .page-item-textarea {
     height: 300px;
 }
@@ -981,6 +1003,7 @@ button:active {
     min-width: 20%;
     padding-top: 20px;
     padding-bottom: 20px;
+    z-index: 1001;
 }
 @keyframes rotate {
     0%    { transform: rotate(0deg); }

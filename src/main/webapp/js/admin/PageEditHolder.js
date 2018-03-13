@@ -129,8 +129,8 @@ function PageEditHolder(main) {
                     {type: HTML.INPUT, label: "Name", prefix:""},
                     {type: HTML.SELECT, label: "Language", values: locales, value: locale, onchange: function() {
                             locale = languageNode.value;
-                            populateWithLang(ids[0], page.title, titleNode);
-                            populateContent(page.resource, contentNode);
+                            populateWithLang(ids[0], dialog.page.title, titleNode);
+                            populateContent(dialog.page.resource, contentNode);
                         }},
                     {type: HTML.SELECT, label: "Title"},
                     {
@@ -138,15 +138,7 @@ function PageEditHolder(main) {
                         label: "Priority",
                         values: [{"10": "Highest"}, {"9": "9"}, {"8": "8"}, {"7": "7"}, {"6": "6"}, {"5": "5"}, {"4": "4"}, {"3": "3"}, {"2": "2"}, {"1": "1"}, {"0": "Default"}, {"-1": "-1"}, {"-2": "-2"}, {"-3": "-3"}, {"-4": "-4"}, {"-5": "-5"}, {"-6": "-6"}, {"-7": "-7"}, {"-8": "-8"}, {"-9": "-9"}, {"-10": "Lowest"}]
                     },
-                    // {type: HTML.TEXTAREA, id:"page-content", label: "Content"},
-                    {type:HTML.DIV, className: "dialog-item-input page-item-textarea", content: u.create(HTML.DIV)
-                            .place(HTML.LABEL, {innerHTML: "Content", className:"dialog-item-label"})
-                            .place(HTML.DIV, {
-                                className: "dialog-item-input-textarea",
-                                content: u.create(HTML.DIV)
-                                    .place(HTML.DIV, {id:"page-content"})
-                            })
-                    }
+                    {type: HTML.TEXTAREA, id:"page-content", editor:true, label: "Content"}
                 ],
                 positive: {
                     label: u.create(HTML.SPAN, "OK"),
@@ -161,7 +153,7 @@ function PageEditHolder(main) {
                         main.turn("pages");
                     }
                 }
-            });
+            }, div.parentNode);
             dialog.setTitle(options.mode);
             var sectionNode = dialog.items[0];
             var categoryNode = dialog.items[1];
@@ -169,11 +161,12 @@ function PageEditHolder(main) {
             var languageNode = dialog.items[3];
             var titleNode = dialog.items[4];
             var priorityNode = dialog.items[5];
-            var contentNode = dialog.items[6].lastChild.lastChild;
+            var contentNode = dialog.items[6];//.lastChild.lastChild;
 
             sectionNode.value = ids[0];
             categoryNode.value = ids[1];
             nameNode.value = ids[2] || "";
+            dialog.page = page;
 
             populateWithLang(ids[0], page.title, titleNode);
             priorityNode.value = page && page.priority || 0;
@@ -200,33 +193,21 @@ function PageEditHolder(main) {
 
     function populateContent(resource, contentNode) {
         u.progress.show("Loading resources");
+        contentNode.setValue("");
         if(resource) {
             u.progress.show("Loading");
-
-            u.create(HTML.LINK, {href:"https://cdn.quilljs.com/1.3.6/quill.snow.css", rel:"stylesheet"}, document.head);
-
-            u.require("https://cdn.quilljs.com/1.3.6/quill.js").then(function(result){
-                console.log("result",result);
-                u.post("/rest/content", {
-                    resource: resource,
-                    locale: locale
-                }).then(function (xhr) {
-                    contentNode.innerHTML = xhr.response;
-                    editor = editor || new Quill("#page-content", {
-                        theme: 'snow'
-                    });
-                    u.progress.hide();
-                }).catch(function (error, json) {
-                    contentNode.innerHTML = "";
-                    u.progress.hide();
-                });
-            }).catch(function (error, json) {
-                console.error(error, json);
-                contentNode.innerHTML = "";
+            u.post("/rest/content", {
+                resource: resource,
+                locale: locale
+            }).then(function (xhr) {
+                contentNode.setValue(xhr.response);
                 u.progress.hide();
-            })
+            }).catch(function (error, json) {
+                contentNode.setValue("");
+                u.progress.hide();
+            });
         } else {
-            contentNode.innerHTML = "";
+            contentNode.setValue("");
         }
     }
 }

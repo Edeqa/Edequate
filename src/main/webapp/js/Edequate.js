@@ -1020,7 +1020,11 @@ function Edequate(options) {
                 delete item.label;
                 delete item.labelClassName;
 
-                x = new NodeInput(item, div);
+                if(item.type === HTML.TEXTAREA) {
+                    x = new NodeTextarea(item, div);
+                } else {
+                    x = new NodeInput(item, div);
+                }
             }
             dialog.items.push(x);
 
@@ -1584,7 +1588,7 @@ function Edequate(options) {
                     }
                     window.addEventListener(HTML.MOUSEUP, mouseup, {passive: true});
                     window.addEventListener(HTML.MOUSEMOVE, mousemove, {passive: true});
-                    e.preventDefault();
+                    e.stopPropagation();
                 }
             }, dialog);
         }
@@ -1600,9 +1604,8 @@ function Edequate(options) {
     function NodeInput(options, appendTo) {
         options = options || {};
 
-        var type = options.type = options.type || HTML.INPUT;
-        if(options.type.toLowerCase() === HTML.TEXTAREA) type = HTML.TEXTAREA;
-        else if(options.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
+        var type = HTML.INPUT;
+        if(options.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
 
         if(options.onclick && options.type !== HTML.BUTTON) {
             var a = options.onclick;
@@ -1618,7 +1621,6 @@ function Edequate(options) {
 
         return input;
     }
-
 
     function NodeSelect(options, appendTo) {
         options = options || {};
@@ -1667,6 +1669,55 @@ function Edequate(options) {
         }
         if(appendTo) appendTo.appendChild(select);
         return select;
+    }
+
+    function NodeTextarea(options, appendTo) {
+        options = options || {};
+
+        var editor = options.editor;
+        delete options.editor;
+
+        if(!options.onclick) {
+            options.onclick = function(e) { this.focus(); e.stopPropagation(); };
+        }
+        var value = options.value || "";
+        delete options.value;
+
+        var textarea;
+        if(editor) {
+            delete options.type;
+            textarea = create(HTML.DIV, options);
+            textarea.editNode = create(HTML.DIV, {}, textarea);
+            textarea.setValue = function (value) {
+                textarea.editNode.innerHTML = value;
+            };
+            create(HTML.LINK, {href:"https://cdn.quilljs.com/1.3.6/quill.snow.css", rel:"stylesheet"}, document.head);
+            require("https://cdn.quilljs.com/1.3.6/quill.js").then(function(result) {
+                textarea.editor = textarea.editor || new Quill(textarea.editNode, {
+                    theme: "snow"
+                });
+                textarea.setValue = function(value) {
+                    clear(textarea);
+                    textarea.editNode = create(HTML.DIV, {innerHTML: value}, textarea);
+                    textarea.editor = new Quill(textarea.editNode, {
+                        theme: "snow"
+                    });
+
+                    // textarea.editor.setText("");
+                    // textarea.editor.clipboard.dangerouslyPasteHTML(5, value);
+                };
+                // textarea.setValue(value);
+            });
+        } else {
+            textarea = create(HTML.TEXTAREA, options);
+            textarea.setValue = function(value) {
+
+            };
+            textarea.setValue(value);
+        }
+
+        if(appendTo) appendTo.appendChild(textarea);
+        return textarea;
     }
 
     function cloneAsObject(object) {
