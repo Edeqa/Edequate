@@ -1,11 +1,13 @@
 package com.edeqa.edequate;
 
 
+import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.Replacements;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Content;
+import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.HtmlGenerator;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
@@ -17,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
+import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
 import static com.edeqa.helpers.HtmlGenerator.A;
 import static com.edeqa.helpers.HtmlGenerator.CLASS;
 import static com.edeqa.helpers.HtmlGenerator.DIV;
@@ -34,10 +37,13 @@ import static com.edeqa.helpers.HtmlGenerator.WIDTH;
 
 public class MainServletHandler extends AbstractServletHandler {
 
+    private final EventBus<AbstractAction> systemBus;
     private MimeTypes mimeTypes;
     private Replacements replacements;
 
     public MainServletHandler() {
+        EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);
+        systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
         setMimeTypes(new MimeTypes().useDefault());
         setReplacements(new Replacements());
     }
@@ -170,5 +176,9 @@ public class MainServletHandler extends AbstractServletHandler {
 
     public void setReplacements(Replacements replacements) {
         this.replacements = replacements;
+    }
+
+    protected EventBus<AbstractAction> getSystemBus() {
+        return systemBus;
     }
 }

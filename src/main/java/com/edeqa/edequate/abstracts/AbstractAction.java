@@ -7,7 +7,8 @@ import org.json.JSONObject;
 @SuppressWarnings("unused")
 public abstract class AbstractAction<T> extends AbstractEntityHolder {
 
-    public static final String EVENTBUS = "rest";
+    public static final String RESTBUS = "rest";
+    public static final String SYSTEMBUS = "system";
 
     public static final String BODY = "body";
     public static final String CALLBACK = "callback";

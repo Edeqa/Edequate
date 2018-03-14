@@ -26,19 +26,22 @@ import java.util.Map;
 import javax.servlet.ServletException;
 
 import static com.edeqa.edequate.abstracts.AbstractAction.CODE;
-import static com.edeqa.edequate.abstracts.AbstractAction.EVENTBUS;
 import static com.edeqa.edequate.abstracts.AbstractAction.FALLBACK;
+import static com.edeqa.edequate.abstracts.AbstractAction.RESTBUS;
 import static com.edeqa.edequate.abstracts.AbstractAction.STATUS;
 import static com.edeqa.edequate.abstracts.AbstractAction.STATUS_ERROR;
+import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
 
 @SuppressWarnings("unchecked")
 public class RestServletHandler extends AbstractServletHandler {
 
     private final EventBus<AbstractAction> restBus;
+    private final EventBus<AbstractAction> systemBus;
 
     public RestServletHandler() {
         EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);
-        restBus = (EventBus<AbstractAction>) EventBus.getOrCreate(EVENTBUS);
+        restBus = (EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS);
+        systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
     }
 
     public void useDefault() {
@@ -72,7 +75,7 @@ public class RestServletHandler extends AbstractServletHandler {
         super.init();
     }
 
-    public void registerAction(AbstractAction<RequestWrapper> actionHolder) {
+    public AbstractAction<RequestWrapper> registerAction(AbstractAction<RequestWrapper> actionHolder) {
         String actionName = actionHolder.getType();
 
         if(restBus.getHolder(actionName) != null) {
@@ -81,6 +84,7 @@ public class RestServletHandler extends AbstractServletHandler {
             Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + actionName + "]");
         }
         restBus.registerOrUpdate(actionHolder);
+        return actionHolder;
     }
 
     @SuppressWarnings("unused")
@@ -199,4 +203,7 @@ public class RestServletHandler extends AbstractServletHandler {
         return Collections.emptyList();
     }
 
+    protected EventBus<AbstractAction> getSystemBus() {
+        return systemBus;
+    }
 }

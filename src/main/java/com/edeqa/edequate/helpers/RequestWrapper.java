@@ -378,7 +378,11 @@ public class RequestWrapper {
         if(mode == MODE_SERVLET) {
             return null;
         } else if(mode == MODE_EXCHANGE) {
-            return httpExchange.getPrincipal().getUsername();// + ":" + httpExchange.getPrincipal().getName();
+            if(httpExchange.getPrincipal() != null) {
+                return httpExchange.getPrincipal().getUsername();// TODO
+            } else {
+                return null;
+            }
         }
         return null;
     }
