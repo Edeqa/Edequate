@@ -819,10 +819,10 @@ function Edequate(options) {
         if (typeof value === "string" && /^function.*?\([\s\S]*?\)\s*{[\s\S]*}[\s\S]*$/.test(value)) {
             var args = value
                     .replace(/\/\/.*$|\/\*[\s\S]*?\*\//mg, "") //strip comments
-                    .match(/\([\s\S]*?\)/m)[0]                      //find argument list
-                    .replace(/^\(|\)$/g, "")                    //remove parens
+                    .match(/\([\s\S]*?\)/m)[0]                 //find argument list
+                    .replace(/^\(|\)$/g, "")                   //remove parens
                     .match(/[^\s(),]+/g) || [],                //find arguments
-                body = value.replace(/\n/mg, "").match(/{([\s\S]*)}/)[1];          //extract body between curlies
+                body = value.replace(/\n/mg, "").match(/{([\s\S]*)}/)[1];    //extract body between curlies
             return Function.apply(0, args.concat(body));
         } else {
             return value;

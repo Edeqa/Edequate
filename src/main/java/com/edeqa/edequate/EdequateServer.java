@@ -103,8 +103,7 @@ public class EdequateServer {
         ServletHandlerOptions.getOrCreate(getSslServer()).putIfAbsent(new ServletHandlerOptions().setContext("/rest/").setServletHandler(restServletHandler));
 
         ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/rest/").setServletHandler(restServletHandler));
-        DigestAuthenticator authenticator = new DigestAuthenticator("edequate");
-        ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/").setServletHandler(adminServletHandler).setAuthenticator(authenticator));
+        ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/").setServletHandler(adminServletHandler).setAuthenticator(new DigestAuthenticator("edequate")));
         ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/admin/logout").setServletHandler(adminServletHandler));
     }
 
@@ -114,7 +113,7 @@ public class EdequateServer {
             @Override
             public void call(ServletHandlerOptions o) {
                 getServer().createContext(o.getContext(), o.getServletHandler());
-                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTP:", getArguments().getHttpPort(), (getArguments().getHttpPort() != getArguments().getHttpPortMasked() ? "(masked by "+ getArguments().getHttpPortMasked() +")" : ""), "[" + o.getContext() + "]");
+                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTP", getArguments().getHttpPort(), "[" + getArguments().getWrappedHttpPort() + o.getContext() + "]");
 
             }
         });
@@ -122,7 +121,7 @@ public class EdequateServer {
             @Override
             public void call(ServletHandlerOptions o) {
                 getSslServer().createContext(o.getContext(), o.getServletHandler());
-                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsPort(), (getArguments().getHttpsPort() != getArguments().getHttpsPortMasked() ? "(masked by "+ getArguments().getHttpsPortMasked() +")" : ""), "[" + o.getContext() + "]");
+                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsPort(), "[" +  getArguments().getWrappedHttpsPort() + o.getContext() + "]");
 
             }
         });
@@ -133,7 +132,7 @@ public class EdequateServer {
                 if(o.getAuthenticator() != null) {
                     context.setAuthenticator(o.getAuthenticator());
                 }
-                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsAdminPort(), "[" + o.getContext() + "]");
+                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsAdminPort(), "[:" + getArguments().getHttpsAdminPort() + o.getContext() + "]");
             }
         });
 

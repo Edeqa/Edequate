@@ -68,11 +68,8 @@ public class ServletHandlerOptions {
         }
 
         public void putIfAbsent(ServletHandlerOptions servletHandlerOptions) {
-            if(items.containsKey(servletHandlerOptions.getContext())) {
-//                return items.get(servletHandlerOptions.getContext());
-            } else {
+            if(!items.containsKey(servletHandlerOptions.getContext())) {
                 items.put(servletHandlerOptions.getContext(), servletHandlerOptions);
-//                return servletHandlerOptions;
             }
         }
 

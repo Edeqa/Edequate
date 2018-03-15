@@ -20,6 +20,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,10 +39,13 @@ public class RestServletHandler extends AbstractServletHandler {
     private final EventBus<AbstractAction> restBus;
     private final EventBus<AbstractAction> systemBus;
 
+    private Map<String, AbstractAction> pool;
+
     public RestServletHandler() {
         EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);
         restBus = (EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS);
         systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
+        pool = new LinkedHashMap<>();
     }
 
     public void useDefault() {
@@ -78,6 +82,18 @@ public class RestServletHandler extends AbstractServletHandler {
     public AbstractAction<RequestWrapper> registerAction(AbstractAction<RequestWrapper> actionHolder) {
         String actionName = actionHolder.getType();
 
+//        if(pool.containsKey(actionName)) {
+//            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + actionName + "]");
+//        } else {
+//            Misc.log("Rest", "register:", actionHolder.getClass().getName(), "[" + actionName + "]");
+//        }
+        pool.put(actionName, actionHolder);
+        return actionHolder;
+    }
+
+    public AbstractAction<RequestWrapper> registerAction1(AbstractAction<RequestWrapper> actionHolder) {
+        String actionName = actionHolder.getType();
+
         if(restBus.getHolder(actionName) != null) {
             Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + actionName + "]");
         } else {
@@ -105,6 +121,7 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     public void perform(RequestWrapper requestWrapper) throws IOException {
+
         String path = requestWrapper.getRequestURI().getPath().replaceFirst("/$", "");
 
         Map<String, List<String>> arguments = requestWrapper.getParameterMap();
@@ -158,6 +175,20 @@ public class RestServletHandler extends AbstractServletHandler {
             requestWrapper.sendResult(callback + "(" + json.toString() + ");");
         } else {
             requestWrapper.sendResult(json);
+        }
+    }
+
+    protected void registerActionsPool() {
+        if(!pool.isEmpty()) {
+            for (Map.Entry<String, AbstractAction> entry : pool.entrySet()) {
+                if (restBus.getHolder(entry.getKey()) != null) {
+                    Misc.log("Rest", "override:", entry.getValue().getClass().getName(), "[" + entry.getKey() + "]");
+                } else {
+                    Misc.log("Rest", "register:", entry.getValue().getClass().getName(), "[" + entry.getKey() + "]");
+                }
+                restBus.registerOrUpdate(entry.getValue());
+            }
+            pool.clear();
         }
     }
 

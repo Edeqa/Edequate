@@ -34,7 +34,7 @@ public class Nothing extends AbstractAction<RequestWrapper> {
 
         String body = request.getBody();
         if (!Misc.isEmpty(body)) {
-            json.put(BODY, request.getBody());
+            json.put(BODY, body);
         }
     }
 

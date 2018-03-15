@@ -13,7 +13,6 @@ import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.MimeTypes;
 import com.edeqa.helpers.Misc;
-import com.google.common.net.HttpHeaders;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +68,12 @@ public class MainServletHandler extends AbstractServletHandler {
             if("/main".startsWith(beginWeb) || "/rest".startsWith(beginWeb) || "/admin".startsWith(beginWeb)) {
                 webPath = new WebPath(getWebDirectory(), "index.html");
                 if (!webPath.path().exists()) {
-                    new Content().setReplacements(getReplacements()).setMimeType(new MimeType().setMime(Mime.TEXT_HTML).setText(true).setGzip(true)).setContent(fetchDefaultIndex().build()).setResultCode(200).call(null, requestWrapper);
+                    new Content()
+                            .setReplacements(getReplacements())
+                            .setMimeType(new MimeType().setMime(Mime.TEXT_HTML).setText(true).setGzip(true))
+                            .setContent(fetchDefaultIndex().build())
+                            .setResultCode(200)
+                            .call(null, requestWrapper);
 //                    requestWrapper.sendResult(200, Mime.TEXT_HTML, fetchDefaultIndex().build().getBytes());
                     return;
                 }
@@ -81,12 +85,8 @@ public class MainServletHandler extends AbstractServletHandler {
 
         String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
 
-        String host = requestWrapper.getRequestedHost(), referer = null;
-        try {
-            referer = requestWrapper.getRequestHeaders().get(HttpHeaders.REFERER).get(0);
-            if(referer.contains(host)) referer = null;
-        } catch(Exception e){
-        }
+        String host = requestWrapper.getRequestedHost();
+        String referer = requestWrapper.getReferer();
 
         File root = new File(getWebDirectory());
         int resultCode = 200;
@@ -126,7 +126,12 @@ public class MainServletHandler extends AbstractServletHandler {
         {
             // Object exists and it is a file: accept with response code 200.
             MimeType mimeType = getMimeTypes().fetchMimeFor(webPath.path().getName());
-            new Content().setReplacements(getReplacements()).setMimeType(mimeType).setWebPath(webPath).setResultCode(resultCode).call(null, requestWrapper);
+            new Content()
+                    .setReplacements(getReplacements())
+                    .setMimeType(mimeType)
+                    .setWebPath(webPath)
+                    .setResultCode(resultCode)
+                    .call(null, requestWrapper);
         }
     }
 

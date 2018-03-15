@@ -19,8 +19,6 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,91 +91,110 @@ public class RequestWrapper {
     }
 
     public URI getRequestURI() {
-        if(mode == MODE_SERVLET) {
-            try {
+        try {
+            if(mode == MODE_SERVLET) {
                 return new URI(httpServletRequest.getRequestURI());
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                return null;
+            } else if(mode == MODE_EXCHANGE) {
+                return httpExchange.getRequestURI();
             }
-        } else if(mode == MODE_EXCHANGE) {
-            return httpExchange.getRequestURI();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
     public void setHeader(String name, String value) {
-        if(mode == MODE_SERVLET) {
-            httpServletResponse.setHeader(name, value);
-        } else if(mode == MODE_EXCHANGE) {
-            httpExchange.getResponseHeaders().set(name, value);
+        try {
+            if(mode == MODE_SERVLET) {
+                httpServletResponse.setHeader(name, value);
+            } else if(mode == MODE_EXCHANGE) {
+                httpExchange.getResponseHeaders().set(name, value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public void addHeader(String name, String value) {
-        if(mode == MODE_SERVLET) {
-            httpServletResponse.addHeader(name, value);
-        } else if(mode == MODE_EXCHANGE) {
-            httpExchange.getResponseHeaders().add(name, value);
+        try {
+            if(mode == MODE_SERVLET) {
+                httpServletResponse.addHeader(name, value);
+            } else if(mode == MODE_EXCHANGE) {
+                httpExchange.getResponseHeaders().add(name, value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public void sendResponseHeaders(int code, int arg1) {
-        if(mode == MODE_SERVLET) {
-            if(charset != null) {
-                String contentType = httpServletResponse.getHeader(HttpHeaders.CONTENT_TYPE);
-                if (!contentType.toLowerCase().contains("; charset=")) {
-                    contentType = contentType + "; charset=" + charset;
-                    httpServletResponse.setHeader(HttpHeaders.CONTENT_TYPE, contentType);
-                }
-            }
-            httpServletResponse.setStatus(code);
-        } else if(mode == MODE_EXCHANGE) {
-            if(isGzip()) {
-                setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
-            }
-
-            if(charset != null) {
-                List<String> contentTypes = httpExchange.getResponseHeaders().get(HttpHeaders.CONTENT_TYPE);
-                for (String contentType : contentTypes) {
+        try {
+            if(mode == MODE_SERVLET) {
+                if(charset != null) {
+                    String contentType = httpServletResponse.getHeader(HttpHeaders.CONTENT_TYPE);
                     if (!contentType.toLowerCase().contains("; charset=")) {
                         contentType = contentType + "; charset=" + charset;
-                        httpExchange.getResponseHeaders().set(HttpHeaders.CONTENT_TYPE, contentType);
+                        httpServletResponse.setHeader(HttpHeaders.CONTENT_TYPE, contentType);
                     }
                 }
-            }
+                httpServletResponse.setStatus(code);
+            } else if(mode == MODE_EXCHANGE) {
+                if(isGzip()) {
+                    setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+                }
 
-            try {
-                httpExchange.sendResponseHeaders(code, arg1);
-            } catch (IOException e) {
-                e.printStackTrace();
+                if(charset != null) {
+                    List<String> contentTypes = httpExchange.getResponseHeaders().get(HttpHeaders.CONTENT_TYPE);
+                    for (String contentType : contentTypes) {
+                        if (!contentType.toLowerCase().contains("; charset=")) {
+                            contentType = contentType + "; charset=" + charset;
+                            httpExchange.getResponseHeaders().set(HttpHeaders.CONTENT_TYPE, contentType);
+                        }
+                    }
+                }
+
+                try {
+                    httpExchange.sendResponseHeaders(code, arg1);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public void sendRedirect(String redirectLink) throws IOException {
-        if(mode == MODE_SERVLET) {
-            setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
-            httpServletResponse.sendRedirect(redirectLink);
-        } else if(mode == MODE_EXCHANGE) {
-            setHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
-            setHeader(HttpHeaders.DATE, new Date().toString());
-            setHeader(HttpHeaders.LOCATION, redirectLink);
-            setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
-            httpExchange.sendResponseHeaders(302, 0);
-            httpExchange.close();
+        try {
+            if(mode == MODE_SERVLET) {
+                setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
+                httpServletResponse.sendRedirect(redirectLink);
+            } else if(mode == MODE_EXCHANGE) {
+                setHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
+                setHeader(HttpHeaders.DATE, new Date().toString());
+                setHeader(HttpHeaders.LOCATION, redirectLink);
+                setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
+                httpExchange.sendResponseHeaders(302, 0);
+                httpExchange.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public OutputStream getOutputStream() throws IOException {
-        if(mode == MODE_SERVLET) {
-            return httpServletResponse.getOutputStream();
-        } else if(mode == MODE_EXCHANGE) {
-            if(isGzip()) {
-                return new BufferedOutputStream(new GZIPOutputStream(httpExchange.getResponseBody()));
-            } else {
-                return httpExchange.getResponseBody();
+        try {
+            if(mode == MODE_SERVLET) {
+                return httpServletResponse.getOutputStream();
+            } else if(mode == MODE_EXCHANGE) {
+                if(isGzip()) {
+                    return new BufferedOutputStream(new GZIPOutputStream(httpExchange.getResponseBody()));
+                } else {
+                    return httpExchange.getResponseBody();
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
@@ -187,10 +204,14 @@ public class RequestWrapper {
     }
 
     public InputStream getInputStream() throws IOException {
-        if(mode == MODE_SERVLET) {
-            return httpServletRequest.getInputStream();
-        } else if(mode == MODE_EXCHANGE) {
-            return httpExchange.getRequestBody();
+        try {
+            if(mode == MODE_SERVLET) {
+                return httpServletRequest.getInputStream();
+            } else if(mode == MODE_EXCHANGE) {
+                return httpExchange.getRequestBody();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
@@ -200,100 +221,144 @@ public class RequestWrapper {
     }
 
     public void setCharacterEncoding(String charset) {
-        if(mode == MODE_SERVLET) {
-            httpServletResponse.setCharacterEncoding(charset);
-        } else if(mode == MODE_EXCHANGE) {
-            this.charset = charset;
+        try {
+            if(mode == MODE_SERVLET) {
+                httpServletResponse.setCharacterEncoding(charset);
+            } else if(mode == MODE_EXCHANGE) {
+                this.charset = charset;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public PrintWriter getPrintWriter() throws IOException {
-        if(mode == MODE_SERVLET) {
-            return httpServletResponse.getWriter();
-        } else if(mode == MODE_EXCHANGE) {
-            return new PrintWriter(httpExchange.getResponseBody());
+        try {
+            if(mode == MODE_SERVLET) {
+                return httpServletResponse.getWriter();
+            } else if(mode == MODE_EXCHANGE) {
+                return new PrintWriter(httpExchange.getResponseBody());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
     public InetSocketAddress getRemoteAddress() {
-        if(mode == MODE_SERVLET) {
-            return new InetSocketAddress(httpServletRequest.getRemoteAddr(), httpServletRequest.getRemotePort());
-        } else if(mode == MODE_EXCHANGE) {
-            return httpExchange.getRemoteAddress();
+        try {
+            if (mode == MODE_SERVLET) {
+                return new InetSocketAddress(httpServletRequest.getRemoteAddr(), httpServletRequest.getRemotePort());
+            } else if (mode == MODE_EXCHANGE) {
+                return httpExchange.getRemoteAddress();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
     public Map<String, List<String>> getRequestHeaders() {
-        if(mode == MODE_SERVLET) {
+        try {
+            if (mode == MODE_SERVLET) {
 //            Headers implements Map<String, List<String>> {
-            Map<String, List<String>> headers = new HashMap<>();
-            String x;
-            Enumeration<String> names = httpServletRequest.getHeaderNames();
-            while(names.hasMoreElements()) {
-                x = names.nextElement();
-                Enumeration<String> h = httpServletRequest.getHeaders(x);
-                headers.put(x, Collections.list(h) );
-            }
-            return headers;
-        } else if(mode == MODE_EXCHANGE) {
-            Map<String, List<String>> headers = new HashMap<>();
-            Map.Entry<String, List<String>> entry;
+                Map<String, List<String>> headers = new HashMap<>();
+                String x;
+                Enumeration<String> names = httpServletRequest.getHeaderNames();
+                while (names.hasMoreElements()) {
+                    x = names.nextElement();
+                    Enumeration<String> h = httpServletRequest.getHeaders(x);
+                    headers.put(x, Collections.list(h));
+                }
+                return headers;
+            } else if (mode == MODE_EXCHANGE) {
+                Map<String, List<String>> headers = new HashMap<>();
+                Map.Entry<String, List<String>> entry;
 
-            Iterator<Map.Entry<String, List<String>>> iter = httpExchange.getRequestHeaders().entrySet().iterator();
-            while(iter.hasNext()) {
-                entry = iter.next();
-                headers.put(entry.getKey(), entry.getValue() );
+                Iterator<Map.Entry<String, List<String>>> iter = httpExchange.getRequestHeaders().entrySet().iterator();
+                while (iter.hasNext()) {
+                    entry = iter.next();
+                    headers.put(entry.getKey(), entry.getValue());
+                }
+                return headers;
             }
-            return headers;
+        } catch(Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
     public List<String> getRequestHeader(String name) {
-        if(mode == MODE_SERVLET) {
-            return Collections.list(httpServletRequest.getHeaders(name));
-        } else if(mode == MODE_EXCHANGE) {
-            Headers headers = httpExchange.getRequestHeaders();
-            if(headers.containsKey(name)) {
-                return httpExchange.getRequestHeaders().get(name);
-            } else {
-                return Collections.emptyList();
+        try {
+            if (mode == MODE_SERVLET) {
+                return Collections.list(httpServletRequest.getHeaders(name));
+            } else if (mode == MODE_EXCHANGE) {
+                Headers headers = httpExchange.getRequestHeaders();
+                if (headers.containsKey(name)) {
+                    return httpExchange.getRequestHeaders().get(name);
+                } else {
+                    return Collections.emptyList();
+                }
             }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
     public String getRequestedHost() {
         String host = null;
-        if(mode == MODE_SERVLET) {
-            System.out.println("REQUESTEDHOST:"+httpServletRequest.getLocalAddr()+":"+httpServletRequest.getRemoteHost());
-            return httpServletRequest.getLocalAddr();
-        } else if(mode == MODE_EXCHANGE) {
-            host = httpExchange.getRequestHeaders().getFirst(HttpHeaders.HOST);
-            if(host == null) {
-                host = httpExchange.getLocalAddress().getHostName();
-            }
-            if(host == null) {
-                try {
+        try {
+            if (mode == MODE_SERVLET) {
+                System.out.println("REQUESTEDHOST:" + httpServletRequest.getLocalAddr() + ":" + httpServletRequest.getRemoteHost());
+                host = httpServletRequest.getLocalAddr();
+            } else if (mode == MODE_EXCHANGE) {
+                host = httpExchange.getRequestHeaders().getFirst(HttpHeaders.HOST);
+                if (host == null) {
+                    host = httpExchange.getLocalAddress().getHostName();
+                }
+                if (host == null) {
                     host = InetAddress.getLocalHost().getHostAddress();
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
+                }
+                if (host != null) {
+                    host = host.split(":")[0];
                 }
             }
-            if(host != null) {
-                host = host.split(":")[0];
-            }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
         return host;
     }
 
+    public String getReferer() {
+        String referer = null;
+        try {
+            if (mode == MODE_SERVLET) {
+                System.out.println("REQUESTEDREFERRE:" + httpServletRequest.getHeader(HttpHeaders.REFERER));
+                referer = null;
+//            return httpServletRequest.getLocalAddr();
+            } else if (mode == MODE_EXCHANGE) {
+                List<String> referers = getRequestHeader(HttpHeaders.REFERER);
+                if (referers != null && referers.size() > 0) {
+                    referer = referers.get(0);
+                }
+            }
+            if (referer != null && referer.contains(getRequestedHost())) referer = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return referer;
+    }
+
     public String getRequestMethod() {
+        try {
         if(mode == MODE_SERVLET) {
             return httpServletRequest.getMethod();
         } else if(mode == MODE_EXCHANGE) {
             return httpExchange.getRequestMethod();
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
@@ -333,9 +398,9 @@ public class RequestWrapper {
 
             sendResponseHeaders(code, bytes.length);
 
-            OutputStream os = getResponseBody();
-            os.write(bytes);
-            os.close();
+            try (OutputStream os = getResponseBody()) {
+                os.write(bytes);
+            }
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -364,17 +429,19 @@ public class RequestWrapper {
     public String getBody() {
         String body = null;
         try {
-            InputStreamReader isr = new InputStreamReader(getRequestBody(), "utf-8");
-            BufferedReader br = new BufferedReader(isr);
-            body = br.readLine();
-            br.close();
-        } catch (IOException e) {
-//            e.printStackTrace();
+        try (InputStreamReader isr = new InputStreamReader(getRequestBody(), "utf-8")) {
+            try (BufferedReader br = new BufferedReader(isr)) {
+                body = br.readLine();
+            }
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return body;
     }
 
     public String getUserName() {
+        try {
         if(mode == MODE_SERVLET) {
             return null;
         } else if(mode == MODE_EXCHANGE) {
@@ -384,35 +451,35 @@ public class RequestWrapper {
                 return null;
             }
         }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     public void processBody(Runnable1<StringBuilder> callback, Runnable1<Exception> fallback) {
         try {
             StringBuilder buf = new StringBuilder();
-            InputStream is = this.getRequestBody();
-            int b;
-            long count = 0;
-            while ((b = is.read()) != -1) {
-                if(count++ > MAX_BODY_LENGTH) {
-                    fallback.call(new IllegalArgumentException("Body size is bigger than " + MAX_BODY_LENGTH + " byte(s)."));
-                    return;
+            try (InputStream is = this.getRequestBody()) {
+                int b;
+                long count = 0;
+                while ((b = is.read()) != -1) {
+                    if (count++ > MAX_BODY_LENGTH) {
+                        fallback.call(new IllegalArgumentException("Body size is bigger than " + MAX_BODY_LENGTH + " byte(s)."));
+                        return;
+                    }
+                    buf.append((char) b);
                 }
-                buf.append((char) b);
             }
-            is.close();
-
             if(buf.length() > 0) {
                 callback.call(buf);
             } else {
                 fallback.call(new IllegalArgumentException("Empty body"));
             }
-
         } catch(Exception e) {
             e.printStackTrace();
             if(fallback != null) fallback.call(e);
         }
-
     }
 
     public Map<String,List<String>> getParameterMap() {

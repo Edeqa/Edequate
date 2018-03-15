@@ -8,12 +8,11 @@ import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.admin.Page;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
-import com.google.common.net.HttpHeaders;
+import com.edeqa.helpers.Misc;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
 
 
@@ -34,6 +33,7 @@ public class AdminServletHandler extends RestServletHandler {
             }
         }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
         registerAction(new Page());
+        registerActionsPool();
     }
 
     @Override
@@ -45,17 +45,22 @@ public class AdminServletHandler extends RestServletHandler {
             super.perform(requestWrapper);
         } else if(requestWrapper.getRequestURI().getPath().startsWith("/admin/")
                 || requestWrapper.getRequestURI().getPath().startsWith("/admin")) {
-            new Content().setMimeType(new MimeType().setMime(Mime.TEXT_HTML).setText(true)).setWebPath(new WebPath(arguments.getWebRootDirectory(), "index-admin.html")).setResultCode(200).call(null, requestWrapper);
+            WebPath webPath = new WebPath(arguments.getWebRootDirectory(), "index-admin.html");
+            if(webPath.path().exists()) {
+                new Content()
+                        .setMimeType(new MimeType().setMime(Mime.TEXT_HTML).setText(true))
+                        .setWebPath(webPath)
+                        .setResultCode(200)
+                        .call(null, requestWrapper);
+            } else {
+                Misc.err("Admin", "doesn't found index-admin.html, redirecting to the main page");
+                String host = requestWrapper.getRequestedHost();
+                String redirectLink = "https://" + host + arguments.getWrappedHttpsPort() + "/404.html";
+                requestWrapper.sendRedirect(redirectLink);
+            }
         } else {
             URI uri = requestWrapper.getRequestURI();
-            String host;
-            try {
-                host = requestWrapper.getRequestHeaders().get(HttpHeaders.HOST).get(0);
-                host = host.split(":")[0];
-            } catch(Exception e){
-                e.printStackTrace();
-                host = InetAddress.getLocalHost().getHostAddress();
-            }
+            String host = requestWrapper.getRequestedHost();
             String redirectLink = "https://" + host + arguments.getWrappedHttpsPort() + uri.getPath();
             requestWrapper.sendRedirect(redirectLink);
         }
