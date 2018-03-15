@@ -142,9 +142,32 @@ function PageEditHolder(main) {
                 ],
                 positive: {
                     label: u.create(HTML.SPAN, "OK"),
+                    dismiss: false,
                     onclick: function () {
                         console.log("ok");
-                        main.turn("pages");
+
+                        u.progress.show("Saving...");
+
+                        var options = {
+                            section: sectionNode.value,
+                            category: categoryNode.value,
+                            name: nameNode.value,
+                            language: languageNode.value,
+                            title: titleNode.value,
+                            priority: priorityNode.value,
+                            content: contentNode.getValue()
+                        };
+
+                        u.post("/admin/rest/page", options).then(function(result){
+                            console.log(result);
+                            u.progress.hide();
+                            u.toast.show("Page saved");
+                            dialog.close();
+                            main.turn("pages");
+                        }).catch(function (reason) {
+                            u.progress.hide();
+                            u.toast.error("Error saving page");
+                        });
                     }
                 },
                 negative: {
