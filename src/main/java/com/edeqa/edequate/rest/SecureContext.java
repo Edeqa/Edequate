@@ -88,9 +88,8 @@ public class SecureContext extends AbstractAction<Arguments> {
                     // get the default parameters
                     SSLParameters defaultSSLParameters = context.getDefaultSSLParameters();
                     params.setSSLParameters(defaultSSLParameters);
-
-                } catch (Exception ex) {
-                    Misc.log(LOG, "is failing to configure SSL server");
+                } catch (Exception e) {
+                    Misc.log(LOG, "is failing to configure SSL server", e);
                 }
             }
         };

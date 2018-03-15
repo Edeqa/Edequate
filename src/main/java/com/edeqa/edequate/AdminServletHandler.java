@@ -5,6 +5,7 @@ import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
+import com.edeqa.edequate.rest.admin.Page;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.google.common.net.HttpHeaders;
@@ -32,6 +33,7 @@ public class AdminServletHandler extends RestServletHandler {
                 return name.contains("Holder");
             }
         }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
+        registerAction(new Page());
     }
 
     @Override

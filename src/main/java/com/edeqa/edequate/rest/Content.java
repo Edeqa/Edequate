@@ -95,14 +95,14 @@ public class Content extends FileRestAction {
                 String string;
                 Charset charset = StandardCharsets.ISO_8859_1;
                 if(getWebPath() != null) {
-                    FileReader reader = new FileReader(getWebPath().path());
                     int c;
                     StringBuilder fileContent = new StringBuilder();
-                    while ((c = reader.read()) != -1) {
-                        fileContent.append((char) c);
+                    try(FileReader reader = new FileReader(getWebPath().path())) {
+                        while ((c = reader.read()) != -1) {
+                            fileContent.append((char) c);
+                        }
+                        reader.close();
                     }
-                    reader.close();
-
                     byte[] bytes = fileContent.toString().getBytes(); //Files.readAllBytes(file.toPath());
                     if (bytes[0] == -1 && bytes[1] == -2) charset = StandardCharsets.UTF_16;
                     else if (bytes[0] == -2 && bytes[1] == -1) charset = StandardCharsets.UTF_16;
@@ -116,38 +116,38 @@ public class Content extends FileRestAction {
                 requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "Origin, X-Requested-With, Content-Type, Accept, Authorization");
                 requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
                 requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, getMimeType().fetchContentType());
-                if (!getMimeType().isGzip())
+                if (!getMimeType().isGzip()) {
                     requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(string.length()));
+                }
                 requestWrapper.sendResponseHeaders(getResultCode(), 0);
 
-                OutputStream os = requestWrapper.getResponseBody();
-                os.write(string.getBytes(charset));
-                os.close();
+                try(OutputStream os = requestWrapper.getResponseBody()) {
+                    os.write(string.getBytes(charset));
+                }
             } else {
                 requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, getMimeType().fetchContentType());
                 if (!getMimeType().isGzip())
                     requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(webPath.path().length()));
                 requestWrapper.sendResponseHeaders(getResultCode(), 0);
-                OutputStream os = requestWrapper.getResponseBody();
 
-                if(getWebPath() != null) {
-                    FileInputStream fs = new FileInputStream(getWebPath().path());
-                    final byte[] buffer = new byte[0x10000];
-                    int count;
-                    while ((count = fs.read(buffer)) >= 0) {
-                        os.write(buffer, 0, count);
+                try (OutputStream os = requestWrapper.getResponseBody()) {
+                    if (getWebPath() != null) {
+                        try (FileInputStream fs = new FileInputStream(getWebPath().path())) {
+                            final byte[] buffer = new byte[0x10000];
+                            int count;
+                            while ((count = fs.read(buffer)) >= 0) {
+                                os.write(buffer, 0, count);
+                            }
+                        }
+                    } else {
+                        try (InputStream is = new ByteArrayInputStream(getContent().getBytes())) {
+                            final byte[] buffer = new byte[0x10000];
+                            int count;
+                            while ((count = is.read(buffer)) >= 0) {
+                                os.write(buffer, 0, count);
+                            }
+                        }
                     }
-                    fs.close();
-                    os.close();
-                } else {
-                    InputStream is = new ByteArrayInputStream(getContent().getBytes());
-                    final byte[] buffer = new byte[0x10000];
-                    int count;
-                    while ((count = is.read(buffer)) >= 0) {
-                        os.write(buffer, 0, count);
-                    }
-                    is.close();
-                    os.close();
                 }
             }
         } catch(Exception e) {

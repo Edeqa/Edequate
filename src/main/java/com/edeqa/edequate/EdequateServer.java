@@ -29,7 +29,7 @@ import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
 /**
  * Created 3/14/18.
  */
-@SuppressWarnings("HardCodedStringLiteral")
+@SuppressWarnings({"HardCodedStringLiteral", "GoogleAppEngineForbiddenCode"})
 public class EdequateServer {
 
     private static final String LOG = "EdequateServer";
@@ -50,7 +50,7 @@ public class EdequateServer {
     @SuppressWarnings("AppEngineForbiddenCode")
     public static void main(final String[] args ) throws Exception {
 
-        Misc.log(LOG, "====== Edequate server v" + Version.getVersion() + ". Copyright (C) Edeqa. http://www.edeqa.com ======");
+        Misc.log(LOG, "====== Edequate server v" + Version.getVersion() + ". Copyright (C) 2017-18, Edeqa. http://www.edeqa.com ======");
 
         setArguments((Arguments) getSystemBus().registerIfAbsent(new Arguments()));
         getArguments().call(null, args);
@@ -94,7 +94,7 @@ public class EdequateServer {
 
     }
 
-    protected static void setupServletHandlers() throws Exception {
+    private static void setupServletHandlers() throws Exception {
         MainServletHandler mainServletHandler = new MainServletHandler();
         RestServletHandler restServletHandler = new RestServletHandler();
         AdminServletHandler adminServletHandler = new AdminServletHandler();

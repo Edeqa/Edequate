@@ -420,9 +420,9 @@ function Edequate(options) {
             onResolved: function(value) {
                 console.warn("Define '.then(onResolved(value){...})'; got response: ", value && value.response);
             },
-            onRejected: function(code, value, error) {
-                console.warn("Define '.catch(onRejected(code, value[, error]){...})'");
-                console.error(code, value, error);
+            onRejected: function(code, value, error, options) {
+                console.warn("Define '.catch(onRejected(code, value[, error[, options]]){...})'");
+                console.error(code, value, error, options);
             },
             promise: function(newPromise) {
                 return newPromise;
@@ -744,9 +744,9 @@ function Edequate(options) {
                 }
                 onlyname = filenameParts.join(".");
                 instanceNames.push(onlyname);
-                isScript = extension === "js";
+                isText = extension === "text" || extension === "txt";
                 isJSON = extension === "json";
-                isText = !isScript && !isJSON;
+                isScript = !isText && !isJSON;
             } else if(name instanceof Object) {
                 isScript = !!name.isScript;
                 isJSON = !!name.isJSON;
@@ -805,8 +805,8 @@ function Edequate(options) {
                 get(name).then(function(result){
                     instantiate.call(result.response, this);
                 }.bind(options)).catch(function(e,result){
-                    returned.onRejected(ERRORS.ERROR_LOADING, e, result);
-                });
+                    returned.onRejected(ERRORS.ERROR_LOADING, e, result, this);
+                }.bind(options));
             }
         }
         return returned;
@@ -1741,10 +1741,16 @@ function Edequate(options) {
         var textarea;
         if(editor) {
             delete options.type;
+            options.onkeyup = function(e) {
+                e.stopPropagation();
+            };
             textarea = create(HTML.DIV, options);
             textarea.editNode = create(HTML.DIV, {}, textarea);
             textarea.setValue = function (value) {
                 textarea.editNode.innerHTML = value;
+            };
+            textarea.getValue = function () {
+                return textarea.editNode.innerHTML;
             };
             create(HTML.LINK, {href:"https://cdn.quilljs.com/1.3.6/quill.snow.css", rel:"stylesheet"}, document.head);
             require("https://cdn.quilljs.com/1.3.6/quill.js").then(function(result) {
@@ -1758,11 +1764,17 @@ function Edequate(options) {
                         theme: "snow"
                     });
                 };
+                textarea.getValue = function() {
+                    return textarea.editNode.firstChild.innerHTML;
+                }
             });
         } else {
             textarea = create(HTML.TEXTAREA, options);
             textarea.setValue = function(value) {
 
+            };
+            textarea.getValue = function() {
+                return "";
             };
             textarea.setValue(value);
         }
@@ -2313,6 +2325,7 @@ function Edequate(options) {
         var toast = create(HTML.DIV, {className:"toast-holder hidden", onclick: function(){ this.hide(HIDING.SCALE_Y_BOTTOM); }});
         toast.content = create(HTML.DIV, {className:"toast shadow"}, toast);
         toast.show = function(text,delay){
+            toast.content.classList.remove("toast-error");
             if(!toast.parentNode) document.body.appendChild(toast);
             clearTimeout(toast.hideTask);
             Lang.updateNode(toast.content, text);
@@ -2323,6 +2336,10 @@ function Edequate(options) {
                     toast.hide(HIDING.SCALE_Y_BOTTOM);
                 },delay);
             }
+        };
+        toast.error = function(text,delay){
+            this.show(text, delay);
+            toast.content.classList.add("toast-error");
         };
         return toast;
     }
