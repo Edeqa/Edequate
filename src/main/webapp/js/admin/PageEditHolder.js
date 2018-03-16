@@ -144,10 +144,7 @@ function PageEditHolder(main) {
                     label: u.create(HTML.SPAN, "OK"),
                     dismiss: false,
                     onclick: function () {
-                        console.log("ok");
-
                         u.progress.show("Saving...");
-
                         var options = {
                             section: sectionNode.value,
                             category: categoryNode.value,
@@ -157,16 +154,18 @@ function PageEditHolder(main) {
                             priority: priorityNode.value,
                             content: contentNode.getValue()
                         };
-
                         u.post("/admin/rest/page", options).then(function(result){
-                            console.log(result);
                             u.progress.hide();
                             u.toast.show("Page saved");
                             dialog.close();
                             main.turn("pages");
-                        }).catch(function (reason) {
+                        }).catch(function (code, reason) {
                             u.progress.hide();
-                            u.toast.error("Error saving page");
+                            var json;
+                            try {
+                                json = JSON.parse(reason.response);
+                            } catch(e) {}
+                            u.toast.error("Error saving page" + (json && json.message ? ": " + json.message : ""));
                         });
                     }
                 },
@@ -226,6 +225,7 @@ function PageEditHolder(main) {
                 contentNode.setValue(xhr.response);
                 u.progress.hide();
             }).catch(function (error, json) {
+                console.error("Error", error, json);
                 contentNode.setValue("");
                 u.progress.hide();
             });

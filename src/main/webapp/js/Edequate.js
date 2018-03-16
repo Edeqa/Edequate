@@ -1726,6 +1726,7 @@ function Edequate(options) {
         return select;
     }
 
+    // using https://quilljs.com/docs/delta/
     function NodeTextarea(options, appendTo) {
         options = options || {};
 
@@ -1733,7 +1734,7 @@ function Edequate(options) {
         delete options.editor;
 
         if(!options.onclick) {
-            options.onclick = function(e) { this.focus(); e.stopPropagation(); };
+            options.onclick = function(e) { e.stopPropagation(); };
         }
         var value = options.value || "";
         delete options.value;
@@ -1754,24 +1755,52 @@ function Edequate(options) {
             };
             create(HTML.LINK, {href:"https://cdn.quilljs.com/1.3.6/quill.snow.css", rel:"stylesheet"}, document.head);
             require("https://cdn.quilljs.com/1.3.6/quill.js").then(function(result) {
-                textarea.editor = textarea.editor || new Quill(textarea.editNode, {
-                    theme: "snow"
+                textarea.editor = new Quill(textarea.editNode, {
+                    theme: "snow",
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                            // [{ 'font': [] }],
+                            ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+                            // [{ 'align': [] }],
+                            ['link', 'image']
+                        ]
+                    }
                 });
                 textarea.setValue = function(value) {
-                    clear(textarea);
-                    textarea.editNode = create(HTML.DIV, {innerHTML: value}, textarea);
-                    textarea.editor = new Quill(textarea.editNode, {
-                        theme: "snow"
-                    });
+                    textarea.editor.setText("");
+                    textarea.editor.clipboard.dangerouslyPasteHTML(0, value);
                 };
                 textarea.getValue = function() {
-                    return textarea.editNode.firstChild.innerHTML;
-                }
+                    var text = "";
+                    var value = textarea.editNode.firstChild.innerHTML;
+                    var tokens = value.split(/(<.*?>)/);
+                    var indent = 0;
+                    function tabs(number) { var tabs = "";for(var i = 0; i < number; i++){ tabs += "\t";} return tabs;}
+                    for(var i in tokens) {
+                        if(tokens[i].indexOf("</") === 0) {
+                            indent--;
+                            text += tabs(indent) + tokens[i] + "\n";
+                        } else if(tokens[i].toLowerCase().indexOf("<img") === 0) {
+                            text += tabs(indent) + tokens[i] + "\n";
+                        } else if(tokens[i].indexOf("<") === 0) {
+                            text += tabs(indent) + tokens[i] + "\n";
+                            indent++;
+                        } else if (tokens[i]) {
+                            text += tabs(indent) + tokens[i] + "\n";
+                        }
+                    }
+                    return text;
+                };
+            }).catch(function(e) {
+                console.error(e);
+                textarea.setValue(value);
             });
         } else {
             textarea = create(HTML.TEXTAREA, options);
             textarea.setValue = function(value) {
-
             };
             textarea.getValue = function() {
                 return "";
