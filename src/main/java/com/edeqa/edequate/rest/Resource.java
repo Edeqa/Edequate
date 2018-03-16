@@ -67,7 +67,7 @@ public class Resource extends FileRestAction {
             Misc.log("Resource", "->", path);
 
             json.put(STATUS, STATUS_SUCCESS);
-            json.put(CODE, CODE_REDIRECT);
+            json.put(CODE, CODE_MOVED_TEMPORARILY);
             json.put(MESSAGE, path);
         } else {
             Misc.log("Resource", "not found: " + files);

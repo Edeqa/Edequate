@@ -70,7 +70,7 @@ function PageEditHolder(main) {
                 }
 
                 if(action === "add") {
-                    editPage(ids, {sections: json.message}, {mode:"Add page"});
+                    editPage(ids, {initial: true, section: json.message}, {mode:"Add page"});
                     return;
                 }
 
@@ -81,7 +81,10 @@ function PageEditHolder(main) {
                             var pages = normalizeStructure(json, [[],[],[],[],[],[],[],[],[],[]]);
                             for(var i in pages[+ids[1]]) {
                                 if(pages[+ids[1]][i].type === ids[2]) {
-                                    editPage(ids, pages[+ids[1]][i], {mode:"Edit page"});
+                                    var page = pages[+ids[1]][i];
+                                    page.section = ids[0];
+                                    page.initial = true;
+                                    editPage(ids, page, {mode:"Edit page"});
                                     break;
                                 }
                             }
@@ -128,10 +131,12 @@ function PageEditHolder(main) {
                     {type: HTML.SELECT, label: "Category", values: categories},
                     {type: HTML.INPUT, label: "Name", prefix:""},
                     {type: HTML.SELECT, label: "Language", values: locales, value: locale, onchange: function() {
-                            locale = languageNode.value;
-                            populateWithLang(ids[0], dialog.page.title, titleNode);
-                            populateContent(dialog.page.resource, contentNode);
+                            locale = localeNode.value;
+                            populateWithLang(ids[0], dialog.initialOptions.title, titleNode, dialog.initialOptions.menu, menuNode);
+                            populateContent(dialog.initialOptions.resource, contentNode);
                         }},
+                    {type: HTML.INPUT, label: "Menu icon"},
+                    {type: HTML.SELECT, label: "Menu name"},
                     {type: HTML.SELECT, label: "Title"},
                     {
                         type: HTML.SELECT,
@@ -145,16 +150,19 @@ function PageEditHolder(main) {
                     dismiss: false,
                     onclick: function () {
                         u.progress.show("Saving...");
+
                         var options = {
-                            section: sectionNode.value,
                             category: categoryNode.value,
+                            icon: iconNode.value,
+                            menu: menuNode.value,
+                            section: sectionNode.value,
                             name: nameNode.value,
-                            language: languageNode.value,
+                            locale: localeNode.value,
                             title: titleNode.value,
                             priority: priorityNode.value,
                             content: contentNode.getValue()
                         };
-                        u.post("/admin/rest/page", options).then(function(result){
+                        u.post("/admin/rest/page", {initial: dialog.initialOptions, update: options}).then(function(result){
                             u.progress.hide();
                             u.toast.show("Page saved");
                             dialog.close();
@@ -180,36 +188,61 @@ function PageEditHolder(main) {
             var sectionNode = dialog.items[0];
             var categoryNode = dialog.items[1];
             var nameNode = dialog.items[2];
-            var languageNode = dialog.items[3];
-            var titleNode = dialog.items[4];
-            var priorityNode = dialog.items[5];
-            var contentNode = dialog.items[6];//.lastChild.lastChild;
+            var localeNode = dialog.items[3];
+            var iconNode = dialog.items[4];
+            var menuNode = dialog.items[5];
+            var titleNode = dialog.items[6];
+            var priorityNode = dialog.items[7];
+            var contentNode = dialog.items[8];//.lastChild.lastChild;
+
 
             sectionNode.value = ids[0];
             categoryNode.value = ids[1];
             nameNode.value = ids[2] || "";
-            dialog.page = page;
+            iconNode.value = page.icon || "";
+            priorityNode.value = page.priority || 0;
 
-            populateWithLang(ids[0], page.title, titleNode);
-            priorityNode.value = page && page.priority || 0;
-            // contentNode.value = page && page.resource || "";
+            dialog.initialOptions = page;
 
+            populateWithLang(ids[0], page.title, titleNode, page.menu, menuNode);
             populateContent(page.resource, contentNode);
+
             dialog.open();
-        } catch(e) {
+        } catch(e){
             console.error(e);
         }
     }
 
-    function populateWithLang(section, value, selectNode) {
+    function populateWithLang(section, titleValue, selectNode, menuValue, menuNode) {
         u.progress.show("Loading resources");
-        u.getJSON("/rest/resources", {resource: section +".json", locale: locale || "en"}).then(function(json){
+
+        function setStrings(json) {
             for(var x in json) {
                 json[x] += " (" + x + ")";
             }
             selectNode.setOptions(json);
-            selectNode.value = value;
+            selectNode.value = titleValue;
+
+            menuNode.setOptions(json);
+            menuNode.value = menuValue;
+
             u.progress.hide();
+        }
+
+        u.getJSON("/rest/resources", {resource: section +".json", locale: "en"}).then(function(json){
+            if(locale !== "en") {
+                u.getJSON("/rest/resources", {resource: section +".json", locale: locale || "en"}).then(function(j){
+                    for(var x in j) {
+                        json[x] = j[x];
+                    }
+                    setStrings(json);
+                }).catch(function(e,x,j) {
+                    console.error(e,x,j);
+                    setStrings(json);
+                });
+            } else {
+                setStrings(json);
+            }
         });
     }
 

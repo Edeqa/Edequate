@@ -4,6 +4,7 @@ package com.edeqa.edequate;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
+import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
@@ -49,15 +50,18 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     public void useDefault() {
-        registerAction(new Resource().setChildDirectory("content").setActionName("/rest/content"));
-        registerAction(new Resource().setChildDirectory("resources").setActionName("/rest/resources"));
-        registerAction(new Resource().setChildDirectory("data").setActionName("/rest/data"));
+
+        Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
+
+        registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("content").setActionName("/rest/content"));
+        registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("resources").setActionName("/rest/resources"));
+        registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
                 return name.contains("Holder");
             }
-        }).setChildDirectory("js/main").setActionName("/rest/main"));
+        }).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/main").setActionName("/rest/main"));
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -68,8 +72,9 @@ public class RestServletHandler extends AbstractServletHandler {
             public String call(String s) {
                 return s.replaceAll("pages-(.*?)\\.json", "$1");
             }
-        }).setChildDirectory("data").setActionName("/rest/data/types"));
-        registerAction(new Locales());
+        }).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data/types"));
+        registerAction(new Locales().setWebDirectory(arguments.getWebRootDirectory()));
+
         registerAction(new Version());
         registerAction(new Nothing());
     }
@@ -145,7 +150,7 @@ public class RestServletHandler extends AbstractServletHandler {
         }
 
         if(json.has(CODE)) {
-            if (json.getInt(CODE) == AbstractAction.CODE_REDIRECT && json.has(AbstractAction.MESSAGE)) {
+            if (json.getInt(CODE) == AbstractAction.CODE_MOVED_TEMPORARILY && json.has(AbstractAction.MESSAGE)) {
                 Misc.log("Rest", "redirect:", json.getString(AbstractAction.MESSAGE));
                 requestWrapper.sendRedirect(json.getString(AbstractAction.MESSAGE));
                 return;
