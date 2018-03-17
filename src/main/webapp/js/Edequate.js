@@ -2243,7 +2243,7 @@ function Edequate(options) {
             options = options || {};
             options.section = options.section || DRAWER.SECTION_PRIMARY;
             if(!options.id) throw Error("ID is not defined for drawer item:", options);
-            if(!options.name) throw Error("ID is not defined for drawer item:", options);
+            if(!options.name) throw Error("Name is not defined for drawer item:", options);
             var callback = options.callback || function() {console.warn("Callback is not defined for drawer item:", options);};
             options.priority = options.priority || 0;
 

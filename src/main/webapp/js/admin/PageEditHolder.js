@@ -169,11 +169,7 @@ function PageEditHolder(main) {
                             main.turn("pages");
                         }).catch(function (code, reason) {
                             u.progress.hide();
-                            var json;
-                            try {
-                                json = JSON.parse(reason.response);
-                            } catch(e) {}
-                            u.toast.error("Error saving page" + (json && json.message ? ": " + json.message : ""));
+                            u.toast.error("Error saving page" + (reason && reason.statusText ? ": " + reason.statusText : ""));
                         });
                     }
                 },

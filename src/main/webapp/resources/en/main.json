@@ -17,6 +17,9 @@
   "loading": "Loading...",
   "ok": "OK",
   "page_not_found": "Page not found",
+  "privacy": "Privacy",
   "privacy_policy": "Privacy policy",
-  "title": "Edequate Example"
+  "terms": "Terms",
+  "terms_of_service": "Terms of service",
+  "title": "Edequate"
 }

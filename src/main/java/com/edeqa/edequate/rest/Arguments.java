@@ -4,6 +4,9 @@ import com.edeqa.edequate.abstracts.AbstractAction;
 
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 @SuppressWarnings("unused")
 public class Arguments extends AbstractAction<String[]> {
 
@@ -28,7 +31,12 @@ public class Arguments extends AbstractAction<String[]> {
     }
 
     public String getWebRootDirectory() {
-        return "";
+        try {
+            return URLDecoder.decode(Thread.currentThread().getContextClassLoader().getResource("").getPath(), "UTF-8").split("/WEB-INF/classes/")[0];
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     public String getSSLCertificatePassword() {

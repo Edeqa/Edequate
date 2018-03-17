@@ -5,15 +5,22 @@ import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
+import com.edeqa.edequate.rest.Locales;
+import com.edeqa.edequate.rest.Nothing;
+import com.edeqa.edequate.rest.Resource;
+import com.edeqa.edequate.rest.Version;
 import com.edeqa.edequate.rest.admin.Page;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
+import com.edeqa.helpers.interfaces.Callable1;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URI;
+
+import javax.servlet.ServletException;
 
 
 /**
@@ -24,8 +31,17 @@ public class AdminServletHandler extends RestServletHandler {
 
     public AdminServletHandler(){
         super();
+        registerRest();
+    }
 
-//        registerAction(new InitialData());
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        registerRest();
+        registerActionsPool();
+    }
+
+    private void registerRest() {
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -33,7 +49,6 @@ public class AdminServletHandler extends RestServletHandler {
             }
         }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
         registerAction(new Page());
-        registerActionsPool();
     }
 
     @Override

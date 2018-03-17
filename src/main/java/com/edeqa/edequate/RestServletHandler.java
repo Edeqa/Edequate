@@ -37,8 +37,8 @@ import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
 @SuppressWarnings("unchecked")
 public class RestServletHandler extends AbstractServletHandler {
 
-    private final EventBus<AbstractAction> restBus;
-    private final EventBus<AbstractAction> systemBus;
+    private EventBus<AbstractAction> restBus;
+    private EventBus<AbstractAction> systemBus;
 
     private Map<String, AbstractAction> pool;
 
@@ -47,6 +47,7 @@ public class RestServletHandler extends AbstractServletHandler {
         restBus = (EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS);
         systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
         pool = new LinkedHashMap<>();
+        getSystemBus().registerIfAbsent(new Arguments());
     }
 
     public void useDefault() {
@@ -79,11 +80,6 @@ public class RestServletHandler extends AbstractServletHandler {
         registerAction(new Nothing());
     }
 
-    @Override
-    public void init() throws ServletException {
-        super.init();
-    }
-
     public AbstractAction<RequestWrapper> registerAction(AbstractAction<RequestWrapper> actionHolder) {
         String actionName = actionHolder.getType();
 
@@ -93,18 +89,6 @@ public class RestServletHandler extends AbstractServletHandler {
 //            Misc.log("Rest", "register:", actionHolder.getClass().getName(), "[" + actionName + "]");
 //        }
         pool.put(actionName, actionHolder);
-        return actionHolder;
-    }
-
-    public AbstractAction<RequestWrapper> registerAction1(AbstractAction<RequestWrapper> actionHolder) {
-        String actionName = actionHolder.getType();
-
-        if(restBus.getHolder(actionName) != null) {
-            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + actionName + "]");
-        } else {
-            Misc.log("Rest", "register:", actionHolder.getClass().getSimpleName(), "[" + actionName + "]");
-        }
-        restBus.registerOrUpdate(actionHolder);
         return actionHolder;
     }
 

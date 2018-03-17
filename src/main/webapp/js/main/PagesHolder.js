@@ -69,7 +69,7 @@ function PagesHolder(main) {
                         main.drawer.add({
                             section: pages.category,
                             id: pages.type,
-                            name: u.lang[pages.menu],
+                            name: u.lang[pages.menu] || pages.menu,
                             icon: pages.icon,
                             priority: pages.priority,
                             callback: function () {
@@ -134,13 +134,13 @@ function PagesHolder(main) {
                 console.error(json);
                 u.create(HTML.DIV, {
                     className: "content-centered",
-                    innerHTML: u.lang.error
+                    innerHTML: u.lang.error || "Error"
                 }, main.content);
                 u.progress.hide();
             });
             main.history.add(self.type, [type]);
-            main.actionbar.setTitle(u.lang[page.title]);
-            u.lang.updateNode(main.drawer.headerPrimary, u.lang[page.title]);
+            main.actionbar.setTitle(u.lang[page.title] || page.title);
+            u.lang.updateNode(main.drawer.headerPrimary, u.lang[page.title] || page.title);
         } catch(e) {
             console.error(e);
         }

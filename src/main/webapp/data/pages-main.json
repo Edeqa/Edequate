@@ -3,18 +3,18 @@
     {
       "category": 9,
       "icon": "help",
-      "menu": "Privacy Policy",
+      "menu": "privacy",
       "resource": "privacy-policy.html",
-      "title": "Privacy Policy",
+      "title": "privacy_policy",
       "type": "privacy"
     },
     {
       "category": 9,
       "icon": "info_outline",
-      "menu": "About",
+      "menu": "about",
       "priority": -10,
       "resource": "main-about.html",
-      "title": "About",
+      "title": "about",
       "type": "about"
     }
   ]

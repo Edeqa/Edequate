@@ -18,6 +18,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
+import javax.servlet.ServletException;
+
 import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
 import static com.edeqa.helpers.HtmlGenerator.A;
 import static com.edeqa.helpers.HtmlGenerator.CLASS;
@@ -36,7 +38,7 @@ import static com.edeqa.helpers.HtmlGenerator.WIDTH;
 
 public class MainServletHandler extends AbstractServletHandler {
 
-    private final EventBus<AbstractAction> systemBus;
+    private EventBus<AbstractAction> systemBus;
     private MimeTypes mimeTypes;
     private Replacements replacements;
 
@@ -45,6 +47,12 @@ public class MainServletHandler extends AbstractServletHandler {
         systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
         setMimeTypes(new MimeTypes().useDefault());
         setReplacements(new Replacements());
+    }
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
     }
 
     @Override
