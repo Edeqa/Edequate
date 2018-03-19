@@ -22,7 +22,11 @@ function Main(u) {
             self.history.goBack();
         });
 
-        self.layout = u.create(HTML.DIV, {className:"layout", role:"main"}, document.body);
+        var collapsed = u.load("drawer:collapsed");
+        self.layout = self.content = u.create(HTML.DIV, {className:"layout changeable" + (collapsed ? " collapsed" : ""), role:"main", onscroll: switchFullDrawer}, document.body);
+        window.addEventListener("scroll", switchFullDrawer);
+        // self.content = u.create(HTML.DIV, {className:"content", onscroll: switchFullDrawer}, self.layout);
+
         self.actionbar = u.actionBar({
             title: "Loading...",
             onbuttonclick: function(){
@@ -88,6 +92,9 @@ function Main(u) {
             } else {
                 window.location = "/";
             }
+            window.addEventListener("load",function() { setTimeout(function(){
+                window.scrollTo(0, 1); }, 0);
+            });
         };
 
         this.loadResources(self.mainType + ".json", function() {
@@ -153,6 +160,9 @@ function Main(u) {
                     "7": u.lang.drawer_settings,
                     "8": u.lang.drawer_help,
                     "9": u.lang.drawer_last
+                },
+                ontogglesize: function(collapsed) {
+                    if(collapsed !== undefined) self.layout.classList[collapsed ? "add":"remove"]("collapsed");
                 }
             }, document.body);
 
@@ -209,17 +219,17 @@ function Main(u) {
             });
 
             // noinspection JSUnusedGlobalSymbols
-            self.content = u.create(HTML.DIV, {className:"content", onscroll: switchFullDrawer}, self.layout);
+            // self.content = u.create(HTML.DIV, {className:"content", onscroll: switchFullDrawer}, self.layout);
 
-            self.buttonScrollTop = u.create(HTML.BUTTON, {
-                className: "icon button-scroll-top changeable hidden",
-                onclick: function() {
-                    self.content.scrollTop = 0;
-                    switchFullDrawer.call(self.content);
-                },
-                innerHTML: "keyboard_arrow_up"
-            }, self.layout);
         });
+        self.buttonScrollTop = u.create(HTML.BUTTON, {
+            className: "icon button-scroll-top changeable hidden",
+            onclick: function() {
+                self.content.scrollTop = 0;
+                switchFullDrawer.call(self.content);
+            },
+            innerHTML: "keyboard_arrow_up"
+        }, document.body);
     };
 
     this.loadResources = function(resource, callback) {
@@ -264,22 +274,24 @@ function Main(u) {
 
     function switchFullDrawer(){
         if(getComputedStyle(self.actionbar).display === "none") return;
-        if(self.content.scrollTop > 200) {
-            self.drawer.toggleSize(true);
-            self.actionbar.toggleSize(true);
-//                    clearTimeout(self.buttonScrollTop.hideTimeout);
-            if(!self.buttonScrollTop.offsetHeight) {
-                self.buttonScrollTop.hideTimeout = setTimeout(function(){
-                    self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
-                }, 1500);
+        if(document.documentElement.scrollTop > 10 || self.layout.scrollTop > 0) {
+            if(!self.drawer.classList.contains("collapsed")) {
+                self.drawer.toggleSize(true);
+                self.actionbar.toggleSize(true);
+                self.layout.classList.add("collapsed");
             }
-            self.buttonScrollTop.show(/*HIDING.OPACITY*/);
-        } else {
-            self.drawer.toggleSize(false);
-            self.actionbar.toggleSize(false);
-            if(self.buttonScrollTop.offsetHeight) {
+            clearTimeout(self.buttonScrollTop.hideTimeout);
+            self.buttonScrollTop.hideTimeout = setTimeout(function(){
                 self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
+            }, 1500);
+            if(self.buttonScrollTop.isHidden) self.buttonScrollTop.show(/*HIDING.OPACITY*/);
+        } else {
+            if(self.drawer.classList.contains("collapsed")) {
+                self.drawer.toggleSize(false);
+                self.actionbar.toggleSize(false);
+                self.layout.classList.remove("collapsed");
             }
+            if(!self.buttonScrollTop.isHidden) self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
         }
     }
 

@@ -1686,6 +1686,12 @@ function Edequate(options) {
         delete options.options;
         var defaultValue = options.value || "";
         delete options.value;
+        var onchange = options.onchange;
+        options.onchange = function(event) {
+            if(onchange) onchange.call(select, event);
+            select.oldValue = select.value;
+        };
+
 
         var select = create(HTML.SELECT, options);
         select.setOptions = function(values) {
@@ -1706,12 +1712,29 @@ function Edequate(options) {
                     }
                 }
             } else if (values instanceof Object) {
-                var keys = Object.keys(values).sort(function(a,b){return values[a].trim().toLowerCase() < values[b].trim().toLowerCase() ? -1 : values[a].trim().toLowerCase() > values[b].trim().toLowerCase() ? 1 : 0});
+                var keys = Object.keys(values).sort(function (a, b) {
+                    var left = values[a];
+                    if(left instanceof HTMLSpanElement) {
+                        left = left.innerText;
+                    }
+                    left = left.trim();
+                    var right = values[b];
+                    if(right instanceof HTMLSpanElement) {
+                        right = right.innerText;
+                    }
+                    right = right.trim();
+                    return left.toLowerCase() < right.toLowerCase() ? -1 : left.toLowerCase() > right.toLowerCase() ? 1 : 0
+                });
                 for (var i in keys) {
                     // noinspection JSUnfilteredForInLoop
+                    var value = values[keys[i]];
+                    if(value instanceof HTMLSpanElement) {
+                        value = value.innerText;
+                    }
+                    value = value.trim();
                     var valueOptions = {
                         value: keys[i],
-                        innerHTML: values[keys[i]]
+                        innerHTML: value
                     };
                     if(defaultValue == keys[i]) valueOptions.selected = true;
                     if(optionClassName) valueOptions.className = optionClassName;
@@ -1719,6 +1742,7 @@ function Edequate(options) {
                 }
             }
         };
+        select.oldValue = defaultValue;
         if(values) {
             select.setOptions(values);
         }
@@ -1746,6 +1770,7 @@ function Edequate(options) {
                 e.stopPropagation();
             };
             textarea = create(HTML.DIV, options);
+            textarea.changed = false;
             textarea.editNode = create(HTML.DIV, {}, textarea);
             textarea.setValue = function (value) {
                 textarea.editNode.innerHTML = value;
@@ -1753,6 +1778,7 @@ function Edequate(options) {
             textarea.getValue = function () {
                 return textarea.editNode.innerHTML;
             };
+            textarea.changed = false;
             create(HTML.LINK, {href:"https://cdn.quilljs.com/1.3.6/quill.snow.css", rel:"stylesheet"}, document.head);
             require("https://cdn.quilljs.com/1.3.6/quill.js").then(function(result) {
                 textarea.editor = new Quill(textarea.editNode, {
@@ -1769,9 +1795,13 @@ function Edequate(options) {
                         ]
                     }
                 });
+                textarea.editor.on("text-change", function() {
+                    textarea.changed = true;
+                });
                 textarea.setValue = function(value) {
                     textarea.editor.setText("");
                     textarea.editor.clipboard.dangerouslyPasteHTML(0, value);
+                    textarea.changed = false;
                 };
                 textarea.getValue = function() {
                     var text = "";
@@ -1897,7 +1927,7 @@ function Edequate(options) {
                 for(var i = 0; i < nodes.length; i++) {
                     if(nodes[i].dataset.lang) {
                         try {
-                            nodes[i].parentNode.replaceChild(Lang[nodes[i].dataset.lang],nodes[i]);
+                            nodes[i].innerHTML = Lang[nodes[i].dataset.lang].innerHTML;
                         } catch(e) {
                             console.warn("Resource not found: " + nodes[i].dataset.lang);
                         }
@@ -2088,7 +2118,7 @@ function Edequate(options) {
         };
 
         var layout = create(HTML.DIV, {
-            className:"drawer noselect changeable" + (collapsed ? " drawer-collapsed" : "") + optionalClassName(options.className),
+            className:"drawer noselect changeable" + (collapsed ? " collapsed" : "") + optionalClassName(options.className),
             tabindex: -1,
             onblur: function(){
                 layout.close();
@@ -2121,10 +2151,10 @@ function Edequate(options) {
                 if(force !== undefined) collapsed = force;
                 save("drawer:collapsed", collapsed);
                 layout.toggleButton.innerHTML = collapsed ? "last_page" : "first_page";
-                layout.classList[collapsed ? "add" : "remove"]("drawer-collapsed");
-                layoutHeaderHolder.classList[collapsed ? "add" : "remove"]("drawer-collapsed");
+                layout.classList[collapsed ? "add" : "remove"]("collapsed");
+                layoutHeaderHolder.classList[collapsed ? "add" : "remove"]("collapsed");
                 /** @namespace options.ontogglesize */
-                if(options.ontogglesize) options.ontogglesize(force);
+                if(options.ontogglesize) options.ontogglesize(collapsed);
             },
             ontouchstart: swipeHolder
 //            onmousedown: swipeHolder
@@ -2180,7 +2210,6 @@ function Edequate(options) {
             };
             window.addEventListener("touchend", endHolder, {passive: true});
             window.addEventListener("touchmove", moveHolder, {passive: true});
-
         };
 
         var layoutHeaderHolder = create(HTML.DIV, {
@@ -2417,9 +2446,9 @@ function Edequate(options) {
         var actionbar = create(HTML.DIV, {
             className:"actionbar changeable" + optionalClassName(options.className),
             toggleSize: function(force){
-                var collapsed = actionbar.classList.contains("actionbar-collapsed");
+                var collapsed = actionbar.classList.contains("collapsed");
                 if(force !== undefined) collapsed = force;
-                actionbar.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
+                actionbar.classList[collapsed ? "add" : "remove"]("collapsed");
 //                actionbarHolder.classList[collapsed ? "add" : "remove"]("actionbar-collapsed");
                 if(options.ontogglesize) options.ontogglesize(force);
             },
@@ -2636,7 +2665,7 @@ function Edequate(options) {
         if(options.caption.items) {
             table.head = create(HTML.DIV, {
                 className: options.caption.className,
-                oncontextmenu: function(e){e.stopPropagation(); e.preventDefault(); return false;}
+                oncontextmenu: function(e){e.stopPropagation(); return false;}
             }, table);
             table.head.cells = [];
 
