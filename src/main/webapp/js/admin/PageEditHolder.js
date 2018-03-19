@@ -142,7 +142,7 @@ function PageEditHolder(main) {
                                 dialogConfirm = dialogConfirm || new u.dialog({
                                     title: "Page changed",
                                     items: [
-                                        { innerHTML: "Page was changed. Do you want to dismiss changes and reload page?" }
+                                        { innerHTML: "Page was changed. Do you want to discard changes and reload page?" }
                                     ],
                                     positive: {
                                         label: u.create(HTML.SPAN, "Yes"),
@@ -161,7 +161,6 @@ function PageEditHolder(main) {
                             } else {
                                 changeLocale();
                             }
-
                         }
                     },
                     {type: HTML.INPUT, label: "Menu icon"},
@@ -193,6 +192,7 @@ function PageEditHolder(main) {
                         };
                         u.post("/admin/rest/page", {initial: dialog.initialOptions, update: options}).then(function(result){
                             u.progress.hide();
+                            contentNode.changed = false;
                             u.toast.show("Page saved");
                             dialog.close();
                             main.turn("pages");

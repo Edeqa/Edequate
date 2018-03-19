@@ -46,7 +46,7 @@ public class Page extends FileRestAction {
     public void call(JSONObject json, RequestWrapper request) {
         String body = request.getBody();
         if(Misc.isEmpty(body)) {
-            Misc.err("Resource", "not performed, arguments not defined");
+            Misc.err("Page", "not performed, arguments not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
             json.put(MESSAGE, "Arguments not defined.");
@@ -54,10 +54,7 @@ public class Page extends FileRestAction {
         }
 
         JSONObject options = new JSONObject(body);
-//        Misc.log("Page", "came: " + options.toString(4));
-
         try {
-
             Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
             directory = new File(arguments.getWebRootDirectory());
 
@@ -70,7 +67,7 @@ public class Page extends FileRestAction {
             if(!validate(json, initial, update)) return;
 
             File updateFile = update.getOptions();
-            PageStructure pageStructure;
+            PagesStructure pagesStructure;
             if(updateFile.exists()) {
                 StringBuilder string = new StringBuilder();
                 try(FileReader reader = new FileReader(updateFile)) {
@@ -79,37 +76,40 @@ public class Page extends FileRestAction {
                         string.append((char)c);
                     }
                 }
-                pageStructure = new PageStructure().parse(string.toString());
+                pagesStructure = new PagesStructure().parse(string.toString());
                 if(initial != null) {
-                    pageStructure.remove(initial);
+                    pagesStructure.remove(initial);
                 }
             } else {
-                pageStructure = new PageStructure().parse("[]");
+                pagesStructure = new PagesStructure().parse("[]");
             }
-            pageStructure.put(update);
-            try(FileWriter writer = new FileWriter(updateFile)) {
-                writer.write(pageStructure.toJSON().toString(2));
+            pagesStructure.put(update);
 
+            try (FileWriter writer = new FileWriter(update.getResource())) {
+                writer.write(update.content);
+                Misc.log("Page", "file updated:", update.getResource(), "with content length:", update.content.length());
+            } catch (Exception e) {
+                Misc.err("Page", "saving failed for", update.getResource(), e);
+                json.put(STATUS, STATUS_ERROR);
+                json.put(CODE, ERROR_RUNTIME);
+                json.put(MESSAGE, e.getMessage());
+            }
+            try (FileWriter writer = new FileWriter(updateFile)) {
+                writer.write(pagesStructure.toJSON().toString(2));
                 Misc.log("Page", "has updated:", update.toJSON(), "[" + update.locale + "]");
                 json.put(STATUS, STATUS_SUCCESS);
+            } catch (Exception e) {
+                Misc.err("Page", "saving failed for", updateFile, e);
+                json.put(STATUS, STATUS_ERROR);
+                json.put(CODE, ERROR_RUNTIME);
+                json.put(MESSAGE, e.getMessage());
             }
         } catch (Exception e) {
             Misc.err("Page", e);
-
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_RUNTIME);
             json.put(MESSAGE, e.getMessage());
         }
-        json.put(STATUS, STATUS_ERROR);
-        json.put(CODE, ERROR_FORBIDDEN);
-        json.put(MESSAGE, "Tilitili");
-
-
-    }
-
-    private JSONArray normalizePagesStructure(JSONArray updateJson) {
-
-        return updateJson;
     }
 
     private boolean validate(JSONObject json, Resource initial, Resource update) throws IOException {
@@ -220,13 +220,12 @@ public class Page extends FileRestAction {
         }
     }
 
-    class PageStructure {
+    class PagesStructure {
         private List<JSONArray> categories;
         private JSONArray json;
 
-        PageStructure parse(String string) {
+        PagesStructure parse(String string) {
             json = new JSONArray(string);
-
             categories = new ArrayList<>();
             for(int i = 0; i < 10; i++) {
                 categories.add(new JSONArray());
@@ -267,17 +266,9 @@ public class Page extends FileRestAction {
                     break;
                 }
             }
-
-//            for(int i = 0; i < categories.get(resource.category).length(); i++) {
-//                JSONObject page = categories.get(resource.category).getJSONObject(i);
-//                if(page.has("type") && page.getString("type").equals(resource.name)) {
-//                    categories.get(resource.category).remove(i);
-//                    break;
-//                }
-//            }
         }
 
-        public JSONArray toJSON() {
+        JSONArray toJSON() {
             JSONArray json = new JSONArray();
             for (JSONArray category : categories) {
                 if (category.length() > 0) {
@@ -286,7 +277,5 @@ public class Page extends FileRestAction {
             }
             return json;
         }
-
     }
-
 }

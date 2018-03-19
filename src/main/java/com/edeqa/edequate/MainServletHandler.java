@@ -70,8 +70,20 @@ public class MainServletHandler extends AbstractServletHandler {
             return;
         }
 
+        String host = requestWrapper.getRequestedHost();
+        String referer = requestWrapper.getReferer();
+        String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
         WebPath webPath = new WebPath(getWebDirectory(), uri.getPath());
-        if(!webPath.path().exists()) {
+        File root = new File(getWebDirectory());
+
+        int resultCode = 200;
+        if (!webPath.path().getCanonicalPath().startsWith(root.getCanonicalPath())) {
+            // Suspected path traversal attack: reject with 403 error.
+            Misc.err("Main", "[" + ipRemote + "]", uri.getPath(), "[403 - suspected path traversal attack]", (referer != null ? "referer: " + referer : ""));
+            resultCode = 403;
+            webPath = new WebPath(getWebDirectory(), "403.html");
+//                Utils.sendResult.onEvent(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
+        } else if(!webPath.path().exists()) {
             String beginWeb = webPath.web(1);
             if("/main".startsWith(beginWeb) || "/rest".startsWith(beginWeb) || "/admin".startsWith(beginWeb)) {
                 webPath = new WebPath(getWebDirectory(), "index.html");
@@ -86,24 +98,10 @@ public class MainServletHandler extends AbstractServletHandler {
                     return;
                 }
             } else {
+                Misc.err("Main", "[" + ipRemote + "]", uri.getPath(), "[404 - not found]", (referer != null ? "referer: " + referer : ""));
                 requestWrapper.sendError(404, "File not found");
                 return;
             }
-        }
-
-        String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
-
-        String host = requestWrapper.getRequestedHost();
-        String referer = requestWrapper.getReferer();
-
-        File root = new File(getWebDirectory());
-        int resultCode = 200;
-        if (!webPath.path().getCanonicalPath().startsWith(root.getCanonicalPath())) {
-            // Suspected path traversal attack: reject with 403 error.
-            Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[403 - suspected path traversal attack]", (referer != null ? "referer: " + referer : ""));
-            resultCode = 403;
-            webPath = new WebPath(getWebDirectory(), "403.html");
-//                Utils.sendResult.onEvent(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
         } else if (webPath.path().isDirectory()) {
             webPath = webPath.webPath("index.html");
             Misc.log("Main", "[" + ipRemote + "]", "->", webPath.web(), "[" + (webPath.path().exists() ? webPath.path().length() + " byte(s)" : "not found") + "]", (referer != null ? "referer: " + referer : ""));
@@ -129,7 +127,7 @@ public class MainServletHandler extends AbstractServletHandler {
                 webPath = new WebPath(getWebDirectory(),"404.html");
             }
         } else {
-            Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[" + webPath.path().length() + " byte(s)]",(referer != null ? "referer: " + referer : ""));
+            //Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[" + webPath.path().length() + " byte(s)]",(referer != null ? "referer: " + referer : ""));
         }
         {
             // Object exists and it is a file: accept with response code 200.
