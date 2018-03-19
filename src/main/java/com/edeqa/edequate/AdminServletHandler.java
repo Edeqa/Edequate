@@ -5,15 +5,12 @@ import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
-import com.edeqa.edequate.rest.Locales;
-import com.edeqa.edequate.rest.Nothing;
-import com.edeqa.edequate.rest.Resource;
-import com.edeqa.edequate.rest.Version;
+import com.edeqa.edequate.rest.admin.LogsClear;
+import com.edeqa.edequate.rest.admin.LogsLog;
 import com.edeqa.edequate.rest.admin.Page;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
-import com.edeqa.helpers.interfaces.Callable1;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -49,6 +46,10 @@ public class AdminServletHandler extends RestServletHandler {
             }
         }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
         registerAction(new Page());
+
+
+        registerAction(new LogsClear());
+        registerAction(new LogsLog());
     }
 
     @Override

@@ -79,4 +79,7 @@ public class Arguments extends AbstractAction<String[]> {
         return getHttpsPortMasked() == 443 ? "" : ":" + getHttpsPortMasked();
     }
 
+    public String getLogFile() {
+        return "";
+    }
 }
