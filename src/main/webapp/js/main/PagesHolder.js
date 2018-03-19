@@ -66,11 +66,18 @@ function PagesHolder(main) {
                     self.pages = self.pages || {};
                     if(!self.pages[pages.type]) {
                         self.pages[pages.type] = pages;
+                        var icon = pages.icon;
+                        if(icon && icon.split("/").length > 1) {
+                            icon = u.create(HTML.IMG, {
+                                src: icon,
+                                className: "icon drawer-menu-item-icon"
+                            })
+                        }
                         main.drawer.add({
                             section: pages.category,
                             id: pages.type,
                             name: u.lang[pages.menu] || pages.menu,
-                            icon: pages.icon,
+                            icon: icon,
                             priority: pages.priority,
                             callback: function () {
                                 main.holder = self;

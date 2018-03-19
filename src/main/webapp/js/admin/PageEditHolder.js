@@ -1,8 +1,7 @@
 /**
- * Part of Waytous <http://waytous.net>
- * Copyright (C) Edeqa LLC <http://www.edeqa.com>
+ * Copyright (C) Edeqa <http://www.edeqa.com>
  *
- * Created 3/11/17.
+ * Created 3/11/18.
  */
 function PageEditHolder(main) {
     var div;
@@ -11,6 +10,7 @@ function PageEditHolder(main) {
     this.type = "page";
     this.title = "Page Edit";
     var dialog;
+    var dialogConfirm;
     var sections;
     var locales;
     var locale;
@@ -131,10 +131,39 @@ function PageEditHolder(main) {
                     {type: HTML.SELECT, label: "Category", values: categories},
                     {type: HTML.INPUT, label: "Name", prefix:""},
                     {type: HTML.SELECT, label: "Language", values: locales, value: locale, onchange: function() {
-                            locale = localeNode.value;
-                            populateWithLang(ids[0], dialog.initialOptions.title, titleNode, dialog.initialOptions.menu, menuNode);
-                            populateContent(dialog.initialOptions.resource, contentNode);
-                        }},
+                            function changeLocale() {
+                                u.progress.show("Loading resources");
+                                locale = localeNode.value;
+                                populateWithLang(ids[0], dialog.initialOptions.title, titleNode, dialog.initialOptions.menu, menuNode);
+                                populateContent(dialog.initialOptions.resource, contentNode);
+                            }
+                            var oldValue = this.oldValue;
+                            if(contentNode.changed) {
+                                dialogConfirm = dialogConfirm || new u.dialog({
+                                    title: "Page changed",
+                                    items: [
+                                        { innerHTML: "Page was changed. Do you want to dismiss changes and reload page?" }
+                                    ],
+                                    positive: {
+                                        label: u.create(HTML.SPAN, "Yes"),
+                                        onclick: function () {
+                                            changeLocale();
+                                        }
+                                    },
+                                    negative: {
+                                        label: u.create(HTML.SPAN, "No"),
+                                        onclick: function () {
+                                            localeNode.value = oldValue;
+                                        }
+                                    }
+                                });
+                                dialogConfirm.open();
+                            } else {
+                                changeLocale();
+                            }
+
+                        }
+                    },
                     {type: HTML.INPUT, label: "Menu icon"},
                     {type: HTML.SELECT, label: "Menu name"},
                     {type: HTML.SELECT, label: "Title"},

@@ -1,8 +1,7 @@
 /**
- * Part of Waytous <http://waytous.net>
- * Copyright (C) Edeqa LLC <http://www.edeqa.com>
+ * Copyright (C) Edeqa <http://www.edeqa.com>
  *
- * Created 3/8/17.
+ * Created 3/8/18.
  */
 function PagesManagerHolder(main) {
     var div;
