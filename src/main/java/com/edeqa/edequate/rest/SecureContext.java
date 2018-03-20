@@ -20,7 +20,7 @@ import javax.net.ssl.TrustManagerFactory;
 @SuppressWarnings("unused")
 public class SecureContext extends AbstractAction<Arguments> {
 
-    public static final String TYPE = "/rest/sslcontext";
+    public static final String TYPE = "/rest/secure/context";
     private static final String LOG = "SecureContext";
     private SSLContext sslContext;
 

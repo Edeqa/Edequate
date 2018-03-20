@@ -43,11 +43,9 @@ public class DigestAuthenticator extends Authenticator {
     @Override
     public Result authenticate(HttpExchange httpExchange) {
         try {
-
             DigestContext context = getOrCreateContext(httpExchange);
             if (context.isAuthenticated()) {
                 String auth = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-
                 if(auth == null || "Digest logout".equals(auth)) {
                     Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal().getName());
 

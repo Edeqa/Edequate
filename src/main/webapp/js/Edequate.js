@@ -726,7 +726,6 @@ function Edequate(options) {
 
             var origin;
             var onlyname;
-            var type = "text";
             var isJSON = false;
             var isScript = false;
             var isText = false;
@@ -757,7 +756,6 @@ function Edequate(options) {
 
                 parts = name.split("/");
                 filename = parts[parts.length-1];
-                // var onlyname = filename.split(".")[0];
                 filenameParts = filename.split(".");
                 extension = filenameParts.pop();
                 if(filenameParts.length === 0) {
@@ -1705,6 +1703,7 @@ function Edequate(options) {
                             value: y,
                             innerHTML: value[y]
                         };
+                        // noinspection EqualityComparisonWithCoercionJS
                         if(defaultValue == y) valueOptions.selected = true;
                         if(optionClassName) valueOptions.className = optionClassName;
                         create(HTML.OPTION, valueOptions, this);
@@ -1724,17 +1723,18 @@ function Edequate(options) {
                     right = right.trim();
                     return left.toLowerCase() < right.toLowerCase() ? -1 : left.toLowerCase() > right.toLowerCase() ? 1 : 0
                 });
-                for (var i in keys) {
+                for (i in keys) {
                     // noinspection JSUnfilteredForInLoop
-                    var value = values[keys[i]];
+                    value = values[keys[i]];
                     if(value instanceof HTMLSpanElement) {
                         value = value.innerText;
                     }
                     value = value.trim();
-                    var valueOptions = {
+                    valueOptions = {
                         value: keys[i],
                         innerHTML: value
                     };
+                    // noinspection EqualityComparisonWithCoercionJS
                     if(defaultValue == keys[i]) valueOptions.selected = true;
                     if(optionClassName) valueOptions.className = optionClassName;
                     create(HTML.OPTION, valueOptions, this);
@@ -1779,7 +1779,7 @@ function Edequate(options) {
             };
             textarea.changed = false;
             create(HTML.LINK, {href:"https://cdn.quilljs.com/1.3.6/quill.snow.css", rel:"stylesheet"}, document.head);
-            require("https://cdn.quilljs.com/1.3.6/quill.js").then(function(result) {
+            require("https://cdn.quilljs.com/1.3.6/quill.js").then(function() {
                 textarea.editor = new Quill(textarea.editNode, {
                     theme: "snow",
                     modules: {
@@ -2635,7 +2635,7 @@ function Edequate(options) {
             sorts: function(options) {
                 if(!options) return table._sorts;
                 for(var i in table._sorts) {
-                    // noinspection JSUnfilteredForInLoop
+                    // noinspection JSUnfilteredForInLoop, EqualityComparisonWithCoercionJS
                     if(table._sorts[i].index == options.index) {
                         // noinspection JSUnfilteredForInLoop
                         table._sorts.splice(i, 1);
@@ -2757,7 +2757,7 @@ function Edequate(options) {
                                             if(cell.filter) table.filter.remove(self.parentNode.filter);
                                             var filterSelected = function(row) {
                                                 if(row.table && row.table.selectable) {
-                                                    return row.cells[row.table.selectable.index].innerHTML == row.table.selectable.string;
+                                                    return row.cells[row.table.selectable.index].innerHTML === row.table.selectable.string;
                                                 } else {
                                                     return true;
                                                 }
@@ -2854,6 +2854,7 @@ function Edequate(options) {
                     },
                     _filter: function(row) {
                         for(var i in row.cells) {
+                            // noinspection JSUnfilteredForInLoop
                             if(row.cells[i].innerText.toLowerCase().indexOf(this.filterInput.value.toLowerCase()) >= 0) return true;
                         }
                         return false;
@@ -3080,14 +3081,14 @@ function Edequate(options) {
                         }
 
                         if(options.modules) {
-                            for(i in options.modules) {
+                            for(var i = 0; i < options.modules.length; i++) {
                                 if(window[options.modules[i]]) {
                                     self.eventBus.modules.push(options.modules[i].toLowerCase().replace("holder",""));
                                     self.eventBus.holders[options.modules[i].toLowerCase().replace("holder","")] = new window[options.modules[i]](options.context);
                                 }
                             }
-                        } else {
-                            for(var i in self.eventBus.origins) {
+                        } else if(self.eventBus.origins) {
+                            for(i = 0; i < self.eventBus.origins.length; i++) {
                                 var holder = self.eventBus.holders[self.eventBus.origins[i]];
                                 if(holder && holder.type) {
                                     self.eventBus.modules.push(holder.type.toLowerCase());
@@ -3110,6 +3111,7 @@ function Edequate(options) {
             }
         };
 
+        // noinspection JSPotentiallyInvalidUsageOfThis
         this.fire = function(event, object) {
             if(!event) return;
             for(var i in self.eventBus.modules) {

@@ -16,6 +16,7 @@ function Main(u) {
 
         var info = arguments.info;
         self.mainType = arguments.type || "main";
+        self.eventBus = u.eventBus;
 
         self.history = new HoldersHistory(self.mainType);
         window.addEventListener("popstate", function() {
@@ -63,15 +64,15 @@ function Main(u) {
             switchFullDrawer.call(self.content);
 
             self.drawer.close();
-            if(u.eventBus.holders[holderType]) {
-                self.holder = u.eventBus.holders[holderType];
+            if(self.eventBus.holders[holderType]) {
+                self.holder = self.eventBus.holders[holderType];
                 /** @namespace self.holder.preventState */
                 if(!self.holder.preventState) {
                     window.history.pushState({}, null, "/" + self.mainType + "/" + holderType);
                 }
             } else {
                 console.log("Passing '" + holderType + "' to PagesHolder");
-                self.holder = u.eventBus.holders["$pages"];//[404];
+                self.holder = self.eventBus.holders["$pages"];//[404];
                 options = [holderType].concat(options)
                 // options = [holderType];
             }
@@ -175,18 +176,18 @@ function Main(u) {
                 if(json.message.indexOf("/js/main/PagesHolder.js") < 0) {
                     json.message.push("/js/main/PagesHolder.js");
                 }
-                u.eventBus.register(json.message, {
+                self.eventBus.register(json.message, {
                     context: self,
                     onprogress: function (loaded) {
                         u.byId("loading-dialog-progress").innerHTML = Math.ceil(loaded / json.message.length * 100) + "%";
                     },
                     onstart: function () {
-                        console.log("Holders started:", u.eventBus.holders);
+                        console.log("Holders started:", self.eventBus.holders);
                     },
                     onsuccess: function () {
-                        u.eventBus.fire("loaded");
-                        for(var x in u.eventBus.holders) {
-                            var holder = u.eventBus.holders[x];
+                        self.eventBus.fire("loaded");
+                        for(var x in self.eventBus.holders) {
+                            var holder = self.eventBus.holders[x];
                             if(holder.menu) {
                                 self.drawer.add({section: holder.category, id: holder.type, name: holder.menu, icon: holder.icon, priority: holder.priority, callback: function(){
                                         self.turn(this.type);

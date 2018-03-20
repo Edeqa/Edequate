@@ -22,14 +22,6 @@ public class Arguments extends AbstractAction<String[]> {
 //        json.put(STATUS, STATUS_SUCCESS);
     }
 
-    public String getLogin() {
-        return "";
-    }
-
-    public String getPasswordHash() {
-        return "";
-    }
-
     public String getWebRootDirectory() {
         try {
             return URLDecoder.decode(Thread.currentThread().getContextClassLoader().getResource("").getPath(), "UTF-8").split("/WEB-INF/classes/")[0];

@@ -3,6 +3,8 @@ package com.edeqa.edequate.helpers;
 import com.edeqa.helpers.Misc;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Arrays;
@@ -65,5 +67,17 @@ public class WebPath {
 
     public String toString() {
         return path().toString();
+    }
+
+    public String content() throws IOException {
+        int c;
+        StringBuilder fileContent = new StringBuilder();
+        try(FileReader reader = new FileReader(path())) {
+            while ((c = reader.read()) != -1) {
+                fileContent.append((char) c);
+            }
+            reader.close();
+        }
+        return fileContent.toString();
     }
 }
