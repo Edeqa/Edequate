@@ -26,7 +26,7 @@ public class Arguments extends AbstractAction<String[]> {
         return "";
     }
 
-    public String getPassword() {
+    public String getPasswordHash() {
         return "";
     }
 

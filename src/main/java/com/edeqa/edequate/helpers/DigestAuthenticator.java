@@ -2,7 +2,7 @@ package com.edeqa.edequate.helpers;
 
 
 import com.edeqa.edequate.abstracts.AbstractAction;
-import com.edeqa.edequate.rest.Arguments;
+import com.edeqa.edequate.rest.admin.Users;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 import com.google.common.net.HttpHeaders;
@@ -19,7 +19,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
+import javax.naming.AuthenticationException;
+
+import static com.edeqa.edequate.abstracts.AbstractAction.RESTBUS;
 
 /*
  * Created 5/16/2017.
@@ -40,61 +42,66 @@ public class DigestAuthenticator extends Authenticator {
 
     @Override
     public Result authenticate(HttpExchange httpExchange) {
-        DigestContext context = getOrCreateContext(httpExchange);
-        if (context.isAuthenticated()) {
-            String auth = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        try {
 
-            if(auth == null || "Digest logout".equals(auth)) {
-                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal().getName());
+            DigestContext context = getOrCreateContext(httpExchange);
+            if (context.isAuthenticated()) {
+                String auth = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-                httpExchange.setAttribute("digest-context", null);
+                if(auth == null || "Digest logout".equals(auth)) {
+                    Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal().getName());
+
+                    httpExchange.setAttribute("digest-context", null);
+                    Headers responseHeaders = httpExchange.getResponseHeaders();
+                    responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+                    return new Authenticator.Retry(401);
+                }
+                return new Authenticator.Success(context.getPrincipal());
+            }
+            Headers requestHeaders = httpExchange.getRequestHeaders();
+            if (!requestHeaders.containsKey(HttpHeaders.AUTHORIZATION)) {
                 Headers responseHeaders = httpExchange.getResponseHeaders();
                 responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
                 return new Authenticator.Retry(401);
             }
-            return new Authenticator.Success(context.getPrincipal());
-        }
-        Headers requestHeaders = httpExchange.getRequestHeaders();
-        if (!requestHeaders.containsKey(HttpHeaders.AUTHORIZATION)) {
-            Headers responseHeaders = httpExchange.getResponseHeaders();
-            responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
-            return new Authenticator.Retry(401);
-        }
 
-        String authorization = requestHeaders.getFirst(HttpHeaders.AUTHORIZATION);
-        if (authorization.startsWith("Basic ")) {
-            Headers responseHeaders = httpExchange.getResponseHeaders();
-            responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
-            return new Authenticator.Retry(401);
-        }
-
-        if (!authorization.startsWith("Digest ")) {
-            throw new RuntimeException("Invalid 'Authorization' header.");
-        }
-        String challenge = authorization.substring(7);
-        Map<String, String> challengeParameters = parseDigestChallenge(challenge);
-
-        HttpPrincipal principal = validateUser(httpExchange, challengeParameters);
-        if (principal == null) {
-            if (challengeParameters.containsKey("nonce")) {
-                useNonce(challengeParameters.get("nonce"));
+            String authorization = requestHeaders.getFirst(HttpHeaders.AUTHORIZATION);
+            if (authorization.startsWith("Basic ")) {
+                Headers responseHeaders = httpExchange.getResponseHeaders();
+                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+                return new Authenticator.Retry(401);
             }
 
+            if (!authorization.startsWith("Digest ")) {
+                throw new RuntimeException("Invalid 'Authorization' header.");
+            }
+            String challenge = authorization.substring(7);
+            Map<String, String> challengeParameters = parseDigestChallenge(challenge);
+
+            HttpPrincipal principal = null;
+            principal = validateUser(httpExchange, challengeParameters);
+            if (principal == null) {
+                Headers responseHeaders = httpExchange.getResponseHeaders();
+                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+                return new Authenticator.Retry(401);
+            }
+            if (useNonce(challengeParameters.get("nonce"))) {
+                context.principal = principal;
+                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login/" + principal.getName());
+                return new Authenticator.Success(principal);
+            }
+            Headers responseHeaders = httpExchange.getResponseHeaders();
+            responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(true));
+            return new Authenticator.Retry(401);
+        } catch (AuthenticationException e) {
+            Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "got error [" + e.getMessage() + "]");
             Headers responseHeaders = httpExchange.getResponseHeaders();
             responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
             return new Authenticator.Retry(401);
         }
-        if (useNonce(challengeParameters.get("nonce"))) {
-            context.principal = principal;
-            Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login/" + principal.getName());
-            return new Authenticator.Success(principal);
-        }
-        Headers responseHeaders = httpExchange.getResponseHeaders();
-        responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(true));
-        return new Authenticator.Retry(401);
     }
 
-    private HttpPrincipal validateUser(HttpExchange httpExchange, Map<String, String> challengeParameters) {
+    private HttpPrincipal validateUser(HttpExchange httpExchange, Map<String, String> challengeParameters) throws AuthenticationException {
         String realm = challengeParameters.get("realm");
         String username = challengeParameters.get("username");
 
@@ -102,23 +109,20 @@ public class DigestAuthenticator extends Authenticator {
             return null;
         }
 
-        Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-        if(!arguments.getLogin().equals(username)) {
+        Users users = (Users) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Users.TYPE);
+        if(!users.exists(username)) {
+            Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "not found user [" + username + "]");
             return null;
         }
 
-        String password = arguments.getPassword();//passwords.getProperty(username);
-        // FIXME implement check for login and password
-        if (password == null) {
-            return null;
-        }
+        String passwordHash = users.getPasswordHash(username);//passwords.getProperty(username);
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(username.getBytes());
             md5.update(COL);
             md5.update(realm.getBytes());
             md5.update(COL);
-            md5.update(password.getBytes());
+            md5.update(passwordHash.getBytes());
 
             byte[] ha1 = toHexBytes(md5.digest());
 
@@ -139,14 +143,13 @@ public class DigestAuthenticator extends Authenticator {
 
             if (MessageDigest.isEqual(expectedResponse, actualResponse)) {
                 return new HttpPrincipal(username, realm);
+            } else {
+                throw new AuthenticationException(passwordHash.length() > 0 ? passwordHash : "Incorrect password");
             }
-
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             throw new IllegalStateException("No MD5? Should not be possible", e);
         }
-
-        return null;
     }
 
 
@@ -296,7 +299,7 @@ public class DigestAuthenticator extends Authenticator {
     }
 
     static final byte[] HEX_BYTES = new byte[]
-            {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+                                            {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
     public static String toHexString(byte[] digest) {
         StringBuilder sb = new StringBuilder();
