@@ -162,44 +162,6 @@ Arguments object will be stored as the property `arguments`.
 
 ## Edequate.js
 
-### Using Edequate.js separately
-
-    <style>
-        @import url("/css/edequate.css");
-        @import url("/css/edequate-horizontal.css");
-    </style>
-
-    <script async 
-       src="/js/Edequate.js" 
-       data-variable="u" 
-       data-callback="u.toast.show('Simple toast')" 
-       data-export-constants="true"
-       data-origin="edequate">
-    </script>
-
-`data-variable` [optional] defines the global variable that will be defined with `new Edequate()` after loading. Default value is `edequate`. I.e. you may access to this instantiated object using `window.edequate` (or by your choice) variable.
-
-`data-callback` [optional] defines the function that will be called after loading; it may use `data-variable`.
-
-`data-export-constants` [optional]  set to `true` to define `Edequate.HTML`, `Edequate.ERRORS`, `Edequate.DRAWER`, `Edequate.HIDING` as the global constants `HTML`, `ERRORS`, `DRAWER`, `HIDING`. Ignored if `data-variable` is not defined;
-
-`data-origin` [optional] prefix for save/load values to browser's localStorage. Default value is `edequate`. Ignored if `data-variable` is not defined;
-
-`data-context` [optional] suffix for context separated save/load values to browser's localStorage. Default value is empty. Ignored if `data-variable` is not defined;
-
-You may also use it with [RawGit](http://rawgit.com):
-
-    https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/js/Edequate.js
-    https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/css/edequate.css
-    https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/css/edequate-horizontal.css
-
-Set the desired `VERSION` and use it stable. Or set `master` for always getting the fresh version.
-
-For example:
-
-    https://cdn.rawgit.com/Edeqa/Edequate/2.0.1/src/main/webapp/js/Edequate.js
-    https://cdn.rawgit.com/Edeqa/Edequate/master/src/main/webapp/js/Edequate.js
-    
 #### Table of contents
 
 * [Main methods](#main-methods)
@@ -213,6 +175,7 @@ For example:
 * [Table](#table)
 * [Toast](#toast)
 * [Tree](#tree)
+* [Using Edequate.js separately](#using-edequate.js-separately)
 
 #### Main methods
 
@@ -258,6 +221,45 @@ For example:
 #### Toast
 
 #### Tree
+
+#### Using Edequate.js separately
+
+    <style>
+        @import url("/css/edequate.css");
+        @import url("/css/edequate-horizontal.css");
+    </style>
+
+    <script async 
+       src="/js/Edequate.js" 
+       data-variable="u" 
+       data-callback="u.toast.show('Simple toast')" 
+       data-export-constants="true"
+       data-origin="edequate">
+    </script>
+
+`data-variable` [optional] defines the global variable that will be defined with `new Edequate()` after loading. Default value is `edequate`. I.e. you may access to this instantiated object using `window.edequate` (or by your choice) variable.
+
+`data-callback` [optional] defines the function that will be called after loading; it may use `data-variable`.
+
+`data-export-constants` [optional]  set to `true` to define `Edequate.HTML`, `Edequate.ERRORS`, `Edequate.DRAWER`, `Edequate.HIDING` as the global constants `HTML`, `ERRORS`, `DRAWER`, `HIDING`. Ignored if `data-variable` is not defined;
+
+`data-origin` [optional] prefix for save/load values to browser's localStorage. Default value is `edequate`. Ignored if `data-variable` is not defined;
+
+`data-context` [optional] suffix for context separated save/load values to browser's localStorage. Default value is empty. Ignored if `data-variable` is not defined;
+
+You may also use it with [RawGit](http://rawgit.com):
+
+    https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/js/Edequate.js
+    https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/css/edequate.css
+    https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/css/edequate-horizontal.css
+
+Set the desired `VERSION` and use it stable. Or set `master` for always getting the fresh version. Available tags are [here](https://github.com/Edeqa/Edequate/tags).
+
+For example:
+
+    https://cdn.rawgit.com/Edeqa/Edequate/2.0.1/src/main/webapp/js/Edequate.js
+    https://cdn.rawgit.com/Edeqa/Edequate/master/src/main/webapp/js/Edequate.js
+    
 
 
 ## History
