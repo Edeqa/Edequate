@@ -74,21 +74,21 @@ function LogsHolder(main) {
                 yes.show();
                 no.show();
             }}, div);
-        var question = u.create(HTML.DIV, { className: "question hidden", innerHTML: "Clear logs?"}, div);
-        var yes = u.create(HTML.BUTTON, { className: "question hidden", innerHTML:"Yes, clear logs", onclick: function(){
+        var question = u.create(HTML.DIV, {className:"buttons hidden", innerHTML: u.create(HTML.DIV, {className:"question", innerHTML: "Clear logs?"})}, div);
+        var yes = u.create(HTML.BUTTON, { className: "question", innerHTML:"Yes, clear logs", onclick: function(){
             clearAll.show();
             question.hide();
             yes.hide();
             no.hide();
             u.get("/admin/rest/logs/clear")
                 .then(updateData);
-        }}, div);
-        var no = u.create(HTML.BUTTON, { className: "hidden", innerHTML:"No", onclick: function(){
+        }}, question);
+        var no = u.create(HTML.BUTTON, { innerHTML:"No", onclick: function(){
             clearAll.show();
             question.hide();
             yes.hide();
             no.hide();
-        }}, div);
+        }}, question);
     }
 }
 

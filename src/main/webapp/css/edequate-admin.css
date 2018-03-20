@@ -3,24 +3,8 @@
  */
 
 h2 {
-    margin-top: 20px;
-    margin-bottom: 0;
-    padding-left: 10px;
-    flex: 0 0 auto;
-    width: 90%;
-    flex-flow: row;
-    flex-wrap: wrap;
-    display: flex;
-    align-items: center;
-}
-.layout {
-    padding-left: 5px;
-    padding-right: 5px;
-    overflow-y: auto;
-    flex: 1 1 auto;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
+    margin-left: 10px;
+    width: calc(100% - 10px);
 }
 .inactive {
     font-style: italic;
@@ -51,10 +35,6 @@ h2 {
     width: 250px;
     background: #ffffdd;
 }
-.td.option {
-    text-align: left;
-    border: none;
-}
 .td.option input {
     width: 250px;
 }
@@ -71,30 +51,13 @@ h2 {
     font-size: x-small;
     padding: 2px;
     margin-left: 10px;
-    border-style: solid;
-    border-width: 1px;
-    border-radius: 3px;
     border-color: darkslategray;
     background-color: antiquewhite;
-}
-.settings-dialog {
-    width: 400px;
-    max-width: 90%;
-}
-.logs-header {
-    padding-top: 5px;
 }
 div.question {
     display: flex;
     font-size: small;
     padding: 5px;
-}
-.logs-header-input {
-    margin: 4px;
-    width: 30px;
-}
-.table {
-    margin-bottom: 5px;
 }
 .logs {
     display: flex;
@@ -104,9 +67,6 @@ div.question {
     flex: 1 1 auto;
     max-width: 100%;
     width: 100%;
-}
-.table-placeholder {
-    /*border: none;*/
 }
 .logs-caption {
     flex: 0 0 auto;
@@ -121,110 +81,30 @@ div.question {
 }
 .logs-body {
     height: 100%;
-    /*display: block;
-    overflow-y: auto;
-    overflow-x: hidden;
-    white-space: pre-wrap;
-    font-size: 12px;*/
     font-family: monospace;
-}
-.buttons {
-    display: inline-flex;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    font-size: initial;
-    align-items: center;
-    margin-left: 10px;
-    margin-right: 10px;
-    flex: 0 0 auto;
 }
 .button-inline {
     stroke: darkslategray;
+    color: darkslategray;
     background-color: transparent;
     outline: none;
     border: 0;
     width: 32px;
     height: 27px;
-    flex: 0 0 32px;
+}
+.button-inline:hover, .button-inline:focus {
+    stroke: darkslategray;
+    color: darkslategray;
+    background-color: antiquewhite;
+    outline: inherit;
 }
 .welcome-input {
     width: 100%;
-}
-.chat-dialog {
-    right: 10px;
-    bottom: 10px;
-    width: 30%;
-    height: 300px;
-}
-.chat-dialog-messages {
-    font-size: x-small;
-}
-.chat-dialog-message {
-    display: block;
-    text-align: left;
-}
-.chat-dialog-message-content {
-    display: flex;
-    flex-wrap: wrap;
-}
-.chat-dialog-message-group {
-    flex: 0 0 80px;
-    cursor: pointer;
-}
-.chat-dialog-message-group:hover {
-    color: blue;
-}
-.chat-dialog-message-name {
-    flex: 0 0 100px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.chat-dialog-message-name:hover {
-    color: blue;
-}
-.chat-dialog-message-timestamp {
-    flex: 1 1;
-    text-align: right;
-}
-.chat-dialog-message-body {
-    padding-bottom: 8px;
-    white-space: pre-wrap;
-    flex: 0 0 100%;
 }
 .two-divs {
     display: flex;
     width: 100%;
     flex: 0 0 auto;
-}
-.summary-place {
-    flex: 1 1 100%;
-}
-.map-place {
-    margin-top: 22px;
-    flex: 1 1 100%;
-}
-.map-place-switch {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    border: none;
-}
-.map-place.modal {
-    width: 40%;
-    height: 30%;
-    position: fixed;
-    right: 5px;
-    border: 0;
-}
-.map {
-    width: 100%;
-    height: 100%;
-    border-style: groove;
-    border-width: 1px;
-}
-.statistics-chart{
-    padding: 10px;
-    width: 100%;
 }
 .admin-splash-layout {
     display: flex;
@@ -251,15 +131,11 @@ div.question {
     display: none;
 }
 
-.tree {
-    margin-top: 22px;
-}
 .tree-pages-root {
     display: flex;
 }
 .tree-pages-item-leaf {
     display: flex;
-    /*width: 100%;*/
 }
 .tree-pages-item-title {
     text-decoration: none;
@@ -270,23 +146,19 @@ div.question {
 }
 
 .page-edit-dialog {
-    width: 90%;
-    /*max-width: 90%;*/
+    width: 80%;
+    z-index: 10000;
 }
 
 
 @media screen and (max-width: 1000px) {
     .buttons {
+        display: inline-flex;
         flex-wrap: wrap;
-        margin-bottom: 5px;
         font-size: initial;
         align-items: center;
         margin: 0;
         width: 100%;
-    }
-    h2 .buttons {
-        width: auto;
-        flex-flow: row;
     }
 
     button {
@@ -305,7 +177,7 @@ div.question {
     }
 
     .actionbar {
-        flex: 0 0 50px;
+        height: 50px;
         justify-content: center;
     }
     .actionbar-label {
@@ -318,15 +190,13 @@ div.question {
 
     /* CLASSES */
     .alert {
-        margin: 0px;
+        margin: 0;
     }
     .layout {
-        padding: 0px;
-        /*position: fixed;
-        top: 50px;*/
-        bottom: 0px;
+        margin-top: 50px;
+        padding: 0;
+        bottom: 0;
         min-height: unset;
-        height: auto;
     }
     .td.th {
         width: 50%;
@@ -335,6 +205,13 @@ div.question {
     .th.option {
         text-align: left;
         width: 40%;
+        overflow: auto;
+    }
+    .td.option {
+        overflow: auto;
+    }
+    .td.option div {
+        max-width: 240px;
     }
     .td.option input {
         width: 100%;
@@ -345,12 +222,6 @@ div.question {
     }
     div.question {
         flex: 0 0 100%;
-    }
-    .logs-header-input {
-        font-size: 16px;
-        padding-top: 5px;
-        padding-bottom: 5px;
-        background-color: antiquewhite;
     }
     .two-divs {
         flex-direction: column;

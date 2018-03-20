@@ -1390,7 +1390,6 @@ function Edequate(options) {
                         }, 300);
                     },
                     onfocus: function(evt) {
-                        evt.preventDefault();
                         evt.stopPropagation();
                     },
                     onblur: function() {

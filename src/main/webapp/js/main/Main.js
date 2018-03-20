@@ -223,8 +223,10 @@ function Main(u) {
 
         });
         self.buttonScrollTop = u.create(HTML.BUTTON, {
-            className: "icon button-scroll-top changeable hidden",
+            className: "icon button-scroll-top changeable hidden notranslate",
             onclick: function() {
+                document.documentElement.scrollTop = 0;
+                self.layout.scrollTop = 0;
                 self.content.scrollTop = 0;
                 switchFullDrawer.call(self.content);
             },

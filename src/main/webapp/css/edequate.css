@@ -15,9 +15,9 @@
 }
 
 /* TAGS */
-html, body {
+body {
     min-height: 100%;
-    overflow: hidden;
+    /*overflow: hidden;*/
     height: auto;
     width: 100%;
     margin: 0;
@@ -54,11 +54,9 @@ button {
     padding-left: 10px;
     padding-right: 10px;
 }
-button:hover {
-    background-color: #eeeeee;
-}
-button:active {
-    background-color: #aaaaaa;
+button:hover, button:active {
+    background-color: #2e5d7d;
+    color: white;
 }
 .icon, .icon svg {
     font-family: "Material Icons";
@@ -201,7 +199,7 @@ button:active {
     opacity: 0.8;
 }
 .modal {
-    position: absolute;
+    position: fixed;
     display: flex;
     flex-direction: column;
     background-color: floralwhite;
@@ -332,23 +330,20 @@ button:active {
 }
 .dialog-item-label {
     padding-right: 5px;
-    flex: 1 0 40%;
+    flex: 0 0 40%;
     white-space: nowrap;
 }
-.dialog-item-input-input, .dialog-item-input-password, .dialog-item-input-number {
+.dialog-item-input-input, .dialog-item-input-password, .dialog-item-input-number, .dialog-item-input-checkbox, .dialog-item-input-select, .dialog-item-input-button {
     font-size: 12px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding-left: 5px;
     flex: 1 1 60%;
     background-color: antiquewhite;
+    height: 24px;
+    border: 1px solid lightgray;
+    border-radius: 5px;
 }
-.dialog-item-input-button {
-    background-color: #4c93af;
-    color: white;
-    margin: 0 !important;
-}
-.dialog-item-input-button:hover, .dialog-item-input-button:focus {
-    background-color: #2e5d7d;
+.dialog-item-input-button.dialog-button {
+    padding: 0;
 }
 .dialog-item-input-link {
     margin-top: 10px;
@@ -367,11 +362,6 @@ button:active {
 }
 .dialog-item-input-textarea .ql-container {
     overflow: auto;
-}
-.dialog-item-input-select {
-    flex: 1 1 60%;
-}
-.dialog-item-input-checkbox {
 }
 .dialog-item-enclosed {
     margin-top: 10px;
@@ -419,7 +409,6 @@ button:active {
     margin: 0 1px;
     outline: none;
     overflow: hidden;
-    padding: 0;
     position: relative;
     transition: background-color .3s;
     padding: 8px 16px;
@@ -794,6 +783,7 @@ button:active {
     font-family: sans-serif;
     font-size:12px;
     box-sizing: border-box;
+    margin-bottom: 5px;
 }
 .table-placeholder {
     display: table-caption;
@@ -909,7 +899,7 @@ button:active {
 }
 
 .tree {
-
+    width: 100%;
 }
 .tree-item {
     cursor: default;
@@ -937,7 +927,6 @@ button:active {
     align-items: center;
 }
 .tree-item-title div {
-    display: inline-flex;
     align-items: center;
 }
 .tree-item-indent {
@@ -1045,11 +1034,11 @@ button:active {
 }
 
 @media screen and (max-width: 1000px) {
-    html {
+    /*html {
         position: initial;
         overflow-y: auto;
         align-items: flex-start;
-    }
+    }*/
     body {
         /*height: calc(100% + 50px);*/
         font-family: sans-serif;
@@ -1235,9 +1224,12 @@ button:active {
     .dialog-item-enclosed-body {
         font-size: initial;
     }
-    .dialog-item-input-select {
-        background-color: antiquewhite;
-        height: 30px;
+    .dialog-item-input-input, .dialog-item-input-password, .dialog-item-input-number, .dialog-item-input-select, .dialog-item-input-button {
+        height: 40px;
+        width: 50%;
+        font-size: 16px;
+    }
+    .dialog-item-input-checkbox {
         width: 50%;
     }
     .dialog-resize {
@@ -1345,6 +1337,10 @@ button:active {
         border-width: 1px;
         border-color: rgba(255, 255, 240, 0.7);
     }
+    .button-scroll-top {
+        bottom: 16px;
+    }
+
     /* Table */
     .table {
         font-size: inherit;
@@ -1355,9 +1351,9 @@ button:active {
     }
     .table-reset-button {
         font-size: larger;
-        top: -40px;
-        right: 0;
-        padding: 10px;
+        top: -34px;
+        right: -0px;
+        padding: 8px;
     }
     .table .thead .th {
         flex: 1 1 auto;
