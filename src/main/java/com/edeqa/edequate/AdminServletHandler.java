@@ -29,14 +29,20 @@ public class AdminServletHandler extends RestServletHandler {
 
     public AdminServletHandler(){
         super();
-        registerRest();
+        useDefault();
+        registerActionsPool();
     }
 
     @Override
     public void init() throws ServletException {
         super.init();
+        useDefault();
+    }
+
+    @Override
+    public void useDefault() {
+        super.useDefault();
         registerRest();
-        registerActionsPool();
     }
 
     private void registerRest() {

@@ -131,13 +131,14 @@ public class RestServletHandler extends AbstractServletHandler {
             Misc.log("Rest", "[" + ipRemote + "]", "perform:", Nothing.class.getSimpleName(), "[" + path + "]");
             new Nothing().call(json, requestWrapper);
         }
+        if (AbstractAction.STATUS_DELAYED.equals(json.getString(STATUS))) {
+            return;
+        }
 
         if(json.has(CODE)) {
             if (json.getInt(CODE) == AbstractAction.CODE_MOVED_TEMPORARILY && json.has(AbstractAction.MESSAGE)) {
                 Misc.log("Rest", "redirect:", json.getString(AbstractAction.MESSAGE));
                 requestWrapper.sendRedirect(json.getString(AbstractAction.MESSAGE));
-                return;
-            } else if(json.getInt(CODE) == AbstractAction.CODE_DELAYED) {
                 return;
             }
         }
@@ -167,7 +168,7 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     protected void registerActionsPool() {
-        if(!pool.isEmpty()) {
+        if (!pool.isEmpty()) {
             for (Map.Entry<String, AbstractAction> entry : pool.entrySet()) {
                 if (restBus.getHolder(entry.getKey()) != null) {
                     Misc.log("Rest", "override:", entry.getValue().getClass().getName(), "[" + entry.getKey() + "]");

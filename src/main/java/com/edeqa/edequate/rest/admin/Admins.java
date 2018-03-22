@@ -10,6 +10,7 @@ import com.edeqa.helpers.Misc;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.security.MessageDigest;
@@ -106,16 +107,11 @@ public class Admins extends AbstractAction<RequestWrapper> {
 
     private void saveAdmin(JSONObject json, JSONObject initial) throws Exception {
         read();
+        System.out.println("Before:"+users);
 
-        JSONObject admin = new JSONObject();
 
         String login = null, password = null;
         if(json.has(LOGIN)) login = json.getString(LOGIN);
-        if(json.has(PASSWORD)) password = json.getString(PASSWORD);
-        if(json.has(NAME)) admin.put(NAME, json.getString(NAME));
-        if(json.has(EMAIL)) admin.put(EMAIL, json.getString(EMAIL));
-        if(json.has(EXPIRATION)) admin.put(EXPIRATION, json.getLong(EXPIRATION));
-        if(json.has(ROLES)) admin.put(ROLES, json.getString(ROLES));
 
         boolean add = false;
         if(json.has(ADD)) {
@@ -128,6 +124,22 @@ public class Admins extends AbstractAction<RequestWrapper> {
             throw new Exception("Admin not exists: " + login);
         }
 
+        JSONObject admin = new JSONObject();
+        if(!add) {
+            admin = users.getJSONObject(login);
+        }
+        if(json.has(PASSWORD)) password = json.getString(PASSWORD);
+
+        admin.remove(NAME);
+        if(json.has(NAME) && json.getString(NAME).length() > 0) admin.put(NAME, json.getString(NAME));
+
+        admin.remove(EMAIL);
+        if(json.has(EMAIL) && json.getString(EMAIL).length() > 0) admin.put(EMAIL, json.getString(EMAIL));
+
+        admin.remove(EXPIRATION);
+        if(json.has(EXPIRATION) && json.getLong(EXPIRATION) > 0) admin.put(EXPIRATION, json.getLong(EXPIRATION));
+        if(json.has(ROLES)) admin.put(ROLES, json.getString(ROLES));
+
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
         String realm = arguments.getRealm();
 
@@ -139,8 +151,20 @@ public class Admins extends AbstractAction<RequestWrapper> {
         md5.update(password.getBytes());
 
         byte[] ha1 = toHexBytes(md5.digest());
+
+        admin.put(PASSWORD_HASH, new String(ha1, "UTF-8"));
+
         System.out.println("Username:"+login+", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
 
+        System.out.println("After:"+users);
+
+        WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json");
+        try (FileWriter writer = new FileWriter(usersWebPath.path())) {
+            writer.write(users.toString(2));
+            Misc.log("Admins", "saved admin:", admin.toString());
+            json.put(STATUS, STATUS_SUCCESS);
+        }
+        read();
     }
 
     private JSONObject fetchAdmin(String login) {

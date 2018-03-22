@@ -31,8 +31,7 @@ public class LogsLog extends AbstractAction<RequestWrapper> {
 
     @Override
     public void call(JSONObject json, final RequestWrapper request) throws IOException {
-        json.put(STATUS, STATUS_SUCCESS);
-        json.put(CODE, CODE_DELAYED);
+        json.put(STATUS, STATUS_DELAYED);
 
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
 

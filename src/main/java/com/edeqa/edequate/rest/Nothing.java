@@ -32,10 +32,12 @@ public class Nothing extends AbstractAction<RequestWrapper> {
             json.put(MESSAGE, getThrowable().getMessage());
         }
 
-        String body = request.getBody();
-        if (!Misc.isEmpty(body)) {
-            json.put(BODY, body);
-        }
+        try {
+            String body = request.getBody();
+            if (!Misc.isEmpty(body)) {
+                json.put(BODY, body);
+            }
+        } catch (Exception e) {}
         setMessage(null);
         setThrowable(null);
     }

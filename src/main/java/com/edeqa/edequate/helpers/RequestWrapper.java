@@ -203,7 +203,7 @@ public class RequestWrapper {
         return getOutputStream();
     }
 
-    public InputStream getInputStream() throws IOException {
+    public InputStream getInputStream() {
         try {
             if(mode == MODE_SERVLET) {
                 return httpServletRequest.getInputStream();
@@ -352,11 +352,11 @@ public class RequestWrapper {
 
     public String getRequestMethod() {
         try {
-        if(mode == MODE_SERVLET) {
-            return httpServletRequest.getMethod();
-        } else if(mode == MODE_EXCHANGE) {
-            return httpExchange.getRequestMethod();
-        }
+            if(mode == MODE_SERVLET) {
+                return httpServletRequest.getMethod();
+            } else if(mode == MODE_EXCHANGE) {
+                return httpExchange.getRequestMethod();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -428,13 +428,11 @@ public class RequestWrapper {
 
     public String getBody() {
         String body = null;
-        try {
         try (InputStreamReader isr = new InputStreamReader(getRequestBody(), "utf-8")) {
             try (BufferedReader br = new BufferedReader(isr)) {
                 body = br.readLine();
             }
-        }
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return body;
@@ -442,15 +440,15 @@ public class RequestWrapper {
 
     public String getUserName() {
         try {
-        if(mode == MODE_SERVLET) {
-            return null;
-        } else if(mode == MODE_EXCHANGE) {
-            if(httpExchange.getPrincipal() != null) {
-                return httpExchange.getPrincipal().getUsername();// TODO
-            } else {
+            if(mode == MODE_SERVLET) {
                 return null;
+            } else if(mode == MODE_EXCHANGE) {
+                if(httpExchange.getPrincipal() != null) {
+                    return httpExchange.getPrincipal().getUsername();// TODO
+                } else {
+                    return null;
+                }
             }
-        }
         } catch (Exception e) {
             e.printStackTrace();
         }

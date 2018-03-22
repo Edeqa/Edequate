@@ -114,7 +114,7 @@ public class DigestAuthenticator extends Authenticator {
             return null;
         }
 
-        String passwordHash = admins.getPasswordHash(username);//passwords.getProperty(username);
+        String passwordHash = admins.getPasswordHash(username);
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(username.getBytes());
