@@ -4,6 +4,8 @@
  * Created 1/19/18.
  */
 function LogoutHolder(main) {
+    var u = main.edequate;
+
     this.category = DRAWER.SECTION_LAST;
     this.type = "logout";
     this.title = "Log out";
@@ -12,11 +14,10 @@ function LogoutHolder(main) {
 
     this.start = function() {
         main.drawer.headerTitle.innerHTML = "${APP_NAME}" || "Edequate";
-        main.drawer.headerSubtitle.innerHTML = data.user || "Admin";
         main.drawer.footer.lastChild.firstChild.replaceWith(u.create(HTML.DIV).place(HTML.SPAN, {className: "drawer-footer-link", innerHTML: "${APP_NAME} &copy;2017-18 Edeqa", onclick: function(e){
             main.arguments.utils.dialogAbout().open();
             e.stopPropagation();
-        }}).place(HTML.SPAN, "\nBuild " + data.version));
+        }}).place(HTML.SPAN, "\nBuild " + window.data.version));
     };
 
     this.resume = function() {
@@ -28,7 +29,7 @@ function LogoutHolder(main) {
             src: "/images/logo.svg"
         }).place(HTML.SPAN, {
             className: "admin-splash-title",
-            innerHTML: "${APP_NAME} 1." + data.version
+            innerHTML: "${APP_NAME} 1." + window.data.version
         }).place(HTML.SPAN, {
             className: "admin-splash-subtitle",
             innerHTML: "Admin"
@@ -41,7 +42,7 @@ function LogoutHolder(main) {
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
                     var url = new URL(window.location.href);
-                    url = "https://" + url.hostname + (data.HTTPS_PORT === 443 ? "" : ":"+ data.HTTPS_PORT) + "/";
+                    url = "https://" + url.hostname + (window.data.HTTPS_PORT === 443 ? "" : ":"+ window.data.HTTPS_PORT) + "/";
                     window.location = url
                 }
             };

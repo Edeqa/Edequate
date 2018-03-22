@@ -83,7 +83,7 @@ public class MainServletHandler extends AbstractServletHandler {
             resultCode = 403;
             webPath = new WebPath(getWebDirectory(), "403.html");
 //                Utils.sendResult.onEvent(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
-        } else if(!webPath.path().exists()) {
+        } else if(!webPath.path().exists() || webPath.path().getName().startsWith(".")) {
             String beginWeb = webPath.web(1);
             if("/main".startsWith(beginWeb) || "/rest".startsWith(beginWeb) || "/admin".startsWith(beginWeb)) {
                 webPath = new WebPath(getWebDirectory(), "index.html");
@@ -94,7 +94,6 @@ public class MainServletHandler extends AbstractServletHandler {
                             .setContent(fetchDefaultIndex().build())
                             .setResultCode(200)
                             .call(null, requestWrapper);
-//                    requestWrapper.sendResult(200, Mime.TEXT_HTML, fetchDefaultIndex().build().getBytes());
                     return;
                 }
             } else {

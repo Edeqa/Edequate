@@ -74,4 +74,8 @@ public class Arguments extends AbstractAction<String[]> {
     public String getLogFile() {
         return "";
     }
+
+    public String getRealm() {
+        return "edequate";
+    }
 }

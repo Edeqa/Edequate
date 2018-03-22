@@ -10,6 +10,7 @@
 
 function Main(u) {
     var self = this;
+    this.edequate = u;
 
     this.start = function(arguments) {
         self.arguments = arguments = arguments || {};
@@ -67,7 +68,7 @@ function Main(u) {
             if(self.eventBus.holders[holderType]) {
                 self.holder = self.eventBus.holders[holderType];
                 /** @namespace self.holder.preventState */
-                if(!self.holder.preventState) {
+                if(!self.holder.preventHistory) {
                     window.history.pushState({}, null, "/" + self.mainType + "/" + holderType);
                 }
             } else {
@@ -85,8 +86,10 @@ function Main(u) {
                 } else {
                     self.holder.resume();
                 }
-                if(!self.holder.preventState) {
+                if(!self.holder.preventHistory) {
                     self.history.add(holderType, options);
+                }
+                if(!self.holder.preventState) {
                     self.actionbar.setTitle(self.holder.title);
                     u.lang.updateNode(self.drawer.headerPrimary, self.holder.title);
                 }
@@ -96,6 +99,7 @@ function Main(u) {
             window.addEventListener("load",function() { setTimeout(function(){
                 window.scrollTo(0, 1); }, 0);
             });
+            self.eventBus.fire("turn", self.holder);
         };
 
         this.loadResources(self.mainType + ".json", function() {
@@ -176,6 +180,9 @@ function Main(u) {
                 if(json.message.indexOf("/js/main/PagesHolder.js") < 0) {
                     json.message.push("/js/main/PagesHolder.js");
                 }
+                if(json.message.indexOf("/js/main/PageNotFoundHolder.js") < 0) {
+                    json.message.push("/js/main/PageNotFoundHolder.js");
+                }
                 self.eventBus.register(json.message, {
                     context: self,
                     onprogress: function (loaded) {
@@ -252,6 +259,7 @@ function Main(u) {
         this.add = function(holderType, options) {
             var previousState = history[history.length - 1] || {};
             var newState = {h: holderType, o:options};
+
             if(JSON.stringify(newState) !== JSON.stringify(previousState)) {
                 history.push(newState);
                 while(history.length > 100) {

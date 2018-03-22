@@ -3,21 +3,18 @@
  *
  * Created 3/11/18.
  */
-function PageEditHolder(main) {
-    var div;
+function PageHolder(main) {
+    var u = main.edequate;
 
-    this.category = DRAWER.SECTION_RESOURCES;
     this.type = "page";
-    this.title = "Page Edit";
+    this.title = "Pages";
+    this.preventHistory = true;
     var dialog;
     var dialogConfirm;
     var sections;
     var locales;
     var locale;
-    var editor;
-    // this.preventState = true;
-
-
+    var div;
 
     var categories = [
         {"0": "Primary"},
@@ -34,6 +31,9 @@ function PageEditHolder(main) {
 
     this.start = function() {
         div = main.content;
+
+
+
     };
 
     this.resume = function(action,id) {

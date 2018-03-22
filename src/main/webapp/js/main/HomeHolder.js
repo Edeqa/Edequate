@@ -5,6 +5,7 @@
  */
 
 function HomeHolder(main) {
+    var u = main.edequate;
 
     this.category = DRAWER.SECTION_PRIMARY;
     this.type = "home";

@@ -2,7 +2,7 @@ package com.edeqa.edequate.helpers;
 
 
 import com.edeqa.edequate.abstracts.AbstractAction;
-import com.edeqa.edequate.rest.admin.Users;
+import com.edeqa.edequate.rest.admin.Admins;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 import com.google.common.net.HttpHeaders;
@@ -11,6 +11,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpPrincipal;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -29,7 +30,7 @@ import static com.edeqa.edequate.abstracts.AbstractAction.RESTBUS;
 @SuppressWarnings("restriction")
 public class DigestAuthenticator extends Authenticator {
 
-    private static final byte COL = ':';
+    public static final byte COL = ':';
 
     private final Set<String> givenNonces = new HashSet<>();
     private final SecureRandom random = new SecureRandom();
@@ -91,8 +92,8 @@ public class DigestAuthenticator extends Authenticator {
             Headers responseHeaders = httpExchange.getResponseHeaders();
             responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(true));
             return new Authenticator.Retry(401);
-        } catch (AuthenticationException e) {
-            Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "got error [" + e.getMessage() + "]");
+        } catch (Exception e) {
+            Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "got error", e);
             Headers responseHeaders = httpExchange.getResponseHeaders();
             responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
             return new Authenticator.Retry(401);
@@ -107,22 +108,28 @@ public class DigestAuthenticator extends Authenticator {
             return null;
         }
 
-        Users users = (Users) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Users.TYPE);
-        if(!users.exists(username)) {
+        Admins admins = (Admins) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Admins.TYPE);
+        if(!admins.exists(username)) {
             Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "not found user [" + username + "]");
             return null;
         }
 
-        String passwordHash = users.getPasswordHash(username);//passwords.getProperty(username);
+        String passwordHash = admins.getPasswordHash(username);//passwords.getProperty(username);
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(username.getBytes());
             md5.update(COL);
             md5.update(realm.getBytes());
             md5.update(COL);
-            md5.update(passwordHash.getBytes());
+            md5.update("".getBytes());
 
             byte[] ha1 = toHexBytes(md5.digest());
+            try {
+                System.out.println("Username:"+username+", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            ha1 = admins.getPasswordHash(username).getBytes();
 
             md5.update(httpExchange.getRequestMethod().getBytes());
             md5.update(COL);
@@ -130,9 +137,16 @@ public class DigestAuthenticator extends Authenticator {
 
             byte[] ha2 = toHexBytes(md5.digest());
 
+            System.out.println(challengeParameters);
             md5.update(ha1);
             md5.update(COL);
             md5.update(challengeParameters.get("nonce").getBytes());
+            md5.update(COL);
+            md5.update(challengeParameters.get("nc").getBytes());
+            md5.update(COL);
+            md5.update(challengeParameters.get("cnonce").getBytes());
+            md5.update(COL);
+            md5.update("auth".getBytes());
             md5.update(COL);
             md5.update(ha2);
 
@@ -154,10 +168,12 @@ public class DigestAuthenticator extends Authenticator {
     private String getChallenge(boolean stale) {
         StringBuilder buf = new StringBuilder();
         buf.append("realm=\"").append(realm).append("\",");
+        buf.append("qop=\"auth,auth-int\",");
         buf.append("nonce=\"").append(createNonce()).append("\"");
         if (stale) {
             buf.append(",stale=true");
         }
+        System.out.println(buf.toString());
         return buf.toString();
     }
 

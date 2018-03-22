@@ -8,5 +8,12 @@
       "title": "home",
       "type": "home"
     }
+  ],
+  [
+    {
+      "resource": "admin-roles.html",
+      "title": "Admin roles",
+      "type": "roles"
+    }
   ]
 ]

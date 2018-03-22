@@ -5,12 +5,10 @@
  */
 
 function PageNotFoundHolder(main) {
+    var u = main.edequate;
 
-//    this.category = DRAWER.SECTION_LAST;
     this.type = "404";
     this.title = u.lang.page_not_found;
-//    this.menu = u.lang.about;
-//    this.icon = "info_outline";
 
     this.start = function() {
         console.log("Starting PageNotFoundHolder");

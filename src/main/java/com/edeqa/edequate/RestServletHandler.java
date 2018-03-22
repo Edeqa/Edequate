@@ -25,8 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletException;
-
 import static com.edeqa.edequate.abstracts.AbstractAction.CODE;
 import static com.edeqa.edequate.abstracts.AbstractAction.FALLBACK;
 import static com.edeqa.edequate.abstracts.AbstractAction.RESTBUS;
@@ -125,6 +123,7 @@ public class RestServletHandler extends AbstractServletHandler {
                 restBus.getHolder(path).call(json, requestWrapper);
             }
         } catch(Exception e) {
+            Misc.err("Rest", "failed:", e);
             new Nothing().setThrowable(e).call(json, requestWrapper);
         }
 

@@ -5,10 +5,10 @@ import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
+import com.edeqa.edequate.rest.admin.Admins;
 import com.edeqa.edequate.rest.admin.LogsClear;
 import com.edeqa.edequate.rest.admin.LogsLog;
 import com.edeqa.edequate.rest.admin.Page;
-import com.edeqa.edequate.rest.admin.Users;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
@@ -50,8 +50,8 @@ public class AdminServletHandler extends RestServletHandler {
 
         registerAction(new LogsClear());
         registerAction(new LogsLog());
-        registerAction(new Users().read());
-//        getSystemBus().registerIfAbsent(new Users());
+        registerAction(new Admins().read());
+//        getSystemBus().registerIfAbsent(new Admins());
     }
 
     @Override

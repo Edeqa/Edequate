@@ -152,6 +152,8 @@ Arguments object will be stored as the property `arguments`.
 
 * `buttonScrollTop`
 
+* `edequate` - instance of Edequate
+ 
  
 #### Methods
 

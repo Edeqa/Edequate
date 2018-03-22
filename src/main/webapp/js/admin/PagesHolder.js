@@ -3,8 +3,9 @@
  *
  * Created 3/8/18.
  */
-function PagesManagerHolder(main) {
-    var div;
+function PagesHolder(main) {
+    var self = this;
+    var u = main.edequate;
 
     this.category = DRAWER.SECTION_RESOURCES;
     this.type = "pages";
@@ -12,8 +13,8 @@ function PagesManagerHolder(main) {
     this.menu = "Pages";
     this.icon = "mode_edit";
     this.scrollTop = 0;
-    var self = this;
 
+    var div;
     var sectionsNames = {
         "0": "Primary",
         "1": "Summary",
@@ -51,8 +52,6 @@ function PagesManagerHolder(main) {
             }}, titleNode);
 
         u.getJSON("/rest/data/types").then(function(json){
-            console.log(json.message);
-
             for(var i in json.message) {
                 var id = json.message[i];
                 if(!id) return;
@@ -145,7 +144,7 @@ function PagesManagerHolder(main) {
                         }
                     }
                     for(var i in json1.message) {
-                        u.require(json1.extra + "/" + json1.message[i]).then(function(holder) {
+                        u.require(json1.extra + "/" + json1.message[i], main).then(function(holder) {
                             var category = holder && holder.category;
                             category = this.items[""+category]
                             if(category && "menu" in holder) {

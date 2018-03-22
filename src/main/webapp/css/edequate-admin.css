@@ -149,7 +149,40 @@ div.question {
     width: 80%;
     z-index: 10000;
 }
-
+.alert-box {
+    display: flex;
+    background-color: gold;
+    width: 100%;
+    margin-top: 5px;
+    padding: 10px;
+    border: 1px solid brown;
+    box-sizing: border-box;
+    font-weight: bold;
+    color: firebrick;
+    align-items: center;
+    flex: 0 0 auto;
+}
+.alert-box .dialog-button {
+    margin-left: 10px;
+}
+.security-expired {
+    background-color: firebrick;
+    color: white;
+}
+.security-expiring-soon {
+    background-color: salmon;
+}
+.security-medium {
+}
+.security-missing {
+    background-color: pink;
+}
+.security-strong {
+    background-color: palegreen;
+}
+.security-weak {
+    background-color: bisque;
+}
 
 @media screen and (max-width: 1000px) {
     .buttons {
@@ -192,6 +225,12 @@ div.question {
     .alert {
         margin: 0;
     }
+    .alert-box {
+        justify-content: space-between;
+    }
+    .alert-box .dialog-button {
+        flex: 0 0 50px;
+    }
     .layout {
         margin-top: 50px;
         padding: 0;
@@ -230,13 +269,13 @@ div.question {
         display: none;
     }
 
-    .account-history .thead, .accounts .thead, .statistics .thead, .groups .thead, .group-users .thead, .user-locations .thead {
+    .account-history .thead, .accounts .thead, .statistics .thead, .groups .thead, .group-users .thead, .user-locations .thead, .admins .thead {
         display: flex;
         justify-content: space-between;
         font-size: 12px;
         flex-wrap: wrap;
     }
-    .account-history .tbody .tr, .accounts .tbody .tr, .statistics .tbody .tr, .groups .tbody .tr, .group-users .tbody .tr, .user-locations .tbody .tr {
+    .account-history .tbody .tr, .accounts .tbody .tr, .statistics .tbody .tr, .groups .tbody .tr, .group-users .tbody .tr, .user-locations .tbody .tr, .admins .tbody .tr {
         display: flex;
         flex-flow: row;
         flex-wrap: wrap;
@@ -245,7 +284,7 @@ div.question {
         font-size: 12px;
         padding: 5px;
     }
-    .account-history .tbody .td, .accounts .tbody .td, .statistics .tbody .td, .groups .tbody .td, .group-users .tbody .td, .user-locations .tbody .td {
+    .account-history .tbody .td, .accounts .tbody .td, .statistics .tbody .td, .groups .tbody .td, .group-users .tbody .td, .user-locations .tbody .td, .admins .tbody .td {
         display: block;
         border: none;
         padding: 0;
@@ -588,6 +627,62 @@ div.question {
         stroke: darkslategray;
         padding-right: 2px;
     }
+
+    .admins .thead .th:nth-child(4) {
+        display: none;
+    }
+    .admins .thead .th:nth-child(5) {
+        display: none;
+    }
+    .admins .thead .th:nth-child(6) {
+        display: none;
+    }
+
+    .admins .tbody .td:nth-child(1) {
+        flex: 0 0 100%;
+        order: 1;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .admins .tbody .td:nth-child(2) {
+        flex: 0 0 50%;
+        order: 2;
+    }
+    .admins .tbody .td:nth-child(2)::before {
+        content: "person";
+        font-family: "Material Icons";
+        font-feature-settings: "liga" 1;
+        font-style: normal;
+        stroke: darkslategray;
+    }
+    .admins .tbody .td:nth-child(3) {
+        flex: 0 0 50%;
+        order: 3;
+    }
+    .admins .tbody .td:nth-child(3)::before {
+        content: "email";
+        font-family: "Material Icons";
+        font-feature-settings: "liga" 1;
+        font-style: normal;
+        stroke: darkslategray;
+    }
+    .admins .tbody .td:nth-child(4) {
+        display: none;
+    }
+    .admins .tbody .td:nth-child(5) {
+        display: none;
+    }
+    .admins .tbody .td:nth-child(6) {
+        display: none;
+    }
+    .admins .tbody .td:nth-child(7) {
+        flex: 0 0 100%;
+        order: 7;
+    }
+    .admins .tbody .td:nth-child(7)::before {
+        content: "Roles: ";
+    }
+
 
     /* media specific classes */
     .hideable {

@@ -4,6 +4,8 @@
  * Created 4/20/17.
  */
 function LogsHolder(main) {
+    var u = main.edequate;
+
     this.category = DRAWER.SECTION_MISCELLANEOUS;
     this.type = "logs";
     this.title = "Logs";
@@ -13,6 +15,7 @@ function LogsHolder(main) {
     var task;
     var logBody;
     var logCaption;
+    var div;
 
     this.start = function() {
         div = main.content;

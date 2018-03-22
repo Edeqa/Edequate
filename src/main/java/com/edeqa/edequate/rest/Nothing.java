@@ -29,13 +29,15 @@ public class Nothing extends AbstractAction<RequestWrapper> {
         json.put(MESSAGE, getMessage());
         json.put(CODE, ERROR_NOT_EXTENDED);
         if(getThrowable() != null) {
-            json.put(EXTRA, getThrowable().getMessage());
+            json.put(MESSAGE, getThrowable().getMessage());
         }
 
         String body = request.getBody();
         if (!Misc.isEmpty(body)) {
             json.put(BODY, body);
         }
+        setMessage(null);
+        setThrowable(null);
     }
 
     public Nothing setMessage(String message) {

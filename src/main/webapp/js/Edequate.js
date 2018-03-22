@@ -5,7 +5,7 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
- * 7 - create(options#content) - if content is defined then just uses it as current HTMLElement; new component - tree
+ * 7 - create(options#content) - if content is defined then just uses it as current HTMLElement; new component - tree; node#setContent(node)
  * 6 - drawer.headerSubtitle; require with caching
  * 5 - onload initialization; DRAWER constants
  * 4 - table#options#caption.selectable=true/false
@@ -25,6 +25,9 @@ function Edequate(options) {
     this.version = 6;
 
     var HTML = {
+        DATE:"date",
+        DATETIME: "datetime",
+        DATETIME_LOCAL: "datetime-local",
         DIV:"div",
         LINK:"link",
         A:"a",
@@ -362,6 +365,29 @@ function Edequate(options) {
         });
     }
 
+    HTMLElement.prototype.setContent = function(node) {
+        for(var i = this.childNodes.length - 1; i >= 0; i--) {
+            this.removeChild(this.childNodes[i]);
+        }
+        this.appendChild(node);
+        return this;
+    };
+
+    if(!Object.assign) {
+        Object.defineProperty(Object.prototype, "assign", {
+            enumerable: false,
+            value: function(target, first, second) {
+                for(var x in first) {
+                    if(first.hasOwnProperty(x)) target[x] = first[x];
+                }
+                for(x in second) {
+                    if(second.hasOwnProperty(x)) target[x] = second[x];
+                }
+                return target;
+            }
+        });
+    }
+
     if(!String.prototype.toUpperCaseFirst) {
         Object.defineProperty(String.prototype, "toUpperCaseFirst", {
             enumerable: false,
@@ -532,17 +558,19 @@ function Edequate(options) {
                     } else if(x === "children" && properties[x]) {
                         var nodes = [];
                         if(properties[x] instanceof HTMLElement) {
-                            properties[x].childNodes.forEach(function (item) {
-                                nodes.push(item);
-                            });
+                            if(properties[x].childNodes) {
+                                for (var i = 0; i < properties[x].childNodes.length; i++) {
+                                    nodes.push(properties[x].childNodes[i]);
+                                }
+                            }
                         } else if (properties[x].constructor === Array) {
                             nodes = properties[x];
                         }
-                        nodes.forEach(function(item) {
-                            if(item instanceof HTMLElement) {
-                                el.appendChild(item);
+                        for(var i = 0; i < nodes.length; i++) {
+                            if(nodes[i] instanceof HTMLElement) {
+                                el.appendChild(nodes[i]);
                             }
-                        });
+                        }
                     } else if(properties[x] instanceof HTMLElement) {
                         el.appendChild(properties[x]);
                         el[x] = properties[x];
@@ -1059,14 +1087,12 @@ function Edequate(options) {
                     create(HTML.LABEL, labelOptions , div);
                 }
 
-                item.tabindex = item.tabindex || -1;
+                item.tabindex = item.tabindex === undefined ? -1 : item.tabindex;
                 item.className = "dialog-item-input-"+item.type + optionalClassName(item.className);
                 item.onkeyup = function(e){
                     if(e.keyCode === 13 && this.type !== HTML.TEXTAREA) {
-                        //dialog.close();
                         dialog.onaccept();
                     } else if(e.keyCode === 27) {
-                        //dialog.close();
                         dialog.oncancel();
                     }
                 };
@@ -1100,10 +1126,10 @@ function Edequate(options) {
             return x;
         };
         dialog.addItems = function(items) {
-            if(items) {
-                items.forEach(function(item){
-                    dialog.addItem(item);
-                })
+            if(items && items.length) {
+                for(var i = 0; i < items.length; i++) {
+                    dialog.addItem(items[i]);
+                }
             }
             return dialog;
         };
@@ -1657,7 +1683,13 @@ function Edequate(options) {
         options = options || {};
 
         var type = HTML.INPUT;
-        if(options.type.toLowerCase() === HTML.BUTTON) type = HTML.BUTTON;
+        options.type = options.type.toLowerCase();
+        if(options.type === HTML.BUTTON
+            /*|| options.type === HTML.DATE
+            || options.type === HTML.DATETIME
+            || options.type === HTML.DATETIME_LOCAL*/) {
+            type = options.type;
+        }
 
         if(options.onclick && options.type !== HTML.BUTTON) {
             var a = options.onclick;
@@ -2709,9 +2741,10 @@ function Edequate(options) {
                     cell.selectButton = create(HTML.DIV, {
                         className:"icon table-select notranslate",
                         innerHTML:"expand_more",
-                        onclick: function(){
+                        onclick: function(e){
                             var cell = this.parentNode;
                             progressHolder.show();
+                            e.stopPropagation();
                             setTimeout(function() {
                                 var selected = {};
                                 var index = this.parentNode.index;
@@ -2854,7 +2887,6 @@ function Edequate(options) {
                     },
                     _filter: function(row) {
                         for(var i in row.cells) {
-                            // noinspection JSUnfilteredForInLoop
                             if(row.cells[i].innerText.toLowerCase().indexOf(this.filterInput.value.toLowerCase()) >= 0) return true;
                         }
                         return false;
