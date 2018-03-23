@@ -21,7 +21,6 @@ function PagesHolder(main) {
     this.preventHistory = true;
 
 
-
     this.start = function() {
         console.log("Starting PagesHolder");
         u.getJSON("/rest/data", {resource: "pages-" + main.mainType + ".json"}).then(function(json){
@@ -141,6 +140,7 @@ function PagesHolder(main) {
                     className: "content-normal",
                     innerHTML: xhr.response
                 }, main.content);
+                main.eventBus.fire("pages_done", type);
                 u.progress.hide();
             }).catch(function (error, json) {
                 console.error(json);

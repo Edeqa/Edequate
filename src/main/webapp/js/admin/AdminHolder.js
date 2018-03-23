@@ -4,6 +4,7 @@
  * Created 3/21/18.
  */
 function AdminHolder(main) {
+    var self = this;
     var u = main.edequate;
 
     this.type = "admin";
@@ -11,6 +12,7 @@ function AdminHolder(main) {
     this.preventHistory = true;
     var div;
     var dialog;
+    var alert;
 
 
     /** @namespace json.message.login */
@@ -20,11 +22,12 @@ function AdminHolder(main) {
             if(json && json.message) {
                 var security = json.message.security || "missing";
                 if(security !== "strong" && security !== "medium") {
-                    u.create(HTML.DIV, {className: "alert-box"}, div, "first")
+                    alert = alert || u.create(HTML.DIV, {className: "alert-box"})
                         .place(HTML.DIV, {innerHTML: "Your password is " + security + "."})
                         .place(HTML.BUTTON, {innerHTML:"Update", className:"dialog-button", onclick: function() {
-                                main.turn("admin", ["password", json.message.login])
+                                main.turn("admin", ["password", json.message.login]);
                             }});
+                    placeAlert();
                 }
                 main.drawer.headerSubtitle.setContent(u.create(HTML.DIV, {
                     innerHTML: json.message.name || json.message.login,
@@ -33,9 +36,9 @@ function AdminHolder(main) {
                         + ", security: " + security
                         + (json.message.expiration ? ", expiration: " + new Date(json.message.expiration).toDateString() : "")
 
-                }).place(HTML.BUTTON, {innerHTML:"edit", title:"Edit", className:"icon notranslate drawer-header-subtitle-icon security-" + (json.message.security || "missing").replace(/[\W]/g,"-"), onclick: function() {
+                })/*.place(HTML.BUTTON, {innerHTML:"edit", title:"Edit", className:"icon notranslate drawer-header-subtitle-icon security-" + (json.message.security || "missing").replace(/[\W]/g,"-"), onclick: function() {
                         main.turn("admin", ["edit", json.message.login])
-                    }}));
+                    }})*/);
             }
         }).catch(function(e,x){
             console.error(e,x);
@@ -94,12 +97,12 @@ function AdminHolder(main) {
                             loginNode.focus();
                             return;
                         }
-                        if(!passwordNode.value) {
+                        if(!passwordNode.value && dialog.initialOptions.security === "missing") {
                             u.toast.error("Password not defined");
                             passwordNode.focus();
                             return;
                         }
-                        if(passwordNode.value.length < 6) {
+                        if(passwordNode.value.length > 0 && passwordNode.value.length < 6) {
                             u.toast.error("Password too short");
                             passwordNode.focus();
                             return;
@@ -122,7 +125,7 @@ function AdminHolder(main) {
                         };
                         u.post("/admin/rest/data/admins", {initial: dialog.initialOptions, mode:"save", admin: resultOptions}).then(function(result){
                             u.progress.hide();
-                            u.toast.show("Page saved");
+                            u.toast.show("Admin saved");
                             dialog.close();
                             main.turn("admins");
                         }).catch(function (code, reason) {
@@ -180,6 +183,21 @@ function AdminHolder(main) {
         } catch(e) {
             console.error(e);
             // main.turn("admins");
+        }
+    }
+
+    this.onEvent = function(event) {
+        switch(event) {
+            case "pages_done":
+            case "turn":
+                placeAlert();
+                break;
+        }
+    };
+
+    function placeAlert() {
+        if(alert) {
+            div.insertBefore(alert, div.firstChild);
         }
     }
 

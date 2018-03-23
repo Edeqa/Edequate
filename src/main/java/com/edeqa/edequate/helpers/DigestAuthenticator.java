@@ -11,7 +11,6 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpPrincipal;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -45,26 +44,36 @@ public class DigestAuthenticator extends Authenticator {
     public Result authenticate(HttpExchange httpExchange) {
         try {
             DigestContext context = getOrCreateContext(httpExchange);
-            if (context.isAuthenticated()) {
-                String auth = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-                if(auth == null || "Digest logout".equals(auth)) {
-                    Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal().getName());
+            String authorization = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
+            /*if (context.isAuthenticated() && authorization != null) {
+                System.out.println("AUTH:"+authorization);
+                *//*if(authorization == null) {
+                    Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login/" + context.getPrincipal().getName());
 
                     httpExchange.setAttribute("digest-context", null);
                     Headers responseHeaders = httpExchange.getResponseHeaders();
                     responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
                     return new Authenticator.Retry(401);
+                } else *//*if("Digest logout".equals(authorization)) {
+                    Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal().getName());
+
+                    httpExchange.setAttribute("digest-context", null);
+                    Headers responseHeaders = httpExchange.getResponseHeaders();
+                    responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+
+                    return new Authenticator.Retry(401);
+                } else {
+                    System.out.println("PRIN:"+context.getPrincipal());
+                    return new Authenticator.Success(context.getPrincipal());
                 }
-                return new Authenticator.Success(context.getPrincipal());
-            }
-            Headers requestHeaders = httpExchange.getRequestHeaders();
-            if (!requestHeaders.containsKey(HttpHeaders.AUTHORIZATION)) {
+            }*/
+            if (authorization == null) {
+//                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login request", "[" + httpExchange.getRequestURI() + "]");
                 Headers responseHeaders = httpExchange.getResponseHeaders();
                 responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
                 return new Authenticator.Retry(401);
             }
-
-            String authorization = requestHeaders.getFirst(HttpHeaders.AUTHORIZATION);
             if (authorization.startsWith("Basic ")) {
                 Headers responseHeaders = httpExchange.getResponseHeaders();
                 responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
@@ -74,11 +83,25 @@ public class DigestAuthenticator extends Authenticator {
             if (!authorization.startsWith("Digest ")) {
                 throw new RuntimeException("Invalid 'Authorization' header.");
             }
+            if("Digest logout".equals(authorization)) {
+                if(context.getPrincipal() == null) {
+                    return new Authenticator.Retry(401);
+                }
+                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal());
+
+                httpExchange.setAttribute("digest-context", null);
+                Headers responseHeaders = httpExchange.getResponseHeaders();
+                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+
+                return new Authenticator.Retry(401);
+            }
             String challenge = authorization.substring(7);
             Map<String, String> challengeParameters = parseDigestChallenge(challenge);
 
-            HttpPrincipal principal = null;
-            principal = validateUser(httpExchange, challengeParameters);
+            HttpPrincipal principal = validateUser(httpExchange, challengeParameters);
+            if (!context.isAuthenticated()) {
+                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logged in/" + principal);
+            }
             if (principal == null) {
                 Headers responseHeaders = httpExchange.getResponseHeaders();
                 responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
@@ -86,7 +109,6 @@ public class DigestAuthenticator extends Authenticator {
             }
             if (useNonce(challengeParameters.get("nonce"))) {
                 context.principal = principal;
-                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login/" + principal.getName());
                 return new Authenticator.Success(principal);
             }
             Headers responseHeaders = httpExchange.getResponseHeaders();
@@ -114,22 +136,22 @@ public class DigestAuthenticator extends Authenticator {
             return null;
         }
 
-        String passwordHash = admins.getPasswordHash(username);
+        Admins.Admin currentAdmin = admins.get(username);
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
-            md5.update(username.getBytes());
-            md5.update(COL);
-            md5.update(realm.getBytes());
-            md5.update(COL);
-            md5.update("".getBytes());
-
-            byte[] ha1 = toHexBytes(md5.digest());
-            try {
-                System.out.println("Username:"+username+", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            ha1 = admins.getPasswordHash(username).getBytes();
+//            md5.update(username.getBytes());
+//            md5.update(COL);
+//            md5.update(realm.getBytes());
+//            md5.update(COL);
+//            md5.update("".getBytes());
+//
+//            byte[] ha1 = toHexBytes(md5.digest());
+//            try {
+//                System.out.println("Username:"+username+", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
+//            } catch (UnsupportedEncodingException e) {
+//                e.printStackTrace();
+//            }
+            byte[] ha1 = currentAdmin.getPasswordHash().getBytes();
 
             md5.update(httpExchange.getRequestMethod().getBytes());
             md5.update(COL);
@@ -137,7 +159,6 @@ public class DigestAuthenticator extends Authenticator {
 
             byte[] ha2 = toHexBytes(md5.digest());
 
-            System.out.println(challengeParameters);
             md5.update(ha1);
             md5.update(COL);
             md5.update(challengeParameters.get("nonce").getBytes());
@@ -156,7 +177,8 @@ public class DigestAuthenticator extends Authenticator {
             if (MessageDigest.isEqual(expectedResponse, actualResponse)) {
                 return new HttpPrincipal(username, realm);
             } else {
-                throw new AuthenticationException(passwordHash.length() > 0 ? passwordHash : "Incorrect password");
+                Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "incorrect password for", "[" + username + "]");
+                return null;
             }
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -173,7 +195,6 @@ public class DigestAuthenticator extends Authenticator {
         if (stale) {
             buf.append(",stale=true");
         }
-        System.out.println(buf.toString());
         return buf.toString();
     }
 

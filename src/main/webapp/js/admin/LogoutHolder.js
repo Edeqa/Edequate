@@ -11,6 +11,8 @@ function LogoutHolder(main) {
     this.title = "Log out";
     this.menu = "Log out";
     this.icon = "exit_to_app";
+    this.preventState = true;
+    this.preventHistory = true;
 
     this.start = function() {
         main.drawer.headerTitle.innerHTML = "${APP_NAME}" || "Edequate";
@@ -35,18 +37,14 @@ function LogoutHolder(main) {
             innerHTML: "Admin"
         });
 
+        window.history.pushState({}, null, "/admin/home");
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/admin", true);
+        xhr.setRequestHeader("Authorization", "Digest logout");
+        xhr.send();
         setTimeout(function () {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "/admin", true);
-            xhr.setRequestHeader("Authorization", "Digest logout");
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    var url = new URL(window.location.href);
-                    url = "https://" + url.hostname + (window.data.HTTPS_PORT === 443 ? "" : ":"+ window.data.HTTPS_PORT) + "/";
-                    window.location = url
-                }
-            };
-            xhr.send();
-        }, 0);
+            window.location.reload();
+        }, 1);
     }
 }

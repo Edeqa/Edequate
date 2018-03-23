@@ -27,6 +27,11 @@ public class WebPath {
         this(URLDecoder.decode(Thread.currentThread().getContextClassLoader().getResource("").getPath(), "UTF-8").split("/WEB-INF/classes/")[0], child);
     }
 
+    public WebPath(File file) {
+        this.directory = file.getParent();
+        this.child = file.getName();
+    }
+
     public File path() {
         return Misc.isEmpty(this.child) ? new File(directory) : new File(directory, child);
     }
@@ -79,5 +84,9 @@ public class WebPath {
             reader.close();
         }
         return fileContent.toString();
+    }
+
+    public boolean rename(String newFilename) {
+        return path().renameTo(new File(path().getParent(), newFilename));
     }
 }

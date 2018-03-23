@@ -6,6 +6,7 @@ import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
+import com.sun.net.httpserver.HttpExchange;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,7 +16,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import static com.edeqa.edequate.helpers.DigestAuthenticator.COL;
 import static com.edeqa.edequate.helpers.DigestAuthenticator.toHexBytes;
@@ -48,7 +51,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
     private final static String SECURITY_STRONG = "strong";
     private final static String SECURITY_WEAK = "weak";
 
-    private JSONObject users;
+    private Map<String, Admin> admins;
 
     @Override
     public String getType() {
@@ -66,37 +69,34 @@ public class Admins extends AbstractAction<RequestWrapper> {
             return;
         }
 
-        if(users == null) {
+        if(admins == null) {
             read();
         }
         JSONObject options = new JSONObject(body);
 
-        Object result = null;
+        Object result;
         switch(options.getString(MODE)) {
             case MODE_CURRENT:
                 Misc.log("Admins", "requested for current", "[" + request.getUserName() + "]");
-                result = fetchAdmin(request.getUserName());
+                result = current(request).toJSON();
                 break;
             case MODE_LIST:
                 Misc.log("Admins", "requested list");
                 result = fetchList();
                 break;
             case MODE_SAVE:
-                Misc.log("Admins", "save", options);
+                Misc.log("Admins", "save admin");
                 saveAdmin(options.getJSONObject(ADMIN), options.getJSONObject(INITIAL));
-//                result = fetchAdmin(options.getString(LOGIN));
-                json.put(STATUS, STATUS_ERROR);
-                json.put(CODE, ERROR_NOT_EXTENDED);
-                json.put(MESSAGE, "Arguments not enough.");
-                return;
+                result = null;
+                break;
             case MODE_SELECT:
                 Misc.log("Admins", "requested for", "[" + options.getString(LOGIN) + "]");
-                result = fetchAdmin(options.getString(LOGIN));
+                result = get(options.getString(LOGIN)).toJSON();
                 break;
             default:
                 json.put(STATUS, STATUS_ERROR);
                 json.put(CODE, ERROR_NOT_EXTENDED);
-                json.put(MESSAGE, "Arguments not enough.");
+                json.put(MESSAGE, "Not enough arguments.");
                 return;
         }
 
@@ -107,8 +107,6 @@ public class Admins extends AbstractAction<RequestWrapper> {
 
     private void saveAdmin(JSONObject json, JSONObject initial) throws Exception {
         read();
-        System.out.println("Before:"+users);
-
 
         String login = null, password = null;
         if(json.has(LOGIN)) login = json.getString(LOGIN);
@@ -117,76 +115,45 @@ public class Admins extends AbstractAction<RequestWrapper> {
         if(json.has(ADD)) {
             add = json.getBoolean(ADD);
         }
-        if(add && users.has(login)) {
+        if(add && exists(login)) {
             throw new Exception("Admin already exists: " + login);
         }
-        if(!add && !users.has(login)) {
+        if(!add && !exists(login)) {
             throw new Exception("Admin not exists: " + login);
         }
 
-        JSONObject admin = new JSONObject();
+        Misc.err("Admins", "is saving for", "[" + login + "]");
+
+        Admin admin = new Admin(login, json);
         if(!add) {
-            admin = users.getJSONObject(login);
+            admin = admins.get(login);
         }
-        if(json.has(PASSWORD)) password = json.getString(PASSWORD);
+        if(json.has(PASSWORD)) admin.storePassword(json.getString(PASSWORD));
 
-        admin.remove(NAME);
-        if(json.has(NAME) && json.getString(NAME).length() > 0) admin.put(NAME, json.getString(NAME));
+        admin.fetchFrom(json);
+        admin.storePassword(password);
 
-        admin.remove(EMAIL);
-        if(json.has(EMAIL) && json.getString(EMAIL).length() > 0) admin.put(EMAIL, json.getString(EMAIL));
-
-        admin.remove(EXPIRATION);
-        if(json.has(EXPIRATION) && json.getLong(EXPIRATION) > 0) admin.put(EXPIRATION, json.getLong(EXPIRATION));
-        if(json.has(ROLES)) admin.put(ROLES, json.getString(ROLES));
+        JSONObject adminsOut = new JSONObject();
+        for(Map.Entry<String,Admin> entry: admins.entrySet()) {
+            adminsOut.put(entry.getKey(), entry.getValue().getJSON());
+        }
 
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-        String realm = arguments.getRealm();
-
-        MessageDigest md5 = MessageDigest.getInstance("MD5");
-        md5.update(login.getBytes());
-        md5.update(COL);
-        md5.update(realm.getBytes());
-        md5.update(COL);
-        md5.update(password.getBytes());
-
-        byte[] ha1 = toHexBytes(md5.digest());
-
-        admin.put(PASSWORD_HASH, new String(ha1, "UTF-8"));
-
-        System.out.println("Username:"+login+", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
-
-        System.out.println("After:"+users);
-
-        WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json");
+        WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json.new");
         try (FileWriter writer = new FileWriter(usersWebPath.path())) {
-            writer.write(users.toString(2));
-            Misc.log("Admins", "saved admin:", admin.toString());
+            writer.write(adminsOut.toString(2));
             json.put(STATUS, STATUS_SUCCESS);
+            writer.close();
+            usersWebPath.rename(".admins.json");
         }
         read();
-    }
-
-    private JSONObject fetchAdmin(String login) {
-        JSONObject user = new JSONObject();
-        if(login == null || !exists(login)) return user;
-        user.put(LOGIN, login);
-        user.put(EMAIL, getEmail(login));
-        user.put(EXPIRATION, getExpiration(login));
-        user.put(NAME, getName(login));
-        user.put(SECURITY, fetchPower(login));
-        user.put(REALM, getRealm(login));
-        user.put(ROLES, getRoles(login));
-        return user;
     }
 
     private JSONArray fetchList() {
         JSONArray usersObject = new JSONArray();
         read();
-        Iterator<String> keys = users.keys();
-        while(keys.hasNext()) {
-            String login = keys.next();
-            usersObject.put(fetchAdmin(login));
+        for(Map.Entry<String,Admin> entry: admins.entrySet()) {
+            usersObject.put(entry.getValue().toJSON());
         }
         return usersObject;
     }
@@ -195,7 +162,13 @@ public class Admins extends AbstractAction<RequestWrapper> {
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
         WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json");
         try {
-            setUsers(new JSONObject(usersWebPath.content()));
+            JSONObject json = new JSONObject(usersWebPath.content());
+            admins = new HashMap<>();
+            Iterator<String> iter = json.keys();
+            while(iter.hasNext()) {
+                String login = iter.next();
+                admins.put(login, new Admin(login, json.getJSONObject(login)));
+            }
         } catch (IOException e) {
             Misc.err("Admins", "got an error", e);
         }
@@ -203,87 +176,167 @@ public class Admins extends AbstractAction<RequestWrapper> {
     }
 
     public boolean exists(String username) {
-        return users.has(username);
+        return admins.containsKey(username);
     }
 
-    public String getEmail(String username) {
-        return (String) getValue(username, EMAIL);
-    }
-
-    public String getName(String username) {
-        return (String) getValue(username, NAME);
-    }
-
-    public String getPasswordHash(String username) {
-        return (String) getValue(username, PASSWORD_HASH);
-    }
-
-    public long getExpiration(String username) {
-        Object value = getValue(username, EXPIRATION);
-        if(value != null) {
-            return (long) value;
-        } else {
-            return 0L;
+    public class Admin {
+        private String login;
+        private JSONObject json;
+        public Admin(String login, JSONObject json) {
+            this.login = login;
+            this.json = json;
         }
-    }
 
-    public String fetchPower(String username) {
-        String power = (String) getValue(username, SECURITY);
-        if(power == null) {
-            power = SECURITY_MISSING;
-        }
-        switch(power) {
-            case SECURITY_MEDIUM:
-            case SECURITY_STRONG:
-            case SECURITY_WEAK:
-                break;
-            default:
+        public String fetchPower() {
+            String power = (String) getValue(SECURITY);
+            if(power == null) {
                 power = SECURITY_MISSING;
-        }
-        long expiration = getExpiration(username);
-        if(expiration > 0) {
-            Calendar cal = Calendar.getInstance();
-            long now = cal.getTime().getTime();
-            if(expiration - now <= 0) {
-                power = SECURITY_EXPIRED;
-            } else if(expiration - now < 30*24*60*60*1000L) {
-                power = SECURITY_EXPIRING_SOON;
             }
-        }
-        return power;
-    }
-
-    public String getRealm(String username) {
-        return (String) getValue(username, REALM);
-    }
-
-    public String getRoles(String username) {
-        return (String) getValue(username, ROLES);
-    }
-
-    private Serializable getValue(String username, String key) {
-        if(getUsers().has(username)) {
-            if(getUsers().get(username) instanceof JSONObject) {
-                JSONObject json = getUsers().getJSONObject(username);
-                if(json.has(key)) {
-                    return (Serializable) json.get(key);
-                } else {
-                    return null;
+            switch(power) {
+                case SECURITY_MEDIUM:
+                case SECURITY_STRONG:
+                case SECURITY_WEAK:
+                    break;
+                default:
+                    power = SECURITY_MISSING;
+            }
+            long expiration = getExpiration();
+            if(expiration > 0) {
+                Calendar cal = Calendar.getInstance();
+                long now = cal.getTime().getTime();
+                if(expiration - now <= 0) {
+                    power = SECURITY_EXPIRED;
+                } else if(expiration - now < 30*24*60*60*1000L) {
+                    power = SECURITY_EXPIRING_SOON;
                 }
-            } else {
-                return "User data is corrupted.";
             }
-        } else {
-            return "User not found.";
+            return power;
+        }
+
+        private JSONObject toJSON() {
+            JSONObject user = new JSONObject();
+            user.put(LOGIN, login);
+            user.put(EMAIL, getEmail());
+            user.put(EXPIRATION, getExpiration());
+            user.put(NAME, getName());
+            user.put(SECURITY, fetchPower());
+            user.put(REALM, getRealm());
+            user.put(ROLES, getRoles());
+            return user;
+        }
+
+        public void fetchFrom(JSONObject json) {
+            this.json.remove(NAME);
+            if(json.has(NAME) && json.getString(NAME).length() > 0) this.json.put(NAME, json.getString(NAME));
+
+            this.json.remove(EMAIL);
+            if(json.has(EMAIL) && json.getString(EMAIL).length() > 0) this.json.put(EMAIL, json.getString(EMAIL));
+
+            this.json.remove(EXPIRATION);
+            if(json.has(EXPIRATION) && json.getLong(EXPIRATION) > 0) this.json.put(EXPIRATION, json.getLong(EXPIRATION));
+            if(json.has(ROLES)) this.json.put(ROLES, json.getString(ROLES));
+        }
+
+        public JSONObject getJSON() {
+            return json;
+        }
+
+        public String getEmail() {
+            return (String) getValue(EMAIL);
+        }
+
+        public String getName() {
+            return (String) getValue(NAME);
+        }
+
+        public String getPasswordHash() {
+            return (String) getValue(PASSWORD_HASH);
+        }
+
+        public long getExpiration() {
+            Object value = getValue(EXPIRATION);
+            if(value != null) {
+                return (long) value;
+            } else {
+                return 0L;
+            }
+        }
+
+        public String getRealm() {
+            return (String) getValue(REALM);
+        }
+
+        public String getRoles() {
+            return (String) getValue(ROLES);
+        }
+
+        private Serializable getValue(String key) {
+            if(json.has(key)) {
+                return (Serializable) json.get(key);
+            } else {
+                return null;
+            }
+        }
+
+        public void storePassword(String password) throws Exception {
+
+            if(password == null || password.length() == 0) return;
+
+            Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+            String realm = arguments.getRealm();
+
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(login.getBytes());
+            md5.update(COL);
+            md5.update(realm.getBytes());
+            md5.update(COL);
+            md5.update(password.getBytes());
+
+            byte[] ha1 = toHexBytes(md5.digest());
+//            Misc.log("Admins", "store login:", login, ", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
+
+            this.json.put(PASSWORD_HASH, new String(ha1, "UTF-8"));
+
+            if(password.length() < 9) {
+                this.json.put(SECURITY, SECURITY_WEAK);
+            } else if(password.length() < 13) {
+                this.json.put(SECURITY, SECURITY_MEDIUM);
+            } else {
+                this.json.put(SECURITY, SECURITY_STRONG);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Admin{" +
+               "login='" + login + '\'' +
+               ", json=" + json +
+               '}';
         }
     }
 
-    private JSONObject getUsers() {
-        return users;
+    public Admin get(String login) {
+        return admins.get(login);
     }
 
-    private void setUsers(JSONObject users) {
-        this.users = users;
+    public Admin current(RequestWrapper request) {
+        try {
+            String name = request.getUserName();
+            return admins.get(name);
+        } catch (Exception e) {
+
+        }
+        return null;
+    }
+
+    public Admin current(HttpExchange httpExchange) {
+        try {
+            String name = httpExchange.getPrincipal().getUsername();
+            return admins.get(name);
+        } catch(Exception e) {
+
+        }
+        return null;
     }
 
 

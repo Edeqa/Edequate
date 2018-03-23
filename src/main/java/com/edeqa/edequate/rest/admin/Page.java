@@ -3,6 +3,7 @@ package com.edeqa.edequate.rest.admin;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.FileRestAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
+import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
@@ -85,17 +86,23 @@ public class Page extends FileRestAction {
             }
             pagesStructure.put(update);
 
-            try (FileWriter writer = new FileWriter(update.getResource())) {
+            WebPath webPath = new WebPath(update.getResource().toString() + ".new");
+            try (FileWriter writer = new FileWriter(webPath.path())) {
                 writer.write(update.content);
-                Misc.log("Page", "file updated:", update.getResource(), "with content length:", update.content.length());
+                writer.close();
+                webPath.rename(update.getResource().getName());
+                Misc.log("Page", "file updated:", webPath.path(), "with content length:", update.content.length());
             } catch (Exception e) {
-                Misc.err("Page", "saving failed for", update.getResource(), e);
+                Misc.err("Page", "saving failed for", webPath.path(), e);
                 json.put(STATUS, STATUS_ERROR);
                 json.put(CODE, ERROR_RUNTIME);
                 json.put(MESSAGE, e.getMessage());
             }
-            try (FileWriter writer = new FileWriter(updateFile)) {
+            webPath = new WebPath(updateFile.toString() + ".new");
+            try (FileWriter writer = new FileWriter(webPath.path())) {
                 writer.write(pagesStructure.toJSON().toString(2));
+                writer.close();
+                webPath.rename(updateFile.getName());
                 Misc.log("Page", "has updated:", update.toJSON(), "[" + update.locale + "]");
                 json.put(STATUS, STATUS_SUCCESS);
             } catch (Exception e) {

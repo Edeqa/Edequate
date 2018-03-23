@@ -81,9 +81,10 @@ public class RequestWrapper {
         return httpServletResponse;
     }
 
-    public void setHttpExchange(HttpExchange httpExchange) {
+    public RequestWrapper setHttpExchange(HttpExchange httpExchange) {
         this.httpExchange = httpExchange;
         setMode(MODE_EXCHANGE);
+        return this;
     }
 
     public HttpExchange getHttpExchange() {

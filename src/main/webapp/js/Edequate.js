@@ -2315,7 +2315,7 @@ function Edequate(options) {
             var th = create(HTML.DIV, {
                 className:"drawer-menu-item",
                 onclick: function (event) {
-                    callback.call(this,event);
+                    callback.call(this, event);
                     layout.blur();
 //                    setTimeout(function () {
 //                        callback.call(self,event);
