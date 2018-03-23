@@ -29,6 +29,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
 
     private final static String ADD = "add";
     private final static String ADMIN = "admin";
+    private final static String DIGEST = "digest";
     private final static String EMAIL = "email";
     private final static String EXPIRATION = "expiration";
     private final static String LOGIN = "login";
@@ -40,7 +41,6 @@ public class Admins extends AbstractAction<RequestWrapper> {
     private final static String MODE_SELECT = "select";
     private final static String NAME = "name";
     private final static String PASSWORD = "password";
-    private final static String PASSWORD_HASH = "password_hash";
     private final static String REALM = "realm";
     private final static String ROLES = "roles";
     private final static String SECURITY = "security";
@@ -107,44 +107,46 @@ public class Admins extends AbstractAction<RequestWrapper> {
 
     private void saveAdmin(JSONObject json, JSONObject initial) throws Exception {
         read();
+        try {
+            String login = null, password = null;
+            if (json.has(LOGIN)) login = json.getString(LOGIN);
 
-        String login = null, password = null;
-        if(json.has(LOGIN)) login = json.getString(LOGIN);
+            boolean add = false;
+            if (json.has(ADD)) {
+                add = json.getBoolean(ADD);
+            }
+            if (add && exists(login)) {
+                throw new Exception("Admin already exists: " + login);
+            }
+            if (!add && !exists(login)) {
+                throw new Exception("Admin not exists: " + login);
+            }
 
-        boolean add = false;
-        if(json.has(ADD)) {
-            add = json.getBoolean(ADD);
-        }
-        if(add && exists(login)) {
-            throw new Exception("Admin already exists: " + login);
-        }
-        if(!add && !exists(login)) {
-            throw new Exception("Admin not exists: " + login);
-        }
+            Misc.err("Admins", "is saving for", "[" + login + "]");
 
-        Misc.err("Admins", "is saving for", "[" + login + "]");
+            Admin admin = new Admin(login, json);
+            if (!add) {
+                admin = admins.get(login);
+            }
+            if (json.has(PASSWORD)) admin.storePassword(json.getString(PASSWORD));
+            admin.fetchFrom(json);
 
-        Admin admin = new Admin(login, json);
-        if(!add) {
-            admin = admins.get(login);
-        }
-        if(json.has(PASSWORD)) admin.storePassword(json.getString(PASSWORD));
+            JSONObject adminsOut = new JSONObject();
+            for (Map.Entry<String, Admin> entry : admins.entrySet()) {
+                adminsOut.put(entry.getKey(), entry.getValue().getJSON());
+            }
 
-        admin.fetchFrom(json);
-        admin.storePassword(password);
-
-        JSONObject adminsOut = new JSONObject();
-        for(Map.Entry<String,Admin> entry: admins.entrySet()) {
-            adminsOut.put(entry.getKey(), entry.getValue().getJSON());
-        }
-
-        Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-        WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json.new");
-        try (FileWriter writer = new FileWriter(usersWebPath.path())) {
-            writer.write(adminsOut.toString(2));
-            json.put(STATUS, STATUS_SUCCESS);
-            writer.close();
-            usersWebPath.rename(".admins.json");
+            Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+            WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json.new");
+            try (FileWriter writer = new FileWriter(usersWebPath.path())) {
+                writer.write(adminsOut.toString(2));
+                json.put(STATUS, STATUS_SUCCESS);
+                writer.close();
+                usersWebPath.rename(".admins.json");
+            }
+        } catch(Exception e) {
+            read();
+            throw e;
         }
         read();
     }
@@ -249,8 +251,8 @@ public class Admins extends AbstractAction<RequestWrapper> {
             return (String) getValue(NAME);
         }
 
-        public String getPasswordHash() {
-            return (String) getValue(PASSWORD_HASH);
+        public String getDigest() {
+            return (String) getValue(DIGEST);
         }
 
         public long getExpiration() {
@@ -295,7 +297,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
             byte[] ha1 = toHexBytes(md5.digest());
 //            Misc.log("Admins", "store login:", login, ", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
 
-            this.json.put(PASSWORD_HASH, new String(ha1, "UTF-8"));
+            this.json.put(DIGEST, new String(ha1, "UTF-8"));
 
             if(password.length() < 9) {
                 this.json.put(SECURITY, SECURITY_WEAK);

@@ -3,11 +3,17 @@ package com.edeqa.edequate.rest;
 import com.edeqa.edequate.abstracts.FileRestAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
+import com.edeqa.helpers.Mime;
+import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Resource extends FileRestAction {
 
@@ -35,47 +41,116 @@ public class Resource extends FileRestAction {
 //            WebPath webPath = new WebPath("content");
 
         if (options.has("type")) {
-            if (options.has(LOCALE) && options.has("resource")) {
+            if (options.has("resource")) {
+                files.add(webPath.webPath(options.getString("type"), options.getString("resource")));
+                files.add(webPath.webPath(options.getString("type"), "en", options.getString("resource")));
+            }
+            if (options.has(LOCALE) && !"en".equals(options.getString(LOCALE)) && options.has("resource")) {
                 files.add(webPath.webPath(options.getString("type"), options.getString(LOCALE), options.getString("resource")));
             }
-            if (options.has("resource")) {
-                files.add(webPath.webPath(options.getString("type"), "en", options.getString("resource")));
-                files.add(webPath.webPath(options.getString("type"), options.getString("resource")));
-            }
         } else {
-            if (options.has(LOCALE) && options.has("resource")) {
+            if (options.has("resource")) {
+                files.add(webPath.webPath(options.getString("resource")));
+                files.add(webPath.webPath("en", options.getString("resource")));
+            }
+            if (options.has(LOCALE) && !"en".equals(options.getString(LOCALE))  && options.has("resource")) {
                 files.add(webPath.webPath(options.getString(LOCALE), options.getString("resource")));
             }
-            if (options.has("resource")) {
-                files.add(webPath.webPath("en", options.getString("resource")));
-                files.add(webPath.webPath(options.getString("resource")));
+        }
+
+        Iterator<WebPath> iter = files.iterator();
+        while(iter.hasNext()) {
+            if(!iter.next().path().exists()) {
+                iter.remove();
             }
         }
 
-        boolean exists = false;
-        WebPath file = null;
-        for (WebPath f : files) {
-            if (f.path().exists()) {
-                file = f;
-                exists = true;
-                break;
-            }
+        if(files.isEmpty()) {
+            Misc.log("Resource", "not found: " + files);
+            json.put(STATUS, STATUS_ERROR);
+            json.put(CODE, ERROR_NOT_FOUND);
+            json.put(MESSAGE, options);
+            return;
         }
-
-        if (exists) {
-            String path = file.web();
+        if(files.get(0).path().getName().startsWith(".")) {
+            Misc.err("Resource", "requested illegal:", options);
+            json.put(STATUS, STATUS_ERROR);
+            json.put(CODE, ERROR_NOT_FOUND);
+            json.put(MESSAGE, options);
+            return;
+        }
+        if(!files.get(files.size() - 1).path().getName().endsWith(".json")) {
+            String path = files.get(files.size() - 1).web();
             Misc.log("Resource", "->", path);
 
             json.put(STATUS, STATUS_SUCCESS);
             json.put(CODE, CODE_MOVED_TEMPORARILY);
             json.put(MESSAGE, path);
-        } else {
-            Misc.log("Resource", "not found: " + files);
-            json.put(STATUS, STATUS_ERROR);
-            json.put(CODE, ERROR_GONE);
-            json.put(MESSAGE, options);
+            return;
         }
+
+        Object jsonContent = null;
+        iter = files.iterator();
+        while(iter.hasNext()) {
+            try {
+                Object object = null;
+                String content = iter.next().content();
+                try {
+                    object = new JSONObject(content);
+                } catch(JSONException e) {
+                    try {
+                        object = new JSONArray(content);
+                    } catch (JSONException e1) {
+                        Misc.log("Resource", "json file damaged: " + files);
+//                        json.put(STATUS, STATUS_ERROR);
+//                        json.put(CODE, ERROR_INTERNAL_SERVER_ERROR);
+//                        json.put(MESSAGE, options);
+//                        return;
+                    }
+                }
+                jsonContent = deepMergeJSON(jsonContent, object);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        new Content()
+                .setMimeType(new MimeType().setMime(Mime.APPLICATION_JSON).setText(true).setGzip(true))
+                .setContent(jsonContent.toString())
+                .setResultCode(200)
+                .call(null, request);
+        json.put(STATUS, STATUS_DELAYED);
     }
+
+    private static Object deepMergeJSON(Object base, Object override) {
+        if(base == null) {
+            base = override;
+        } else if(base instanceof JSONObject && override instanceof JSONObject) {
+            Iterator<String> keys = ((JSONObject) override).keys();
+
+            while(keys.hasNext()) {
+                String key = keys.next();
+//                System.out.println(key + ":" + ((JSONObject) override).get(key)+ ":"
+//                + (!((JSONObject) base).has(key) || (!(((JSONObject) base).get(key) instanceof JSONObject) && !(((JSONObject) base).get(key) instanceof JSONArray))));
+                if(!((JSONObject) base).has(key) || (!(((JSONObject) base).get(key) instanceof JSONObject) && !(((JSONObject) base).get(key) instanceof JSONArray))) {
+                    ((JSONObject) base).put(key, ((JSONObject) override).get(key));
+                } else {
+                    Misc.err("Admins", "found collision merging JSONs for key:", key);
+                }
+            }
+        } else if(base instanceof JSONArray && override instanceof JSONArray) {
+            for(int i = 0; i < ((JSONArray) override).length(); i++) {
+                if(((JSONArray) base).length() < i) {
+                    ((JSONArray) base).put(((JSONArray) override).get(i));
+                } else {
+                    deepMergeJSON(((JSONArray) base).get(i), ((JSONArray) override).get(i));
+                }
+            }
+        } else {
+            Misc.err("Admins", "found issue merging JSONs", base, override);
+        }
+        return base;
+    }
+
 }
 
 

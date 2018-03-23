@@ -151,7 +151,7 @@ public class DigestAuthenticator extends Authenticator {
 //            } catch (UnsupportedEncodingException e) {
 //                e.printStackTrace();
 //            }
-            byte[] ha1 = currentAdmin.getPasswordHash().getBytes();
+            byte[] ha1 = currentAdmin.getDigest().getBytes();
 
             md5.update(httpExchange.getRequestMethod().getBytes());
             md5.update(COL);
