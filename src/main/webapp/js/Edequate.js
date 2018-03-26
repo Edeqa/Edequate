@@ -798,7 +798,7 @@ function Edequate(options) {
                 origin: origin,
                 instance: onlyname,
                 async: true,
-                defer: true,
+                // defer: true,
                 isScript: isScript,
                 isJSON: isJSON,
                 isText: isText,
@@ -1065,7 +1065,7 @@ function Edequate(options) {
 
                 item.className = "dialog-item-input-select" + optionalClassName(item.itemClassName);
                 delete item.itemClassName;
-                item.tabindex = item.tabindex || -1;
+                item.tabindex = item.tabindex || 0;
                 x = new NodeSelect(item, div);
             } else {
                 item.itemClassName = "dialog-item dialog-item-input" + optionalClassName(item.itemClassName);
@@ -1087,14 +1087,16 @@ function Edequate(options) {
                     create(HTML.LABEL, labelOptions , div);
                 }
 
-                item.tabindex = item.tabindex === undefined ? -1 : item.tabindex;
+                item.tabindex = item.tabindex || 0;
                 item.className = "dialog-item-input-"+item.type + optionalClassName(item.className);
+                var onkeyup = item.onkeyup;
                 item.onkeyup = function(e){
                     if(e.keyCode === 13 && this.type !== HTML.TEXTAREA) {
                         dialog.onaccept();
                     } else if(e.keyCode === 27) {
                         dialog.oncancel();
                     }
+                    if(onkeyup) onkeyup.call(this, e);
                 };
                 delete item.label;
                 delete item.labelClassName;
@@ -1247,7 +1249,7 @@ function Edequate(options) {
                     var current = 0;
                     dialog.intervalTask = setInterval(function(){
                         current += 16;
-                        dialog.progress.style.width = (current / dialog.options.timeout * 100) + "%";
+                        dialog.progress.style.width = 100 - (current / dialog.options.timeout * 100) + "%";
                         if(current >= dialog.options.timeout) {
                             clearInterval(dialog.intervalTask);
                             dialog.close();
@@ -1539,7 +1541,7 @@ function Edequate(options) {
                 };
                 return dialog.positive;
             }
-            item.tabindex = -1;
+            item.tabindex = 0;
             item.className = "dialog-button dialog-button-positive" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
@@ -1575,7 +1577,7 @@ function Edequate(options) {
                 };
                 return dialog.neutral;
             }
-            item.tabindex = -1;
+            item.tabindex = 0;
             item.className = "dialog-button dialog-button-neutral" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
@@ -1609,7 +1611,7 @@ function Edequate(options) {
                 dialog.negative.hide();
                 return dialog.negative;
             }
-            item.tabindex = -1;
+            item.tabindex = 0;
             item.className = "dialog-button dialog-button-negative" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
@@ -1684,16 +1686,13 @@ function Edequate(options) {
 
         var type = HTML.INPUT;
         options.type = options.type.toLowerCase();
-        if(options.type === HTML.BUTTON
-            /*|| options.type === HTML.DATE
-            || options.type === HTML.DATETIME
-            || options.type === HTML.DATETIME_LOCAL*/) {
+        if(options.type === HTML.BUTTON) {
             type = options.type;
         }
 
         if(options.onclick && options.type !== HTML.BUTTON) {
-            var a = options.onclick;
-            options.onclick = function(e) { this.focus(); a.call(this); e.stopPropagation(); };
+            var onclick = options.onclick;
+            options.onclick = function(e) { this.focus(); onclick.call(this); e.stopPropagation(); };
         } else if(options.onclick) {
         } else{
             options.onclick = function(e) { this.focus(); e.stopPropagation(); };
@@ -1744,11 +1743,13 @@ function Edequate(options) {
             } else if (values instanceof Object) {
                 var keys = Object.keys(values).sort(function (a, b) {
                     var left = values[a];
+                    if(left === undefined) return -1;
                     if(left instanceof HTMLSpanElement) {
                         left = left.innerText;
                     }
                     left = left.trim();
                     var right = values[b];
+                    if(right === undefined) return 1;
                     if(right instanceof HTMLSpanElement) {
                         right = right.innerText;
                     }
@@ -1923,30 +1924,10 @@ function Edequate(options) {
     Lang.$arguments = Lang.$arguments || {};
 
     Lang.overrideResources = function(options) {
-        if(options.locale === "en") {
-            Lang._overrideResources(options);
-        } else {
-            Lang._overrideResources({
-                "default": options.default,
-                resources: options.default,
-                type: options.type,
-                resource: options.resource,
-                locale: "en",
-                callback: function() {
-                    Lang._overrideResources(options);
-                }
-            });
-        }
-    };
-
-    Lang._overrideResources = function(options) {
-        if(!options || !options.default) {
-            console.error("Not defined default resources");
+        if(!options || !options.resource) {
+            console.error("Not defined resources");
             return;
         }
-
-        options.resources = options.resources || options.default;
-
         if(options.resources.constructor === String) {
             getJSON(options.resources, options).then(function(json){
                 var nodes = document.getElementsByTagName(HTML.SPAN);
@@ -1969,28 +1950,15 @@ function Edequate(options) {
                 switch(code) {
                     case ERRORS.ERROR_LOADING:
                         console.warn("Error fetching resources for",options,xhr.status + ': ' + xhr.statusText);
-                        if(options.default !== options.resources){
-                            console.warn("Switching to default resources \""+options.default+"\".");
-                            Lang._overrideResources({"default":options.default});
-                        }
                         break;
                     case ERRORS.INCORRECT_JSON:
                         console.warn("Incorrect, empty or damaged resources file for",options,error,xhr);
-                        if(options.default !== options.resources){
-                            console.warn("Switching to default resources \""+options.default+"\".");
-                            Lang._overrideResources({"default":options.default});
-                        }
                         break;
                     default:
                         console.warn("Incorrect, empty or damaged resources file for",options,error,xhr);
                         break;
                 }
-                if(options.default !== options.resources){
-                    console.warn("Switching to default resources \""+options.default+"\".");
-                    Lang._overrideResources({"default":options.default});
-                } else {
-                    if(options.callback) options.callback();
-                }
+                if(options.callback) options.callback();
             });
 
         } else if(options.resources.resources) {

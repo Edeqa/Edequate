@@ -17,6 +17,10 @@ import java.util.Iterator;
 
 public class Resource extends FileRestAction {
 
+    private final static String RESOURCE = "resource";
+    private final static String TYPE = "type";
+
+
     public Resource() {
         super();
     }
@@ -35,26 +39,46 @@ public class Resource extends FileRestAction {
         JSONObject options = new JSONObject(body);
         Misc.log("Resource", "requested: " + options);
 
+        if(!options.has(RESOURCE)) {
+            Misc.err("Resource", "not defined");
+            json.put(STATUS, STATUS_ERROR);
+            json.put(CODE, ERROR_NOT_EXTENDED);
+            json.put(MESSAGE, options);
+            return;
+        }
+
         ArrayList<WebPath> files = new ArrayList<>();
 
-        WebPath webPath = new WebPath(getWebDirectory(), getChildDirectory());
 //            WebPath webPath = new WebPath("content");
 
-        if (options.has("type")) {
-            if (options.has("resource")) {
-                files.add(webPath.webPath(options.getString("type"), options.getString("resource")));
-                files.add(webPath.webPath(options.getString("type"), "en", options.getString("resource")));
-            }
-            if (options.has(LOCALE) && !"en".equals(options.getString(LOCALE)) && options.has("resource")) {
-                files.add(webPath.webPath(options.getString("type"), options.getString(LOCALE), options.getString("resource")));
-            }
+        ArrayList<Object> resources = new ArrayList<>();
+        if(options.get(RESOURCE) instanceof JSONArray) {
+            resources.addAll(((JSONArray) options.get(RESOURCE)).toList());
+        } else if(options.get(RESOURCE) instanceof String) {
+            resources.add(options.get(RESOURCE));
         } else {
-            if (options.has("resource")) {
-                files.add(webPath.webPath(options.getString("resource")));
-                files.add(webPath.webPath("en", options.getString("resource")));
-            }
-            if (options.has(LOCALE) && !"en".equals(options.getString(LOCALE))  && options.has("resource")) {
-                files.add(webPath.webPath(options.getString(LOCALE), options.getString("resource")));
+            Misc.err("Resource", "defined is invalid");
+            json.put(STATUS, STATUS_ERROR);
+            json.put(CODE, ERROR_BAD_REQUEST);
+            json.put(MESSAGE, options);
+            return;
+        }
+
+        WebPath webPath = new WebPath(getWebDirectory(), getChildDirectory());
+        for(Object x: resources) {
+            String name = (String) x;
+            if (options.has("type")) {
+                files.add(webPath.webPath(options.getString("type"), name));
+                files.add(webPath.webPath(options.getString("type"), "en", name));
+                if (options.has(LOCALE) && !"en".equals(options.getString(LOCALE))) {
+                    files.add(webPath.webPath(options.getString("type"), options.getString(LOCALE), name));
+                }
+            } else {
+                files.add(webPath.webPath(name));
+                files.add(webPath.webPath("en", name));
+                if (options.has(LOCALE) && !"en".equals(options.getString(LOCALE))) {
+                    files.add(webPath.webPath(options.getString(LOCALE), name));
+                }
             }
         }
 
@@ -114,7 +138,7 @@ public class Resource extends FileRestAction {
             }
         }
         new Content()
-                .setMimeType(new MimeType().setMime(Mime.APPLICATION_JSON).setText(true).setGzip(true))
+                .setMimeType(new MimeType().setMime(Mime.APPLICATION_JSON).setText(true).setGzip(true).setType("json"))
                 .setContent(jsonContent.toString())
                 .setResultCode(200)
                 .call(null, request);

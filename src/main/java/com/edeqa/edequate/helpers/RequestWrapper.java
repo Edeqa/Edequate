@@ -165,24 +165,6 @@ public class RequestWrapper {
         }
     }
 
-    public void sendRedirect(String redirectLink) throws IOException {
-        try {
-            if(mode == MODE_SERVLET) {
-                setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
-                httpServletResponse.sendRedirect(redirectLink);
-            } else if(mode == MODE_EXCHANGE) {
-                setHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
-                setHeader(HttpHeaders.DATE, new Date().toString());
-                setHeader(HttpHeaders.LOCATION, redirectLink);
-                setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
-                httpExchange.sendResponseHeaders(302, 0);
-                httpExchange.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public OutputStream getOutputStream() throws IOException {
         try {
             if(mode == MODE_SERVLET) {
@@ -378,6 +360,28 @@ public class RequestWrapper {
 
     public void sendError(Integer code, String string) {
         sendResult(code, Mime.TEXT_PLAIN, string.getBytes());
+    }
+
+    public void sendRedirect(String redirectLink) throws IOException {
+        try {
+            if(mode == MODE_SERVLET) {
+                setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
+                httpServletResponse.sendRedirect(redirectLink);
+            } else if(mode == MODE_EXCHANGE) {
+                setHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
+                setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+                setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+                setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "Origin, Content-Type, X-Auth-Token");
+
+                setHeader(HttpHeaders.DATE, new Date().toString());
+                setHeader(HttpHeaders.LOCATION, redirectLink);
+                setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());
+                httpExchange.sendResponseHeaders(302, 0);
+                httpExchange.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void sendResult(Integer code, String contentType, byte[] bytes) {

@@ -80,6 +80,9 @@ public class Content extends FileRestAction {
             requestWrapper.setHeader(HttpHeaders.STRICT_TRANSPORT_SECURITY, "max-age=63072000; includeSubDomains; preload");
 //                requestWrapper.setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, "script-src 'unsafe-inline' 'unsafe-eval' https: 'nonce-waytous' 'strict-dynamic' report-uri /violation");
 //        requestWrapper.setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://www.googletagmanager.com https://cdnjs.cloudflare.com https://www.google-analytics.com https://connect.facebook.net https://platform.twitter.com https://maps.googleapis.com https://apis.google.com");
+            requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+            requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+            requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
 
             // FIXME http://nibbler.silktide.com/en_US/reports/waytous.net
             // FIXME https://gtmetrix.com/reports/waytous.net/6i4B5kR2
@@ -103,18 +106,22 @@ public class Content extends FileRestAction {
                         }
                         reader.close();
                     }
-                    byte[] bytes = fileContent.toString().getBytes(); //Files.readAllBytes(file.toPath());
-                    if (bytes[0] == -1 && bytes[1] == -2) charset = StandardCharsets.UTF_16;
-                    else if (bytes[0] == -2 && bytes[1] == -1) charset = StandardCharsets.UTF_16;
-                    string = new String(bytes, charset);
+                    string = fileContent.toString();
+//                    byte[] bytes = fileContent.toString().getBytes(); //Files.readAllBytes(file.toPath());
+//                    if (bytes[0] == -1 && bytes[1] == -2) charset = StandardCharsets.UTF_16;
+//                    else if (bytes[0] == -2 && bytes[1] == -1) charset = StandardCharsets.UTF_16;
+//                    string = new String(bytes, charset);
                 } else {
                     string = getContent();
                 }
 
+                byte[] bytes = string.getBytes(); //Files.readAllBytes(file.toPath());
+                if (bytes[0] == -1 && bytes[1] == -2) charset = StandardCharsets.UTF_16;
+                else if (bytes[0] == -2 && bytes[1] == -1) charset = StandardCharsets.UTF_16;
+                string = new String(bytes, charset);
+
+
                 if(getReplacements() != null) string = getReplacements().process(string, getMimeType());
-                requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-                requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-                requestWrapper.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
                 requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, getMimeType().fetchContentType());
                 if (!getMimeType().isGzip()) {
                     requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(string.length()));

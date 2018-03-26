@@ -102,9 +102,9 @@ public class EdequateServer {
         ServletHandlerOptions.getOrCreate(getSslServer()).putIfAbsent(new ServletHandlerOptions().setContext("/").setServletHandler(mainServletHandler));
         ServletHandlerOptions.getOrCreate(getSslServer()).putIfAbsent(new ServletHandlerOptions().setContext("/rest/").setServletHandler(restServletHandler));
 
-        ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/rest/").setServletHandler(restServletHandler));
         ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/").setServletHandler(adminServletHandler).setAuthenticator(new DigestAuthenticator(getArguments().getRealm())));
         ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/admin/logout").setServletHandler(adminServletHandler));
+        ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/rest/").setServletHandler(restServletHandler));
     }
 
 
