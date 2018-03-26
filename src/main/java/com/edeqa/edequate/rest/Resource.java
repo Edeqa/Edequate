@@ -132,7 +132,7 @@ public class Resource extends FileRestAction {
 //                        return;
                     }
                 }
-                jsonContent = deepMergeJSON(jsonContent, object);
+                jsonContent = Misc.mergeJSON(jsonContent, object);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -143,36 +143,6 @@ public class Resource extends FileRestAction {
                 .setResultCode(200)
                 .call(null, request);
         json.put(STATUS, STATUS_DELAYED);
-    }
-
-    private static Object deepMergeJSON(Object base, Object override) {
-        if(base == null) {
-            base = override;
-        } else if(base instanceof JSONObject && override instanceof JSONObject) {
-            Iterator<String> keys = ((JSONObject) override).keys();
-
-            while(keys.hasNext()) {
-                String key = keys.next();
-//                System.out.println(key + ":" + ((JSONObject) override).get(key)+ ":"
-//                + (!((JSONObject) base).has(key) || (!(((JSONObject) base).get(key) instanceof JSONObject) && !(((JSONObject) base).get(key) instanceof JSONArray))));
-                if(!((JSONObject) base).has(key) || (!(((JSONObject) base).get(key) instanceof JSONObject) && !(((JSONObject) base).get(key) instanceof JSONArray))) {
-                    ((JSONObject) base).put(key, ((JSONObject) override).get(key));
-                } else {
-                    Misc.err("Admins", "found collision merging JSONs for key:", key);
-                }
-            }
-        } else if(base instanceof JSONArray && override instanceof JSONArray) {
-            for(int i = 0; i < ((JSONArray) override).length(); i++) {
-                if(((JSONArray) base).length() < i) {
-                    ((JSONArray) base).put(((JSONArray) override).get(i));
-                } else {
-                    deepMergeJSON(((JSONArray) base).get(i), ((JSONArray) override).get(i));
-                }
-            }
-        } else {
-            Misc.err("Admins", "found issue merging JSONs", base, override);
-        }
-        return base;
     }
 
 }

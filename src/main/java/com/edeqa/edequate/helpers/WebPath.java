@@ -87,6 +87,8 @@ public class WebPath {
     }
 
     public boolean rename(String newFilename) {
+        File newFile = new File(path().getParent(), newFilename);
+        if(newFile.exists()) newFile.delete();
         return path().renameTo(new File(path().getParent(), newFilename));
     }
 }
