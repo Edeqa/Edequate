@@ -8,7 +8,7 @@ import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.admin.Admins;
 import com.edeqa.edequate.rest.admin.LogsClear;
 import com.edeqa.edequate.rest.admin.LogsLog;
-import com.edeqa.edequate.rest.admin.Page;
+import com.edeqa.edequate.rest.admin.Pages;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
@@ -52,7 +52,7 @@ public class AdminServletHandler extends RestServletHandler {
                 return name.contains("Holder");
             }
         }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
-        registerAction(new Page());
+        registerAction(new Pages());
 
         registerAction(new LogsClear());
         registerAction(new LogsLog());

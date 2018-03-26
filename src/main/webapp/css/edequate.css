@@ -330,6 +330,9 @@ button:hover, button:active {
     min-width: 250px;
     text-align: left;
 }
+.dialog-item-input .icon {
+    font-family: "Material Icons";
+}
 .dialog-item-label {
     flex: 0 0 40%;
     padding-right: 5px;
@@ -420,7 +423,11 @@ button:hover, button:active {
     background-color: #4c93af;
     color: white;
 }
+.dialog-button:focus {
+    background-color: #2e5d7d;
+}
 .dialog-button:hover, .dialog-button:focus {
+
 }
 .dialog-button > * {
     position: relative;
@@ -466,13 +473,17 @@ button:hover, button:active {
 .dialog-progress-bar {
     height: 5px;
     width: 90%;
-    background-color: darkgray;
+    background-color: #4c93af;
+    background: linear-gradient(to right, green 0%,red 100%);
     margin-bottom: 5px;
     align-self: center;
+    display: flex;
+    justify-content: flex-end;
 }
 .dialog-progress-value {
-    background-color: #4c93af;
     height: 100%;
+    width: 100%;
+    background-color: darkgray;
 }
 .dialog-help-button {
     background: none;
@@ -939,6 +950,7 @@ button:hover, button:active {
 }
 .tree-item-title div {
     align-items: center;
+    white-space: nowrap;
 }
 .tree-item-indent {
     display: inline-block;

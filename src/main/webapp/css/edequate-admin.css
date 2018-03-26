@@ -106,6 +106,14 @@ div.question {
     width: 100%;
     flex: 0 0 auto;
 }
+.add-locale-dialog {
+    z-index: 10002;
+}
+.admin-edit-dialog-strength {
+    background: linear-gradient(to right, red 0%,bisque 50%,white 60%,green 100%);
+    margin-top: 5px;
+    width: 100%;
+}
 .admin-splash-layout {
     display: flex;
     flex-direction: column;

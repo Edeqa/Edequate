@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class Page extends FileRestAction {
+public class Pages extends FileRestAction {
 
     public static final String TYPE = "/admin/rest/page";
 
@@ -47,7 +47,7 @@ public class Page extends FileRestAction {
     public void call(JSONObject json, RequestWrapper request) {
         String body = request.getBody();
         if(Misc.isEmpty(body)) {
-            Misc.err("Page", "not performed, arguments not defined");
+            Misc.err("Pages", "not performed, arguments not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
             json.put(MESSAGE, "Arguments not defined.");
@@ -86,33 +86,34 @@ public class Page extends FileRestAction {
             }
             pagesStructure.put(update);
 
-            WebPath webPath = new WebPath(update.getResource().toString() + ".new");
+            System.out.println(update.getResource().toString());
+            WebPath webPath = new WebPath(update.getResource().getParent(), update.getResource().getName() + ".new");
             try (FileWriter writer = new FileWriter(webPath.path())) {
                 writer.write(update.content);
                 writer.close();
                 webPath.rename(update.getResource().getName());
-                Misc.log("Page", "file updated:", webPath.path(), "with content length:", update.content.length());
+                Misc.log("Pages", "file updated:", webPath.path(), "with content length:", update.content.length());
             } catch (Exception e) {
-                Misc.err("Page", "saving failed for", webPath.path(), e);
+                Misc.err("Pages", "saving failed for", webPath.path(), e);
                 json.put(STATUS, STATUS_ERROR);
                 json.put(CODE, ERROR_RUNTIME);
                 json.put(MESSAGE, e.getMessage());
             }
-            webPath = new WebPath(updateFile.toString() + ".new");
+            webPath = new WebPath(updateFile.getParent(), updateFile.getName() + ".new");
             try (FileWriter writer = new FileWriter(webPath.path())) {
                 writer.write(pagesStructure.toJSON().toString(2));
                 writer.close();
                 webPath.rename(updateFile.getName());
-                Misc.log("Page", "has updated:", update.toJSON(), "[" + update.locale + "]");
+                Misc.log("Pages", "has updated:", update.toJSON(), "[" + update.locale + "]");
                 json.put(STATUS, STATUS_SUCCESS);
             } catch (Exception e) {
-                Misc.err("Page", "saving failed for", updateFile, e);
+                Misc.err("Pages", "saving failed for", updateFile, e);
                 json.put(STATUS, STATUS_ERROR);
                 json.put(CODE, ERROR_RUNTIME);
                 json.put(MESSAGE, e.getMessage());
             }
         } catch (Exception e) {
-            Misc.err("Page", e);
+            Misc.err("Pages", e);
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_RUNTIME);
             json.put(MESSAGE, e.getMessage());
@@ -120,18 +121,25 @@ public class Page extends FileRestAction {
     }
 
     private boolean validate(JSONObject json, Resource initial, Resource update) throws IOException {
-        File updateFile = update.getOptions();
         if(initial != null) {
-            File initialFile = initial.getOptions();
-            if(!initialFile.getCanonicalPath().equals(updateFile.getCanonicalPath())) {
-                Misc.err("Page", "found invalid section file name:", update.getResource().getAbsolutePath());
+            File updateFile = update.getOptions();
+            boolean found = false;
+            for(File file: initial.getOptionsMulti()) {
+                System.out.println(file.getCanonicalPath()+":"+updateFile.getCanonicalPath());
+                if(file.getCanonicalPath().equals(updateFile.getCanonicalPath())) {
+                    found = true;
+                    break;
+                }
+            }
+            if(!found) {
+                Misc.err("Pages", "found invalid section:", update.getResource().getAbsolutePath());
                 json.put(STATUS, STATUS_ERROR);
-                json.put(CODE, ERROR_FORBIDDEN);
-                json.put(MESSAGE, "Invalid section");
+                json.put(CODE, ERROR_NOT_FOUND);
+                json.put(MESSAGE, "Invalid data");
                 return false;
             }
             if(!(new File(directory, "content").getCanonicalPath().equals(update.getResource().getParentFile().getParentFile().getCanonicalPath()))) {
-                Misc.err("Page", "found invalid resource file name:", update.getResource().getAbsolutePath());
+                Misc.err("Pages", "found invalid resource file name:", update.getResource().getAbsolutePath());
                 json.put(CODE, ERROR_FORBIDDEN);
                 json.put(STATUS, STATUS_ERROR);
                 json.put(MESSAGE, "Invalid file name");
@@ -139,7 +147,7 @@ public class Page extends FileRestAction {
             }
         }
         if(update.section == null || update.name == null) {
-            Misc.err("Page", "not found section or name:", update);
+            Misc.err("Pages", "not found section or name:", update);
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_UNPROCESSABLE_ENTITY);
             json.put(MESSAGE, "Invalid data");
@@ -153,16 +161,17 @@ public class Page extends FileRestAction {
         private int priority;
         private String resource;
         private String icon;
-        private int category;
+        private Object category;
         private String menu;
-        private String section;
+        private Object section;
         private String title;
         private String name;
         private String locale;
         private String content;
 
         Resource parse(JSONObject json) {
-            if(json.has(CATEGORY)) category = json.getInt(CATEGORY);
+            if(json.has(CATEGORY)) category = json.get(CATEGORY);
+            if(category == null) category = 10;
             if(json.has(CONTENT)) content = json.getString(CONTENT);
             if(json.has(ICON)) icon = json.getString(ICON);
             if(json.has(INITIAL)) initial = json.getBoolean(INITIAL);
@@ -170,7 +179,7 @@ public class Page extends FileRestAction {
             if(json.has(MENU)) menu = json.getString(MENU);
             if(json.has(PRIORITY)) priority = json.getInt(PRIORITY);
             if(json.has(RESOURCE)) resource = json.getString(RESOURCE);
-            if(json.has(SECTION)) section = json.getString(SECTION);
+            if(json.has(SECTION)) section = json.get(SECTION);
             if(json.has(TITLE)) title = json.getString(TITLE);
 
             if(json.has("type")) name = json.getString("type");
@@ -185,6 +194,21 @@ public class Page extends FileRestAction {
 
         File getOptions() {
             return new File(directory, "data/pages-" + section + ".json");
+        }
+
+        ArrayList<File> getOptionsMulti() {
+            ArrayList<File> list = new ArrayList<>();
+            List<Object> names;
+            if(section instanceof JSONArray) {
+                names = ((JSONArray) section).toList();
+            } else {
+                names = new ArrayList<>();
+                names.add(section);
+            }
+            for(Object name:names) {
+                list.add(new File(directory, "data/pages-" + name.toString() + ".json"));
+            }
+            return list;
         }
 
         File getResource() {
@@ -212,18 +236,18 @@ public class Page extends FileRestAction {
         @Override
         public String toString() {
             return "Resource{" +
-                    "initial=" + initial +
-                    ", priority=" + priority +
-                    ", resource='" + resource + '\'' +
-                    ", icon='" + icon + '\'' +
-                    ", category=" + category +
-                    ", menu='" + menu + '\'' +
-                    ", section='" + section + '\'' +
-                    ", title='" + title + '\'' +
-                    ", name='" + name + '\'' +
-                    ", locale='" + locale + '\'' +
-                    (content != null ? ", content=" + content.length() : "") +
-                    '}';
+                "initial=" + initial +
+                ", priority=" + priority +
+                ", resource='" + resource + '\'' +
+                ", icon='" + icon + '\'' +
+                ", category=" + category +
+                ", menu='" + menu + '\'' +
+                ", section='" + section + '\'' +
+                ", title='" + title + '\'' +
+                ", name='" + name + '\'' +
+                ", locale='" + locale + '\'' +
+                (content != null ? ", content=" + content.length() : "") +
+                "}";
         }
     }
 
@@ -234,11 +258,10 @@ public class Page extends FileRestAction {
         PagesStructure parse(String string) {
             json = new JSONArray(string);
             categories = new ArrayList<>();
-            for(int i = 0; i < 10; i++) {
+            for(int i = 0; i < 11; i++) {
                 categories.add(new JSONArray());
             }
             parse(json);
-
             return this;
         }
 
@@ -249,7 +272,7 @@ public class Page extends FileRestAction {
                 } else if(array.get(i) instanceof JSONObject) {
                     parse(array.getJSONObject(i));
                 } else {
-                    Misc.err("Page", "normalizing, ignore:", array.get(i));
+                    Misc.err("Pages", "normalizing, ignore:", array.get(i));
                 }
             }
         }
@@ -261,11 +284,11 @@ public class Page extends FileRestAction {
 
         public void put(Resource resource) {
             remove(resource);
-            categories.get(resource.category).put(resource.toJSON());
+            categories.get(Integer.valueOf(resource.category.toString())).put(resource.toJSON());
         }
 
         public void remove(Resource resource) {
-            Iterator<Object> iter = categories.get(resource.category).iterator();
+            Iterator<Object> iter = categories.get(Integer.valueOf(resource.category.toString())).iterator();
             while (iter.hasNext()) {
                 JSONObject page = (JSONObject) iter.next();
                 if(page.has("type") && page.getString("type").equals(resource.name)) {

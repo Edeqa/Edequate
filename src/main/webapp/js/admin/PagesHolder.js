@@ -25,7 +25,8 @@ function PagesHolder(main) {
         "6": "Miscellaneous",
         "7": "Settings",
         "8": "Help",
-        "9": "Last"
+        "9": "Last",
+        "10": "[out of menu]"
     };
 
     this.start = function() {
@@ -120,13 +121,7 @@ function PagesHolder(main) {
                                 priority: values.priority,
                                 content: u.create(HTML.DIV, {className:"tree-pages-item-leaf"})
                                     .place(HTML.DIV, {
-                                        innerHTML:values.title
-                                    })
-                                    .place(HTML.A, {
-                                        innerHTML:"link",
-                                        className: "icon notranslate tree-item-icon",
-                                        href:"/" + this.id + "/" + values.type,
-                                        target:"_blank"
+                                        innerHTML: values.title
                                     })
                                     .place(HTML.BUTTON, {
                                         innerHTML:"edit",
@@ -138,6 +133,12 @@ function PagesHolder(main) {
                                             self.scrollTop = main.content.scrollTop;
                                             main.turn("page", ["edit",this.parentNode.item.id]);
                                         }
+                                    })
+                                    .place(HTML.A, {
+                                        innerHTML: "[" + values.type + "]",
+                                        // className: "icon notranslate tree-item-icon",
+                                        href:"/" + this.id + "/" + values.type,
+                                        target:"_blank"
                                     })
                             });
                             main.content.scrollTop = self.scrollTop;
@@ -156,9 +157,14 @@ function PagesHolder(main) {
                                             innerHTML: holder.title || holder.moduleName,
                                             title: holder.moduleName + "'s responsibility, can not be edited"
                                         })
-                                        .place(HTML.A, {
-                                            innerHTML:"link",
+                                        .place(HTML.DIV, {
+                                            innerHTML: "lock_outline",
                                             className: "icon notranslate tree-item-icon",
+                                            title: holder.moduleName + "'s responsibility, can not be edited"
+                                        })
+                                        .place(HTML.A, {
+                                            innerHTML: "[" + holder.type + "]",
+                                            // className: "icon notranslate tree-item-icon",
                                             href:"/" + this.id + "/" + holder.type,
                                             target:"_blank"
                                         })
@@ -171,23 +177,23 @@ function PagesHolder(main) {
                     console.error(e,x);
                 });
             }
-
         }).catch(function(e,x){
             console.error(e,x);
         });
     };
 
     function parsePages(pages, structure) {
-        structure = structure || {"0":{},"1":{},"2":{},"3":{},"4":{},"5":{},"6":{},"7":{},"8":{},"9":{}};
+        structure = structure || {"0":{},"1":{},"2":{},"3":{},"4":{},"5":{},"6":{},"7":{},"8":{},"9":{},"10":{}};
         try {
             if (!pages) return;
             if (pages.constructor === Object) {
-                if (pages.menu) {
-                    structure[pages.category] = structure[pages.category] || {};
-                    if(!structure[pages.category][pages.type]) {
-                        structure[pages.category][pages.type] = pages;
+                // if (pages.menu) {
+                    var category = pages.category !== undefined ? pages.category : "10";
+                    structure[category] = structure[category] || {};
+                    if(!structure[category][pages.type]) {
+                        structure[category][pages.type] = pages;
                     }
-                }
+                // }
             } else if (pages.constructor === Array) {
                 for (var i in pages) {
                     parsePages(pages[i], structure);

@@ -131,11 +131,11 @@ function PagesHolder(main) {
                 return;
             }
 
-            u.clear(main.content);
             u.post("/rest/content", {
                 resource: page.resource,
                 locale: main.selectLang.value
             }).then(function (xhr) {
+                u.clear(main.content);
                 u.create(HTML.DIV, {
                     className: "content-normal",
                     innerHTML: xhr.response
@@ -144,10 +144,12 @@ function PagesHolder(main) {
                 u.progress.hide();
             }).catch(function (error, json) {
                 console.error(json);
+                u.clear(main.content);
                 u.create(HTML.DIV, {
                     className: "content-centered",
                     innerHTML: u.lang.error || "Error"
                 }, main.content);
+                main.eventBus.fire("pages_done", type);
                 u.progress.hide();
             });
 
