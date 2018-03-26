@@ -21,6 +21,10 @@ function AdminHolder(main) {
         u.getJSON("/admin/rest/data/admins", {mode:"current"}).then(function(json){
             if(json && json.message) {
                 var security = json.message.security || "missing";
+                if(security === "expired" || security === "missing") {
+                    main.turn("password");
+                    editAdmin(json.message, {mode:"Edit admin", action:"password"});
+                }
                 if(security !== "strong" && security !== "medium") {
                     alert = alert || u.create(HTML.DIV, {className: "alert-box"})
                         .place(HTML.DIV, {innerHTML: "Your password is " + security + "."})
@@ -78,7 +82,12 @@ function AdminHolder(main) {
                 className: "admin-edit-dialog",
                 items: [
                     {type: HTML.INPUT, label: "Login", required: true, tabindex: 1 },
-                    {type: HTML.PASSWORD, label: "Password", tabindex: 2 },
+                    {type: HTML.PASSWORD, label: "Password", tabindex: 2, onkeyup: function() {
+                        var width = (12 - passwordNode.value.length) / 12. * 100;
+                        if(width < 0) width = 0;
+                        strengthNode.firstChild.style.width = width + "%";
+                    }},
+                    {type: HTML.DIV, className: "dialog-progress-bar admin-edit-dialog-strength", innerHTML: u.create(HTML.DIV, {className:"dialog-progress-value"})},
                     {type: HTML.PASSWORD, label: "Confirm password", tabindex: 3 },
                     {type: HTML.INPUT, label: "Name", tabindex: 4 },
                     {type: HTML.INPUT, label: "E-mail", tabindex: 5 },
@@ -97,7 +106,7 @@ function AdminHolder(main) {
                             loginNode.focus();
                             return;
                         }
-                        if(!passwordNode.value && dialog.initialOptions.security === "missing") {
+                        if(!passwordNode.value && (dialog.initialOptions.security === "missing" || dialog.initialOptions.security === "expired")) {
                             u.toast.error("Password not defined");
                             passwordNode.focus();
                             return;
@@ -127,7 +136,11 @@ function AdminHolder(main) {
                             u.progress.hide();
                             u.toast.show("Admin saved");
                             dialog.close();
-                            main.turn("admins");
+                            if(data.user === resultOptions.login) {
+                                window.location = "/admin/home";
+                            } else {
+                                main.turn("admins");
+                            }
                         }).catch(function (code, reason) {
                             u.progress.hide();
                             var json = JSON.parse(reason.response);
@@ -146,20 +159,22 @@ function AdminHolder(main) {
             // dialog.setTitle(options.mode);
             var loginNode = dialog.items[0];
             var passwordNode = dialog.items[1];
-            var confirmPasswordNode = dialog.items[2];
-            var nameNode = dialog.items[3];
-            var emailNode = dialog.items[4];
-            var expirationNode = dialog.items[5];
-            var rolesNode = dialog.items[6];
+            var strengthNode = dialog.items[2];
+            var confirmPasswordNode = dialog.items[3];
+            var nameNode = dialog.items[4];
+            var emailNode = dialog.items[5];
+            var expirationNode = dialog.items[6];
+            var rolesNode = dialog.items[7];
 
 
             loginNode.value = admin.login || "";
-            // loginNode.disabled = options.action !== "add";
+            loginNode.disabled = options.action !== "add";
 
             passwordNode.value = "";
             passwordNode.placeholder = "";
+            strengthNode.firstChild.style = "";
             confirmPasswordNode.placeholder = "";
-            if(admin.security !== "missing") {
+            if(admin.security !== "missing" && admin.security !== "expired") {
                 passwordNode.placeholder = "Defined, " + admin.security;
                 confirmPasswordNode.placeholder = "Defined";
             }
@@ -167,7 +182,13 @@ function AdminHolder(main) {
             confirmPasswordNode.value = "";
             nameNode.value = admin.name || "";
             emailNode.value = admin.email || "";
-            expirationNode.value = admin.expiration || "";
+
+            var value = "";
+            if(admin.expiration && admin.security !== "expired") {
+                var date = new Date(admin.expiration);
+                value = "%04d-%02d-%02dT%02d:%02d".sprintf(date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes());
+            }
+            expirationNode.value = value;
             rolesNode.value = admin.roles || "administrator";
 
             dialog.initialOptions = admin;
