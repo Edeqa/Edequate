@@ -24,6 +24,21 @@ function Main(u) {
             self.history.goBack();
         });
 
+        if (arguments.serviceWorker && "serviceWorker" in navigator) {
+            window.addEventListener("load", function() {
+                navigator.serviceWorker.register(arguments.serviceWorker).then(function(registration) {
+                    console.log("ServiceWorker registration successful with scope:", registration);
+                }).catch(function(err) {
+                    if(err.code === 18) {
+                        console.warn(err);
+                        return;
+                    }
+                    console.error("ServiceWorker registration failed:", err);
+                    throw new Error("ServiceWorker error:",err);
+                });
+            });
+        }
+
         var collapsed = u.load("drawer:collapsed");
         self.layout = self.content = u.create(HTML.DIV, {className:"layout changeable" + (collapsed ? " collapsed" : ""), role:"main", onscroll: switchFullDrawer}, document.body);
         window.addEventListener("scroll", switchFullDrawer);

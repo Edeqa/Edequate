@@ -82,6 +82,11 @@ public class AdminServletHandler extends RestServletHandler {
                 String redirectLink = "https://" + host + arguments.getWrappedHttpsPort() + "/404.html";
                 requestWrapper.sendRedirect(redirectLink);
             }
+        } else if(requestWrapper.getRequestURI().getPath().equals("/home")) {
+            URI uri = requestWrapper.getRequestURI();
+            String host = requestWrapper.getRequestedHost();
+            String redirectLink = "https://" + host + arguments.getWrappedHttpsPort();
+            requestWrapper.sendRedirect(redirectLink);
         } else {
             URI uri = requestWrapper.getRequestURI();
             String host = requestWrapper.getRequestedHost();

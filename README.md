@@ -64,7 +64,7 @@ Set the `index.html` file as a head of your project, change it as you'd like:
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <script async src="/js/Edequate.js"
             data-variable="u"
-            data-callback="u.require('/js/main/Main.js', u).then(function(main){main.start({type:'main'})})"
+            data-callback="u.require('/js/Main.js', u).then(function(main){main.start({type:'main'})})"
             data-export-constants="true">
         </script>
     </head>
@@ -108,13 +108,13 @@ Edequate embedding:
 
     <script async src="/js/Edequate.js"
         data-variable="u"
-        data-callback="u.require('/js/main/Main.js', u).then(function(main){main.start({type:'main'})})"
+        data-callback="u.require('/js/Main.js', u).then(function(main){main.start({type:'main'})})"
         data-export-constants="true">
     </script>
 
 You may use variable `u` globally with this definition. Or just replace it with any other text.
 
-`u.require('/js/main/Main.js', u)` loads the main script of project and instantiates it with Edequate's context. Next, `then(function(main){main.start({type:'main'})})`, uses the instance of `Main.js` and calls its `start` with arguments.
+`u.require('/js/Main.js', u)` loads the main script of project and instantiates it with Edequate's context. Next, `then(function(main){main.start({type:'main'})})`, uses the instance of `Main.js` and calls its `start` with arguments.
 
 ### Main.js
 
@@ -127,6 +127,8 @@ Arguments passes into `Main.js` as an object. All keys are optional. Possible ke
 * `type` - . Default: `main`.
 
 * `info` - 
+
+* `serviceWorker` - url to service worker script
 
 Arguments object will be stored as the property `arguments`.
 
