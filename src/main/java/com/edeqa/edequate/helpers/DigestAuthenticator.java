@@ -2,8 +2,11 @@ package com.edeqa.edequate.helpers;
 
 
 import com.edeqa.edequate.abstracts.AbstractAction;
+import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.admin.Admins;
 import com.edeqa.eventbus.EventBus;
+import com.edeqa.helpers.HtmlGenerator;
+import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.Misc;
 import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Authenticator;
@@ -11,17 +14,39 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpPrincipal;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import javax.naming.AuthenticationException;
 
 import static com.edeqa.edequate.abstracts.AbstractAction.RESTBUS;
+import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
+import static com.edeqa.helpers.HtmlGenerator.A;
+import static com.edeqa.helpers.HtmlGenerator.BUTTON;
+import static com.edeqa.helpers.HtmlGenerator.CLASS;
+import static com.edeqa.helpers.HtmlGenerator.DIV;
+import static com.edeqa.helpers.HtmlGenerator.HEIGHT;
+import static com.edeqa.helpers.HtmlGenerator.HREF;
+import static com.edeqa.helpers.HtmlGenerator.ID;
+import static com.edeqa.helpers.HtmlGenerator.IMG;
+import static com.edeqa.helpers.HtmlGenerator.LINK;
+import static com.edeqa.helpers.HtmlGenerator.NOSCRIPT;
+import static com.edeqa.helpers.HtmlGenerator.ONCLICK;
+import static com.edeqa.helpers.HtmlGenerator.REL;
+import static com.edeqa.helpers.HtmlGenerator.SPAN;
+import static com.edeqa.helpers.HtmlGenerator.SRC;
+import static com.edeqa.helpers.HtmlGenerator.STYLESHEET;
+import static com.edeqa.helpers.HtmlGenerator.TYPE;
+import static com.edeqa.helpers.HtmlGenerator.WIDTH;
 
 /*
  * Created 5/16/2017.
@@ -34,7 +59,7 @@ public class DigestAuthenticator extends Authenticator {
     private final Set<String> givenNonces = new HashSet<>();
     private final SecureRandom random = new SecureRandom();
     private final String realm;
-
+    private final ExpiringHashMap<String,Object> timestamps = new ExpiringHashMap<String,Object>();//.setTimeout(1000 * 60 * 60L);
 
     public DigestAuthenticator(String realm) {
         this.realm = realm;
@@ -46,38 +71,12 @@ public class DigestAuthenticator extends Authenticator {
             DigestContext context = getOrCreateContext(httpExchange);
             String authorization = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-            /*if (context.isAuthenticated() && authorization != null) {
-                System.out.println("AUTH:"+authorization);
-                *//*if(authorization == null) {
-                    Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login/" + context.getPrincipal().getName());
-
-                    httpExchange.setAttribute("digest-context", null);
-                    Headers responseHeaders = httpExchange.getResponseHeaders();
-                    responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
-                    return new Authenticator.Retry(401);
-                } else *//*if("Digest logout".equals(authorization)) {
-                    Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal().getName());
-
-                    httpExchange.setAttribute("digest-context", null);
-                    Headers responseHeaders = httpExchange.getResponseHeaders();
-                    responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
-
-                    return new Authenticator.Retry(401);
-                } else {
-                    System.out.println("PRIN:"+context.getPrincipal());
-                    return new Authenticator.Success(context.getPrincipal());
-                }
-            }*/
             if (authorization == null) {
 //                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login request", "[" + httpExchange.getRequestURI() + "]");
-                Headers responseHeaders = httpExchange.getResponseHeaders();
-                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
-                return new Authenticator.Retry(401);
+                return fetchHeaders(httpExchange);
             }
             if (authorization.startsWith("Basic ")) {
-                Headers responseHeaders = httpExchange.getResponseHeaders();
-                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
-                return new Authenticator.Retry(401);
+                return fetchHeaders(httpExchange);
             }
 
             if (!authorization.startsWith("Digest ")) {
@@ -99,27 +98,53 @@ public class DigestAuthenticator extends Authenticator {
             Map<String, String> challengeParameters = parseDigestChallenge(challenge);
 
             HttpPrincipal principal = validateUser(httpExchange, challengeParameters);
+
+            if (principal == null) {
+                return fetchHeaders(httpExchange);
+            }
+            System.out.println(timestamps);
+            if(timestamps.getTimeout() > 0 && !timestamps.containsKey(principal.getName())) {
+                timestamps.put(principal.getName());
+                return fetchHeaders(httpExchange);
+            }
+            if(timestamps.expired(principal.getName())) {
+                timestamps.put(principal.getName());
+//                httpExchange.setAttribute("digest-context", null);
+                return fetchHeaders(httpExchange);
+            }
+
             if (!context.isAuthenticated()) {
                 Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logged in/" + principal);
             }
-            if (principal == null) {
-                Headers responseHeaders = httpExchange.getResponseHeaders();
-                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
-                return new Authenticator.Retry(401);
-            }
+
             if (useNonce(challengeParameters.get("nonce"))) {
+                timestamps.put(principal.getName());
                 context.principal = principal;
                 return new Authenticator.Success(principal);
             }
             Headers responseHeaders = httpExchange.getResponseHeaders();
             responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(true));
             return new Authenticator.Retry(401);
+//            return fetchHeaders(httpExchange);
+
         } catch (Exception e) {
             Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "got error", e);
             Headers responseHeaders = httpExchange.getResponseHeaders();
             responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
             return new Authenticator.Retry(401);
         }
+    }
+
+    private Result fetchHeaders(HttpExchange httpExchange) throws IOException {
+        Headers responseHeaders = httpExchange.getResponseHeaders();
+        responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+
+        String content = fetchSplash(true).build();
+        httpExchange.sendResponseHeaders(401, content.length());
+        try (OutputStream os = httpExchange.getResponseBody()) {
+            os.write(content.getBytes());
+        }
+        return null;
     }
 
     private HttpPrincipal validateUser(HttpExchange httpExchange, Map<String, String> challengeParameters) throws AuthenticationException {
@@ -356,4 +381,144 @@ public class DigestAuthenticator extends Authenticator {
         }
         return converted;
     }
+
+    private HtmlGenerator fetchSplash(boolean withButtons) {
+        HtmlGenerator html = new HtmlGenerator();
+
+        html.getHead().add(HtmlGenerator.TITLE).with("Edeqa");
+        html.getHead().add(HtmlGenerator.LINK).with(HtmlGenerator.REL, "icon").with(HtmlGenerator.HREF, "/icons/favicon.ico");
+        html.getHead().add(HtmlGenerator.STYLE).with("@import url('/css/edequate.css');@import url('/css/edequate-admin.css');");
+        html.getHead().add(HtmlGenerator.META).with(HtmlGenerator.NAME, "viewport").with(HtmlGenerator.CONTENT, "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=no");
+        html.getHead().add(HtmlGenerator.SCRIPT).with(HtmlGenerator.ASYNC, true).with(HtmlGenerator.SRC, "/js/Edequate.js").with("data-variable", "u");
+
+        HtmlGenerator.Tag body = html.getBody().add(DIV).with(ID, "loading-dialog").with(CLASS, "admin-splash-layout");
+        body.add(DIV).with(CLASS, "admin-splash-logo").with(SRC, "/images/logo.svg");
+        body.add(DIV).with(CLASS, "admin-splash-title").with("Edequate 1.60");
+        body.add(DIV).with(CLASS, "admin-splash-subtitle").with("Admin");
+
+        if(withButtons) {
+            HtmlGenerator.Tag buttons = body.add(DIV).with(CLASS, "admin-splash-buttons");
+
+            Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+
+            buttons.add(BUTTON).with("Home").with(ONCLICK, "window.location = '/home';");
+            buttons.add(BUTTON).with("Login").with(ONCLICK, "u.clear(this.parentNode);window.location.reload();");
+            buttons.add(BUTTON).with("Forgot password").with(ONCLICK, "window.location = '/restore';");
+        }
+
+        HtmlGenerator.Tag noscript = html.getBody().add(NOSCRIPT);
+        noscript.add(LINK).with(TYPE, Mime.TEXT_CSS).with(REL, STYLESHEET).with(HREF, "/css/noscript.css");
+
+        HtmlGenerator.Tag header = noscript.add(DIV).with(CLASS, "header");
+        header.add(IMG).with(SRC, "/images/edeqa-logo.svg").with(WIDTH, 24).with(HEIGHT, 24);
+        header.with("Edequate Example");
+
+        noscript.add(DIV).with(CLASS, "text").with("This site requires to allow Javascript. Please enable Javascript in your browser and try again or use other browser that supports Javascript.");
+
+        HtmlGenerator.Tag copyright = noscript.add(DIV).with(CLASS, "copyright");
+        copyright.add(A).with("Edequate").with(CLASS, "link").with(HREF, "http://www.edeqa.com/edequate");
+        copyright.add(SPAN).with(" &copy;2017-18 ");
+        copyright.add(A).with("Edeqa").with(CLASS, "link").with(HREF, "http://www.edeqa.com");
+
+        return html;
+    }
+
+
+    public class ExpiringHashMap<K,V> extends HashMap<K,V> {
+        private HashMap<K,Long> timestamp;
+        private Long timeout = 0L;
+        private int max = 100;
+
+        public ExpiringHashMap() {
+            timestamp = new HashMap<>();
+        }
+
+        @Override
+        public V get(Object key) {
+            if(expired(key)) {
+                return null;
+            }
+            return super.get(key);
+        }
+
+        public boolean expired(Object key) {
+            if(containsKey(key)) {
+                Long last = timestamp.get(key);
+                long now = Calendar.getInstance().getTimeInMillis();
+                if(timeout > 0 && now - last > timeout) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean valid(Object key) {
+            if(containsKey(key) && !expired(key)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public V put(K key, V value) {
+            checkMax();
+            long now = Calendar.getInstance().getTimeInMillis();
+            timestamp.put(key, now);
+            return super.put(key, value);
+        }
+
+        private void checkMax() {
+            if(size() > max) {
+                long now = Calendar.getInstance().getTimeInMillis();
+                Iterator<Entry<K, Long>> iter = timestamp.entrySet().iterator();
+                while(iter.hasNext()) {
+                    Entry<K, Long> entry = iter.next();
+                    if(timeout > 0 && now - entry.getValue() > timeout) {
+                        super.remove(entry.getKey());
+                        iter.remove();
+                    }
+                }
+            }
+        }
+
+        public V put(K key) {
+            long now = Calendar.getInstance().getTimeInMillis();
+            checkMax();
+            timestamp.put(key, now);
+            return super.put(key, null);
+        }
+
+        @Override
+        public V remove(Object key) {
+            timestamp.remove(key);
+            return super.remove(key);
+        }
+
+        public ExpiringHashMap<K, V> setTimeout(Long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public Long getTimeout() {
+            return timeout;
+        }
+
+        public Long expiredInMillis(K key) {
+            if(containsKey(key)) {
+                long now = Calendar.getInstance().getTimeInMillis();
+                return now - timestamp.get(key);
+            } else {
+                return 0L;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "ExpiringHashMap{" +
+               "timestamp=" + timestamp +
+               '}' + super.toString();
+        }
+    }
+
 }
