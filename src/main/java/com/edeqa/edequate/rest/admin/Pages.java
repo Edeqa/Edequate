@@ -13,7 +13,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -34,6 +33,7 @@ public class Pages extends FileRestAction {
     public static final String NAME = "name";
     private static final String PRIORITY = "priority";
     private static final String RESOURCE = "resource";
+    private static final String REMOVE = "remove";
     private static final String SECTION = "section";
     private static final String TITLE = "title";
     public static final String UPDATE = "update";
@@ -59,64 +59,93 @@ public class Pages extends FileRestAction {
             Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
             directory = new File(arguments.getWebRootDirectory());
 
-            Resource initial = null, update;
-            if(options.has(INITIAL)) {
-                initial = new Resource().parse(options.getJSONObject(INITIAL));
-            }
-            update = new Resource().parse(options.getJSONObject(UPDATE));
-
-            if(!validate(json, initial, update)) return;
-
-            File updateFile = update.getOptions();
-            PagesStructure pagesStructure;
-            if(updateFile.exists()) {
-                StringBuilder string = new StringBuilder();
-                try(FileReader reader = new FileReader(updateFile)) {
-                    int c;
-                    while((c=reader.read())!=-1){
-                        string.append((char)c);
-                    }
-                }
-                pagesStructure = new PagesStructure().parse(string.toString());
-                if(initial != null) {
-                    pagesStructure.remove(initial);
-                }
-            } else {
-                pagesStructure = new PagesStructure().parse("[]");
-            }
-            pagesStructure.put(update);
-
-            System.out.println(update.getResource().toString());
-            WebPath webPath = new WebPath(update.getResource().getParent(), update.getResource().getName() + ".new");
-            try (FileWriter writer = new FileWriter(webPath.path())) {
-                writer.write(update.content);
-                writer.close();
-                webPath.rename(update.getResource().getName());
-                Misc.log("Pages", "file updated:", webPath.path(), "with content length:", update.content.length());
-            } catch (Exception e) {
-                Misc.err("Pages", "saving failed for", webPath.path(), e);
-                json.put(STATUS, STATUS_ERROR);
-                json.put(CODE, ERROR_RUNTIME);
-                json.put(MESSAGE, e.getMessage());
-            }
-            webPath = new WebPath(updateFile.getParent(), updateFile.getName() + ".new");
-            try (FileWriter writer = new FileWriter(webPath.path())) {
-                writer.write(pagesStructure.toJSON().toString(2));
-                writer.close();
-                webPath.rename(updateFile.getName());
-                Misc.log("Pages", "has updated:", update.toJSON(), "[" + update.locale + "]");
-                json.put(STATUS, STATUS_SUCCESS);
-            } catch (Exception e) {
-                Misc.err("Pages", "saving failed for", updateFile, e);
-                json.put(STATUS, STATUS_ERROR);
-                json.put(CODE, ERROR_RUNTIME);
-                json.put(MESSAGE, e.getMessage());
+            if(options.has(UPDATE)) {
+                updatePage(json, options);
+            } else if(options.has(REMOVE)) {
+                removePage(json, options);
             }
         } catch (Exception e) {
             Misc.err("Pages", e);
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_RUNTIME);
             json.put(MESSAGE, e.getMessage());
+        }
+    }
+
+    private void updatePage(JSONObject json, JSONObject options) throws IOException {
+        Resource initial = null, update;
+        if (options.has(INITIAL)) {
+            initial = new Resource().parse(options.getJSONObject(INITIAL));
+        }
+        update = new Resource().parse(options.getJSONObject(UPDATE));
+
+        if (!validate(json, initial, update)) return;
+
+        File updateFile = update.getOptions();
+        PagesStructure pagesStructure;
+        if (updateFile.exists()) {
+            pagesStructure = new PagesStructure().read(updateFile);
+            if (initial != null) {
+                pagesStructure.remove(initial);
+            }
+        } else {
+            pagesStructure = new PagesStructure().parse("[]");
+        }
+        pagesStructure.put(update);
+
+        System.out.println(update.getResource().toString());
+        try {
+            new WebPath(update.getResource()).save(update.content);
+            Misc.log("Pages", "file updated:", update.getResource(), "with content length:", update.content.length());
+        } catch (Exception e) {
+            Misc.err("Pages", "saving failed for", update, e);
+            json.put(STATUS, STATUS_ERROR);
+            json.put(CODE, ERROR_RUNTIME);
+            json.put(MESSAGE, e.getMessage());
+        }
+        try {
+            new WebPath(updateFile).save(pagesStructure.toJSON().toString(2));
+            json.put(STATUS, STATUS_SUCCESS);
+            Misc.log("Pages", "has updated:", update.toJSON(), "[" + update.locale + "]");
+        } catch (Exception e) {
+            Misc.err("Pages", "saving failed for", updateFile, e);
+            json.put(STATUS, STATUS_ERROR);
+            json.put(CODE, ERROR_RUNTIME);
+            json.put(MESSAGE, e.getMessage());
+        }
+    }
+
+    private void removePage(JSONObject json, JSONObject options) throws IOException {
+        Resource initial = null, remove;
+        remove = new Resource().parse(options.getJSONObject(REMOVE));
+
+        if (!validate(json, initial, remove)) return;
+
+        File removeFile = remove.getOptions();
+        PagesStructure pagesStructure;
+        try {
+            if (removeFile.exists()) {
+                pagesStructure = new PagesStructure().read(removeFile);
+                pagesStructure.remove(remove);
+
+                try {
+                    new WebPath(removeFile).save(pagesStructure.toJSON().toString(2));
+                    json.put(STATUS, STATUS_SUCCESS);
+                    Misc.log("Pages", "has removed:", remove.toJSON());
+                } catch (Exception e) {
+                    Misc.err("Pages", "removing failed for", remove, e);
+                    json.put(STATUS, STATUS_ERROR);
+                    json.put(CODE, ERROR_RUNTIME);
+                    json.put(MESSAGE, e.getMessage());
+                }
+            } else {
+                Misc.err("Pages", "not found", remove);
+                json.put(STATUS, STATUS_ERROR);
+                json.put(CODE, ERROR_NOT_FOUND);
+                json.put(MESSAGE, "Page not found");
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -157,6 +186,7 @@ public class Pages extends FileRestAction {
     }
 
     class Resource {
+        private JSONObject json;
         private boolean initial;
         private int priority;
         private String resource;
@@ -170,22 +200,38 @@ public class Pages extends FileRestAction {
         private String content;
 
         Resource parse(JSONObject json) {
+            this.json = json;
             if(json.has(CATEGORY)) category = json.get(CATEGORY);
             if(category == null) category = 10;
             if(json.has(CONTENT)) content = json.getString(CONTENT);
-            if(json.has(ICON)) icon = json.getString(ICON);
             if(json.has(INITIAL)) initial = json.getBoolean(INITIAL);
             if(json.has(LOCALE)) locale = json.getString(LOCALE);
-            if(json.has(MENU)) menu = json.getString(MENU);
-            if(json.has(PRIORITY)) priority = json.getInt(PRIORITY);
             if(json.has(RESOURCE)) resource = json.getString(RESOURCE);
             if(json.has(SECTION)) section = json.get(SECTION);
-            if(json.has(TITLE)) title = json.getString(TITLE);
 
             if(json.has("type")) name = json.getString("type");
             else if(json.has(NAME)) name = json.getString(NAME);
 
             return this;
+        }
+
+        public JSONObject toJSON() {
+            if(json == null) json = new JSONObject();
+            JSONObject newJson = new JSONObject(json.toString());
+            newJson.put(CATEGORY, category);
+            newJson.put("type", name);
+            if(resource != null) {
+                newJson.put(RESOURCE, resource);
+            } else {
+                newJson.put(RESOURCE, getResource().getName());
+            }
+            if(newJson.has(CONTENT)) newJson.remove(CONTENT);
+            if(newJson.has(INITIAL)) newJson.remove(INITIAL);
+            if(newJson.has(LOCALE)) newJson.remove(LOCALE);
+            if(newJson.has(NAME)) newJson.remove(NAME);
+            if(newJson.has(SECTION)) newJson.remove(SECTION);
+
+            return newJson;
         }
 
         String getLocale() {
@@ -214,23 +260,6 @@ public class Pages extends FileRestAction {
         File getResource() {
             if(resource != null) return new File(directory, "content/" + getLocale() + "/" + resource);
             return new File(directory, "content/" + getLocale() + "/" + section + "-" + name + ".html");
-        }
-
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-
-            json.put(CATEGORY, category);
-            if(icon != null) json.put(ICON, icon);
-            if(menu != null) json.put(MENU, menu);
-            json.put("type", name);
-            if(priority != 0) json.put(PRIORITY, priority);
-            if(resource != null) json.put(RESOURCE, resource);
-            else {
-                json.put(RESOURCE, getResource().getName());
-            }
-            if(title != null) json.put(TITLE, title);
-
-            return json;
         }
 
         @Override
@@ -306,6 +335,18 @@ public class Pages extends FileRestAction {
                 }
             }
             return json;
+        }
+
+        public PagesStructure read(File updateFile) throws IOException {
+            StringBuilder string = new StringBuilder();
+            try (FileReader reader = new FileReader(updateFile)) {
+                int c;
+                while ((c = reader.read()) != -1) {
+                    string.append((char) c);
+                }
+            }
+            parse(string.toString());
+            return this;
         }
     }
 }

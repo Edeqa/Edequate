@@ -295,7 +295,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
             md5.update(password.getBytes());
 
             byte[] ha1 = toHexBytes(md5.digest());
-//            Misc.log("Admins", "store login:", login, ", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
+            Misc.log("Admins", "store login:", login, ", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
 
             this.json.put(DIGEST, new String(ha1, "UTF-8"));
 

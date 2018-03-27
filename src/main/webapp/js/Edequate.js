@@ -930,7 +930,7 @@ function Edequate(options) {
     *       onclick,
     *       dismiss: *true*|false, - if false then dialog will keep shown,
     *   }
-     * dialog.addItem(options)
+     * dialog.add(options)
      * options = {
     *       id,
     *       type: HTML.DIV|HTML.A|HTML.SELECT|*HTML.TEXT*|HTML.NUMBER|HTML.TEXTAREA|HTML.BUTTON|HTML.HIDDEN,
@@ -1001,9 +1001,19 @@ function Edequate(options) {
 
         };
 
-        dialog.addItem = function(item, appendTo) {
-            item = item || {};
+        dialog.add = function(item, appendTo) {
             appendTo = appendTo || dialog.itemsLayout;
+
+            if(item instanceof Array) {
+                if(item.length) {
+                    for(var i = 0; i < item.length; i++) {
+                        dialog.add(item[i], appendTo);
+                    }
+                }
+                return dialog;
+            }
+
+            item = item || {};
             item.type = item.type || HTML.DIV;
 
             var div,x;
@@ -1127,14 +1137,7 @@ function Edequate(options) {
             dialog.itemsLayout.show();
             return x;
         };
-        dialog.addItems = function(items) {
-            if(items && items.length) {
-                for(var i = 0; i < items.length; i++) {
-                    dialog.addItem(items[i]);
-                }
-            }
-            return dialog;
-        };
+
         dialog.setItems = function(items) {
             dialog.clearItems();
             dialog.addItems(items);
@@ -1493,7 +1496,7 @@ function Edequate(options) {
         dialog.itemsLayout = create(HTML.DIV, {className:"dialog-items" +optionalClassName(options.itemsClassName)}, dialog);
         dialog.items = [];
         if(options.items) {
-            dialog.addItems(options.items);
+            dialog.add(options.items);
         }
 
         if(options.title && options.title.filter) {
@@ -2143,7 +2146,6 @@ function Edequate(options) {
                     this.open();
                 }
             },
-            items: {},
             sections: [],
             toggleSize: function(force) {
                 collapsed = !collapsed;
@@ -2158,6 +2160,7 @@ function Edequate(options) {
             ontouchstart: swipeHolder
 //            onmousedown: swipeHolder
         });
+        layout.items = {};
         if(typeof appendTo === "string") {
             appendTo = byId(appendTo);
             appendTo.parentNode.replaceChild(layout, appendTo);
@@ -2275,12 +2278,8 @@ function Edequate(options) {
             var callback = options.callback || function() {console.warn("Callback is not defined for drawer item:", options);};
             options.priority = options.priority || 0;
 
-            layout.items[options.id] = {
-                name: options.name,
-                icon: options.icon,
-                callback: callback
-            };
             var th = create(HTML.DIV, {
+                id: options.name,
                 className:"drawer-menu-item",
                 onclick: function (event) {
                     callback.call(this, event);
@@ -2334,6 +2333,7 @@ function Edequate(options) {
                 },
                 priority: options.priority
             });
+            layout.items[options.id] = th;
 
             var added = false;
             for(var i = 0; i < layout.sections[options.section].lastChild.childNodes.length; i++) {
@@ -2364,6 +2364,15 @@ function Edequate(options) {
             layout.sections[options.section].show();
 
             return th;
+        };
+
+        layout.remove = function(id) {
+            if(layout.items[id]) {
+                var item = layout.items[id];
+                item.parentNode.removeChild(item);
+                delete layout.items[id];
+                return item;
+            }
         };
 
         layout.footer = create(HTML.DIV, { className:"drawer-footer"}, layout);
@@ -3169,15 +3178,15 @@ function Edequate(options) {
         options.items = [];
         var menu = new Dialog(options, document.body);
 
-        menu._addItem = menu.addItem;
-        menu.addItem = function(item) {
+        menu._add = menu.add;
+        menu.add = function(item) {
             item._onclick = item.onclick;
             item.onclick = function(evt) {
                 if(this._onclick) this._onclick(evt);
                 menu.close(HIDING.OPACITY)
             };
             item.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;};
-            menu._addItem(item);
+            menu._add(item);
         };
         menu.addItems(items);
 

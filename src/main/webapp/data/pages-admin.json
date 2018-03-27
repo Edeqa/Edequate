@@ -13,12 +13,15 @@
     {
       "resource": "admin-roles.html",
       "title": "Admin roles",
-      "type": "roles"
+      "type": "roles",
+      "persistent": true
     },
     {
       "resource": "admin-password.html",
       "title": "Admins",
-      "type": "password"
+      "type": "password",
+      "description": "Descr",
+      "persistent": true
     }
   ]
 ]

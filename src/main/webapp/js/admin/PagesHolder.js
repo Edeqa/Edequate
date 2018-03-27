@@ -15,6 +15,9 @@ function PagesHolder(main) {
     this.scrollTop = 0;
 
     var div;
+    var dialogConfirm;
+
+
     var sectionsNames = {
         "0": "Primary",
         "1": "Summary",
@@ -132,6 +135,48 @@ function PagesHolder(main) {
                                             console.log("edit page", this.parentNode.item.id);
                                             self.scrollTop = main.content.scrollTop;
                                             main.turn("page", ["edit",this.parentNode.item.id]);
+                                        }
+                                    })
+                                    .place(HTML.BUTTON, {
+                                        innerHTML:"clear",
+                                        title: "Remove page",
+                                        className:"icon notranslate tree-item-icon" + (values.persistent ? " hidden" : ""),
+                                        onclick: function (e) {
+                                            e.stopPropagation();
+                                            dialogConfirm = dialogConfirm || new u.dialog({
+                                                title: "Removing page",
+                                                items: [
+                                                    { innerHTML: "Page will be removed. Continue?" }
+                                                ],
+                                                positive: {
+                                                    label: u.create(HTML.SPAN, "Yes"),
+                                                    onclick: function () {
+                                                        console.log(dialogConfirm.current);
+                                                        u.progress.show("Removing page...");
+                                                        var ids = dialogConfirm.current.id.split(":");
+                                                        var options = {
+                                                            category: ids[1],
+                                                            section: ids[0],
+                                                            name: ids[2]
+                                                        };
+                                                        u.post("/admin/rest/page", {remove: options}).then(function(result){
+                                                            u.progress.hide();
+                                                            u.toast.show("Page removed");
+                                                            main.turn("pages");
+                                                            main.drawer.remove(options.name);
+                                                        }).catch(function (code, reason) {
+                                                            u.progress.hide();
+                                                            console.error(code, reason.response);
+                                                            u.toast.error("Error removing page" + (reason && reason.statusText ? ": " + reason.statusText : ""));
+                                                        });
+                                                    }
+                                                },
+                                                negative: {
+                                                    label: u.create(HTML.SPAN, "No")
+                                                }
+                                            });
+                                            dialogConfirm.open();
+                                            dialogConfirm.current = this.parentNode.item;
                                         }
                                     })
                                     .place(HTML.A, {

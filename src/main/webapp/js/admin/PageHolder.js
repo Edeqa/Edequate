@@ -186,8 +186,12 @@ function PageHolder(main) {
                     label: u.create(HTML.SPAN, "OK"),
                     dismiss: false,
                     onclick: function () {
+                        if(!nameNode.value) {
+                            u.toast.error("Name must be defined");
+                            nameNode.focus();
+                            return;
+                        }
                         u.progress.show("Saving...");
-
                         var options = {
                             category: categoryNode.value,
                             icon: iconNode.value,
@@ -205,6 +209,20 @@ function PageHolder(main) {
                             u.toast.show("Page saved");
                             dialog.close();
                             main.turn("pages");
+                            if(options.menu) {
+                                main.drawer.remove(options.name);
+                                main.drawer.add({
+                                    section: options.category,
+                                    id: options.name,
+                                    name: options.menu,
+                                    icon: options.icon,
+                                    priority: options.priority,
+                                    callback: function(){
+                                        main.turn(options.name);
+                                        return false;
+                                    }.bind(options)});
+                                // window.location.reload();
+                            }
                         }).catch(function (code, reason) {
                             u.progress.hide();
                             u.toast.error("Error saving page" + (reason && reason.statusText ? ": " + reason.statusText : ""));
@@ -351,16 +369,17 @@ function PageHolder(main) {
                 }
             });
             dialogAddString.clearItems();
-            dialogAddString.addItem({
+            var stringNode = dialogAddString.add({
                 label: "String", type: HTML.INPUT
             });
             // for(var x in locales) {
-            //     dialogAddString.addItem({
+            //     dialogAddString.add({
             //         type: HTML.INPUT, id: x, label: locales[x]
             //     });
             // }
             dialogAddString.itemNode = this;
             dialogAddString.open();
+            stringNode.focus();
         }
     }
 }

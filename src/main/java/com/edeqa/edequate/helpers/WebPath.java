@@ -4,6 +4,7 @@ import com.edeqa.helpers.Misc;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -90,5 +91,18 @@ public class WebPath {
         File newFile = new File(path().getParent(), newFilename);
         if(newFile.exists()) newFile.delete();
         return path().renameTo(new File(path().getParent(), newFilename));
+    }
+
+    public void save(String content) throws IOException {
+        File tempName = new File(path().getName() + ".$new");
+        if(tempName.exists()) tempName.delete();
+        try (FileWriter writer = new FileWriter(tempName)) {
+            writer.write(content);
+            writer.close();
+            if(path().exists()) path().delete();
+            tempName.renameTo(path());
+        } catch(Exception e) {
+            throw e;
+        }
     }
 }
