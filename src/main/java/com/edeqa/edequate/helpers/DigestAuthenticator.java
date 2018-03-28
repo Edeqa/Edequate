@@ -102,7 +102,6 @@ public class DigestAuthenticator extends Authenticator {
             if (principal == null) {
                 return fetchHeaders(httpExchange);
             }
-            System.out.println(timestamps);
             if(timestamps.getTimeout() > 0 && !timestamps.containsKey(principal.getName())) {
                 timestamps.put(principal.getName());
                 return fetchHeaders(httpExchange);

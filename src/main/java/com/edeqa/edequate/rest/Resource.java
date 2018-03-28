@@ -27,8 +27,10 @@ public class Resource extends FileRestAction {
 
     @Override
     public void call(JSONObject json, RequestWrapper request) {
-        String body = request.getBody();
-        if(Misc.isEmpty(body)) {
+        JSONObject options = request.fetchOptions();
+
+//        String body = request.getBody();
+        if(options.length() == 0) {
             Misc.err("Resource", "not performed, arguments not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
@@ -36,7 +38,7 @@ public class Resource extends FileRestAction {
             return;
         }
 
-        JSONObject options = new JSONObject(body);
+//        JSONObject options = new JSONObject(body);
         Misc.log("Resource", "requested: " + options);
 
         if(!options.has(RESOURCE)) {
@@ -90,7 +92,7 @@ public class Resource extends FileRestAction {
         }
 
         if(files.isEmpty()) {
-            Misc.log("Resource", "not found: " + files);
+            Misc.log("Resource", "not found");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_FOUND);
             json.put(MESSAGE, options);
@@ -137,14 +139,17 @@ public class Resource extends FileRestAction {
                 e.printStackTrace();
             }
         }
+        String text = jsonContent.toString();
+        if(options.has(CALLBACK)) {
+            text = options.get(CALLBACK) + "(" + text + ");";
+        }
         new Content()
                 .setMimeType(new MimeType().setMime(Mime.APPLICATION_JSON).setText(true).setGzip(true).setType("json"))
-                .setContent(jsonContent.toString())
+                .setContent(text)
                 .setResultCode(200)
                 .call(null, request);
         json.put(STATUS, STATUS_DELAYED);
     }
-
 }
 
 

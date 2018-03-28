@@ -7,6 +7,7 @@ import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
@@ -432,15 +433,19 @@ public class RequestWrapper {
     }
 
     public String getBody() {
-        String body = null;
+        StringBuilder buffer = new StringBuilder();
         try (InputStreamReader isr = new InputStreamReader(getRequestBody(), "utf-8")) {
             try (BufferedReader br = new BufferedReader(isr)) {
-                body = br.readLine();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if(buffer.length() > 0) buffer.append("\n");
+                    buffer.append(line);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return body;
+        return buffer.toString();
     }
 
     public String getUserName() {
@@ -518,4 +523,66 @@ public class RequestWrapper {
         }
         return Collections.emptyMap();
     }
+
+
+    public JSONObject fetchOptions() {
+        JSONObject json = new JSONObject();
+
+        String query = getRequestURI().getQuery();
+        if(query != null && query.length() > 0) {
+            json = parse(json, query);
+        }
+        query = getBody();
+        if(query != null && query.length() > 0) {
+            json = parse(json, query);
+        }
+        return json;
+    }
+
+    private static JSONObject parse(JSONObject json, String text) {
+        try {
+            JSONObject newJson = new JSONObject(text);
+            Iterator<String> keys = newJson.keys();
+            while(keys.hasNext()) {
+                String key = keys.next();
+                putItem(json, key, newJson.get(key));
+            }
+        } catch (Exception e){
+            String[] options = text.split("[&\\n]+");
+            for(String option: options) {
+                String[] parts = option.split("=", 2);
+                if (parts.length > 1) {
+                    putItem(json, parts[0], parts[1]);
+                } else {
+                    putItem(json, parts[0], "");
+                }
+            }
+        }
+        return json;
+    }
+
+    private static JSONObject putItem(JSONObject json, String key, Object value) {
+        if(json.has(key)) {
+            Object object = json.get(key);
+            if(object instanceof JSONArray) {
+                ((JSONArray) object).put(value);
+            } else {
+                JSONArray array = new JSONArray();
+                array.put(object);
+                if(value instanceof JSONArray) {
+                    for(int i = 0; i < ((JSONArray) value).length(); i++) {
+                        array.put(((JSONArray) value).get(i));
+                    }
+                } else {
+                    array.put(value);
+                }
+                json.put(key, array);
+            }
+        } else {
+            json.put(key, value);
+        }
+        return json;
+    }
+
+
 }

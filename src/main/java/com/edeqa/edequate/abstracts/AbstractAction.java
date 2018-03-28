@@ -151,6 +151,7 @@ public abstract class AbstractAction<T> extends AbstractEntityHolder {
 
     public abstract void call(JSONObject event, T object) throws Exception;
 
+
 }
 
 
