@@ -12,12 +12,10 @@ import com.edeqa.edequate.rest.Resource;
 import com.edeqa.edequate.rest.Version;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
-import com.edeqa.helpers.interfaces.Callable1;
 
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,25 +53,9 @@ public class RestServletHandler extends AbstractServletHandler {
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("content").setActionName("/rest/content"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data"));
-        registerAction(new Files().setFilenameFilter(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.contains("Holder");
-            }
-        }).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/main").setActionName("/rest/main"));
-        registerAction(new Files().setFilenameFilter(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.contains("pages-");
-            }
-        }).setFilenameProcess(new Callable1<String, String>() {
-            @Override
-            public String call(String s) {
-                return s.replaceAll("pages-(.*?)\\.json", "$1");
-            }
-        }).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data/types"));
+        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("Holder")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/main").setActionName("/rest/main"));
+        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("pages-")).setFilenameProcess(name -> name.replaceAll("pages-(.*?)\\.json", "$1")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data/types"));
         registerAction(new Locales().setWebDirectory(arguments.getWebRootDirectory()));
-
         registerAction(new Version());
         registerAction(new Nothing());
     }

@@ -14,8 +14,6 @@ import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URI;
 
@@ -43,12 +41,7 @@ public class AdminServletHandler extends RestServletHandler {
     @Override
     public void useDefault() {
         super.useDefault();
-        registerAction(new Files().setFilenameFilter(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.contains("Holder");
-            }
-        }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
+        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("Holder")).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
         registerAction(new Pages());
 
         registerAction(new LogsClear());
@@ -62,10 +55,10 @@ public class AdminServletHandler extends RestServletHandler {
 
         Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
 
-        if(requestWrapper.getRequestURI().getPath().startsWith("/admin/rest/")) {
+        URI uri = requestWrapper.getRequestURI();
+        if(uri.getPath().startsWith("/admin/rest/")) {
             super.perform(requestWrapper);
-        } else if(requestWrapper.getRequestURI().getPath().startsWith("/admin/")
-                || requestWrapper.getRequestURI().getPath().startsWith("/admin")) {
+        } else if(uri.getPath().startsWith("/admin")) {
             WebPath webPath = new WebPath(arguments.getWebRootDirectory(), "index-admin.html");
             if(webPath.path().exists()) {
                 new Content()
@@ -79,13 +72,11 @@ public class AdminServletHandler extends RestServletHandler {
                 String redirectLink = "https://" + host + arguments.getWrappedHttpsPort() + "/404.html";
                 requestWrapper.sendRedirect(redirectLink);
             }
-        } else if(requestWrapper.getRequestURI().getPath().equals("/home")) {
-            URI uri = requestWrapper.getRequestURI();
+        } else if(uri.getPath().equals("/home")) {
             String host = requestWrapper.getRequestedHost();
             String redirectLink = "https://" + host + arguments.getWrappedHttpsPort();
             requestWrapper.sendRedirect(redirectLink);
         } else {
-            URI uri = requestWrapper.getRequestURI();
             String host = requestWrapper.getRequestedHost();
             String redirectLink = "https://" + host + arguments.getWrappedHttpsPort() + uri.getPath();
             requestWrapper.sendRedirect(redirectLink);

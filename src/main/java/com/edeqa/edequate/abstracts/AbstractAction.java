@@ -150,9 +150,4 @@ public abstract class AbstractAction<T> extends AbstractEntityHolder {
     public static final int ERROR_NOT_EXTENDED = 510;
 
     public abstract void call(JSONObject event, T object) throws Exception;
-
-
 }
-
-
-

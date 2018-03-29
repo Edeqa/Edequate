@@ -9,7 +9,6 @@ import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.SecureContext;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
-import com.edeqa.helpers.interfaces.Runnable1;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsServer;
@@ -111,31 +110,22 @@ public class EdequateServer {
 
 
     protected static void startServer() throws Exception {
-        ServletHandlerOptions.getOrCreate(getServer()).forEach(new Runnable1<ServletHandlerOptions>() {
-            @Override
-            public void call(ServletHandlerOptions o) {
-                getServer().createContext(o.getContext(), o.getServletHandler());
-                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTP", getArguments().getHttpPort(), "[" + getArguments().getWrappedHttpPort() + o.getContext() + "]");
+        ServletHandlerOptions.getOrCreate(getServer()).forEach(servletHandler -> {
+            getServer().createContext(servletHandler.getContext(), servletHandler.getServletHandler());
+            Misc.log(LOG, "starting", servletHandler.getServletHandler().getClass().getSimpleName(), "on HTTP", getArguments().getHttpPort(), "[" + getArguments().getWrappedHttpPort() + servletHandler.getContext() + "]");
 
-            }
         });
-        ServletHandlerOptions.getOrCreate(getSslServer()).forEach(new Runnable1<ServletHandlerOptions>() {
-            @Override
-            public void call(ServletHandlerOptions o) {
-                getSslServer().createContext(o.getContext(), o.getServletHandler());
-                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsPort(), "[" +  getArguments().getWrappedHttpsPort() + o.getContext() + "]");
+        ServletHandlerOptions.getOrCreate(getSslServer()).forEach(servletHandler -> {
+            getSslServer().createContext(servletHandler.getContext(), servletHandler.getServletHandler());
+            Misc.log(LOG, "starting", servletHandler.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsPort(), "[" +  getArguments().getWrappedHttpsPort() + servletHandler.getContext() + "]");
 
-            }
         });
-        ServletHandlerOptions.getOrCreate(getAdminServer()).forEach(new Runnable1<ServletHandlerOptions>() {
-            @Override
-            public void call(ServletHandlerOptions o) {
-                HttpContext context = getAdminServer().createContext(o.getContext(), o.getServletHandler());
-                if(o.getAuthenticator() != null) {
-                    context.setAuthenticator(o.getAuthenticator());
-                }
-                Misc.log(LOG, "starting", o.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsAdminPort(), "[:" + getArguments().getHttpsAdminPort() + o.getContext() + "]");
+        ServletHandlerOptions.getOrCreate(getAdminServer()).forEach(servletHandler -> {
+            HttpContext context = getAdminServer().createContext(servletHandler.getContext(), servletHandler.getServletHandler());
+            if(servletHandler.getAuthenticator() != null) {
+                context.setAuthenticator(servletHandler.getAuthenticator());
             }
+            Misc.log(LOG, "starting", servletHandler.getServletHandler().getClass().getSimpleName(), "on HTTPS:", getArguments().getHttpsAdminPort(), "[:" + getArguments().getHttpsAdminPort() + servletHandler.getContext() + "]");
         });
 
         ExecutorService executor = Executors.newCachedThreadPool();
