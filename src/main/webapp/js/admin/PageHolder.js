@@ -204,25 +204,12 @@ function PageHolder(main) {
                             content: contentNode.getValue()
                         };
                         u.post("/admin/rest/page", {initial: dialog.initialOptions, update: options}).then(function(result){
-                            u.progress.hide();
                             contentNode.changed = false;
-                            u.toast.show("Page saved");
+                            main.eventBus.holders.$pages.start();
                             dialog.close();
                             main.turn("pages");
-                            if(options.menu) {
-                                main.drawer.remove(options.name);
-                                main.drawer.add({
-                                    section: options.category,
-                                    id: options.name,
-                                    name: options.menu,
-                                    icon: options.icon,
-                                    priority: options.priority,
-                                    callback: function(){
-                                        main.turn(options.name);
-                                        return false;
-                                    }.bind(options)});
-                                // window.location.reload();
-                            }
+                            u.progress.hide();
+                            u.toast.show("Page saved");
                         }).catch(function (code, reason) {
                             u.progress.hide();
                             u.toast.error("Error saving page" + (reason && reason.statusText ? ": " + reason.statusText : ""));
@@ -274,7 +261,6 @@ function PageHolder(main) {
                 menuNode.value = page.menu;
             });
             populateContent(page.resource);
-
 
             dialog.open();
         } catch(e){

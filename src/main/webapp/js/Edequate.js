@@ -2319,17 +2319,17 @@ function Edequate(options) {
                     else parent.hide();
                 },
                 increaseBadge: function() {
-                    var val = parseInt(this.badge.innerHTML || "0");
+                    var val = parseInt(this.badgeNode.innerHTML || "0");
                     val ++;
-                    this.badge.innerHTML = val;
+                    this.badgeNode.innerHTML = val;
                     this.showBadge();
                 },
                 showBadge: function() {
-                    this.badge.show();
+                    this.badgeNode.show();
                 },
                 hideBadge: function() {
-                    this.badge.hide();
-                    this.badge.innerHTML = "0";
+                    this.badgeNode.hide();
+                    this.badgeNode.innerHTML = "0";
                 },
                 priority: options.priority
             });
@@ -2349,18 +2349,19 @@ function Edequate(options) {
 
             if(options.icon) {
                 if(options.icon.constructor === String) {
-                    create(HTML.DIV, { className:"icon drawer-menu-item-icon notranslate", innerHTML: options.icon }, th);
+                    th.iconNode = create(HTML.DIV, { className:"icon drawer-menu-item-icon notranslate", innerHTML: options.icon }, th);
                 } else {
                     th.appendChild(options.icon);
+                    th.iconNode = options.icon;
                 }
             }
             if(callback) {
-                create(HTML.DIV, {
+                th.labelNode = create(HTML.DIV, {
                     className: "drawer-menu-item-label",
                     innerHTML: options.name
                 }, th);
             }
-            th.badge = create(HTML.DIV, { className:"drawer-menu-item-badge hidden", innerHTML: "0" }, th);
+            th.badgeNode = create(HTML.DIV, { className:"drawer-menu-item-badge hidden", innerHTML: "0" }, th);
             layout.sections[options.section].show();
 
             return th;
@@ -2793,7 +2794,7 @@ function Edequate(options) {
 
             if((options.filter === undefined || options.filter) || (options.sort === undefined || options.sort) || selectable) {
                 table.resetButton = create(HTML.DIV, {
-                    className: "table-reset-button notranslate",
+                    className: "icon table-reset-button notranslate",
                     innerHTML: "clear_all",
                     title: "Reset customizations",
                     onclick: function() {
@@ -2825,7 +2826,7 @@ function Edequate(options) {
                 }, table);
 
                 table.filterButton = create(HTML.DIV, {
-                    className: "table-filter-button notranslate",
+                    className: "icon table-filter-button notranslate",
                     innerHTML: "search",
                     title: "Filter",
                     onclick: function() {
@@ -2879,7 +2880,7 @@ function Edequate(options) {
                     }
                 }, table.filterLayout);
                 table.filterClear = create(HTML.DIV, {
-                    className: "table-filter-clear hidden notranslate",
+                    className: "icon table-filter-clear hidden notranslate",
                     innerHTML: "clear",
                     onclick: function() {
                         table.filterInput.value = "";

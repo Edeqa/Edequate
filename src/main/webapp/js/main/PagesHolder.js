@@ -96,6 +96,8 @@ function PagesHolder(main) {
                                 }.bind(pages)
                             });
                         }
+                    } else if(main.drawer.items[pages.type]) {
+                        u.lang.updateNode(main.drawer.items[pages.type].labelNode, u.lang[pages.menu] || pages.menu);
                     }
                 }
             } else if (pages.constructor === Array) {
