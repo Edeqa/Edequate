@@ -30,7 +30,7 @@
         display: none;
     }
     .actionbar-label {
-        color: #fff;
+        color: white;
         font-size: x-large;
         font-weight: bold;
         position: absolute;
@@ -43,7 +43,7 @@
         position: absolute;
         bottom: 10px;
         right: 10px;
-        background-color: #819bc7;
+        background-color: #9bc781;
         outline: none;
     }
     .actionbar.collapsed .actionbar-select-lang {

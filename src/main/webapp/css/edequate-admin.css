@@ -1,7 +1,6 @@
 /**
  * Created 1/19/17.
  */
-
 h2 {
     margin-left: 10px;
     width: calc(100% - 10px);
@@ -114,6 +113,14 @@ div.question {
     margin-top: 5px;
     width: 100%;
 }
+.admin-splash-buttons {
+    margin-top: 20px;
+}
+.admin-splash-copyright {
+    position: absolute;
+    bottom: 10px;
+    font-size: smaller;
+}
 .admin-splash-layout {
     display: flex;
     flex-direction: column;
@@ -193,6 +200,10 @@ div.question {
 }
 
 @media screen and (max-width: 1000px) {
+    html, body {
+        height: 100%;
+    }
+
     .buttons {
         display: inline-flex;
         flex-wrap: wrap;
