@@ -42,6 +42,8 @@ public class Admins extends AbstractAction<RequestWrapper> {
     private final static String NAME = "name";
     private final static String PASSWORD = "password";
     private final static String REALM = "realm";
+    private static final String RESTORE_TOKEN = "restore_token";
+    private static final String RESTORE_TIMESTAMP = "restore_timestamp";
     private final static String ROLES = "roles";
     private final static String SECURITY = "security";
     private final static String SECURITY_EXPIRED = "expired";
@@ -184,6 +186,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
     public class Admin {
         private String login;
         private JSONObject json;
+
         public Admin(String login, JSONObject json) {
             this.login = login;
             this.json = json;
@@ -314,6 +317,11 @@ public class Admins extends AbstractAction<RequestWrapper> {
                "login='" + login + '\'' +
                ", json=" + json +
                '}';
+        }
+
+        public void setRestore(String restoreToken) {
+            json.put(RESTORE_TOKEN, restoreToken);
+            json.put(RESTORE_TIMESTAMP, System.currentTimeMillis());
         }
     }
 

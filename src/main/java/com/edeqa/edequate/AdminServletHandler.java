@@ -10,6 +10,7 @@ import com.edeqa.edequate.rest.admin.LogsClear;
 import com.edeqa.edequate.rest.admin.LogsLog;
 import com.edeqa.edequate.rest.admin.Pages;
 import com.edeqa.edequate.rest.admin.RestorePassword;
+import com.edeqa.edequate.rest.admin.Splash;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
@@ -48,6 +49,7 @@ public class AdminServletHandler extends RestServletHandler {
         registerAction(new LogsLog());
         registerAction(new Admins().read());
         registerAction(new RestorePassword());
+        registerAction(new Splash());
     }
 
     @Override
@@ -56,7 +58,7 @@ public class AdminServletHandler extends RestServletHandler {
         Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
 
         URI uri = requestWrapper.getRequestURI();
-        if(uri.getPath().startsWith("/admin/rest/")) {
+        if(uri.getPath().startsWith("/admin/rest/") || uri.getPath().startsWith("/admin/restore/")) {
             super.perform(requestWrapper);
         } else if(uri.getPath().startsWith("/admin")) {
             WebPath webPath = new WebPath(arguments.getWebRootDirectory(), "index-admin.html");

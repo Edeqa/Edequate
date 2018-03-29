@@ -2,12 +2,9 @@ package com.edeqa.edequate.helpers;
 
 
 import com.edeqa.edequate.abstracts.AbstractAction;
-import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.admin.Admins;
-import com.edeqa.edequate.rest.admin.RestorePassword;
+import com.edeqa.edequate.rest.admin.Splash;
 import com.edeqa.eventbus.EventBus;
-import com.edeqa.helpers.HtmlGenerator;
-import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.Misc;
 import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Authenticator;
@@ -27,27 +24,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import javax.naming.AuthenticationException;
-
 import static com.edeqa.edequate.abstracts.AbstractAction.RESTBUS;
-import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
-import static com.edeqa.helpers.HtmlGenerator.A;
-import static com.edeqa.helpers.HtmlGenerator.BUTTON;
-import static com.edeqa.helpers.HtmlGenerator.CLASS;
-import static com.edeqa.helpers.HtmlGenerator.DIV;
-import static com.edeqa.helpers.HtmlGenerator.HEIGHT;
-import static com.edeqa.helpers.HtmlGenerator.HREF;
-import static com.edeqa.helpers.HtmlGenerator.ID;
-import static com.edeqa.helpers.HtmlGenerator.IMG;
-import static com.edeqa.helpers.HtmlGenerator.LINK;
-import static com.edeqa.helpers.HtmlGenerator.NOSCRIPT;
-import static com.edeqa.helpers.HtmlGenerator.ONCLICK;
-import static com.edeqa.helpers.HtmlGenerator.REL;
-import static com.edeqa.helpers.HtmlGenerator.SPAN;
-import static com.edeqa.helpers.HtmlGenerator.SRC;
-import static com.edeqa.helpers.HtmlGenerator.STYLESHEET;
-import static com.edeqa.helpers.HtmlGenerator.TYPE;
-import static com.edeqa.helpers.HtmlGenerator.WIDTH;
 
 /*
  * Created 5/16/2017.
@@ -139,7 +116,8 @@ public class DigestAuthenticator extends Authenticator {
         Headers responseHeaders = httpExchange.getResponseHeaders();
         responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
 
-        String content = fetchSplash(true).build();
+        Splash splash = (Splash) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Splash.TYPE);
+        String content = splash.fetchSplash(true, false).build();
         httpExchange.sendResponseHeaders(401, content.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(content.getBytes());
@@ -147,7 +125,7 @@ public class DigestAuthenticator extends Authenticator {
         return null;
     }
 
-    private HttpPrincipal validateUser(HttpExchange httpExchange, Map<String, String> challengeParameters) throws AuthenticationException {
+    private HttpPrincipal validateUser(HttpExchange httpExchange, Map<String, String> challengeParameters) {
         String realm = challengeParameters.get("realm");
         String username = challengeParameters.get("username");
 
@@ -381,57 +359,6 @@ public class DigestAuthenticator extends Authenticator {
         }
         return converted;
     }
-
-    private HtmlGenerator fetchSplash(boolean withButtons) {
-
-        Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-
-        HtmlGenerator html = new HtmlGenerator();
-
-        html.getHead().add(HtmlGenerator.TITLE).with("Edeqa");
-        html.getHead().add(HtmlGenerator.LINK).with(HtmlGenerator.REL, "icon").with(HtmlGenerator.HREF, "/icons/favicon.ico");
-        html.getHead().add(HtmlGenerator.STYLE).with("@import url('/css/edequate.css');@import url('/css/edequate-admin.css');");
-        html.getHead().add(HtmlGenerator.META).with(HtmlGenerator.NAME, "viewport").with(HtmlGenerator.CONTENT, "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=no");
-        html.getHead().add(HtmlGenerator.SCRIPT).with(HtmlGenerator.ASYNC, true).with(HtmlGenerator.SRC, "/js/Edequate.js").with("data-variable", "u");
-
-        HtmlGenerator.Tag body = html.getBody().add(DIV).with(ID, "loading-dialog").with(CLASS, "admin-splash-layout");
-        body.add(IMG).with(CLASS, "admin-splash-logo").with(SRC, "/images/logo.svg");
-        body.add(DIV).with(CLASS, "admin-splash-title").with(arguments.getAppName() + " " + arguments.getVersion());
-
-        body.add(DIV).with(CLASS, "admin-splash-subtitle").with("Admin");
-
-        if(withButtons) {
-            HtmlGenerator.Tag buttons = body.add(DIV).with(CLASS, "admin-splash-buttons");
-
-            buttons.add(BUTTON).with("Home").with(CLASS, "dialog-button").with(ONCLICK, "window.location = '/home';");
-            buttons.add(BUTTON).with("Login").with(CLASS, "dialog-button").with(ONCLICK, "u.clear(this.parentNode);window.location.reload();");
-            buttons.add(BUTTON).with("Forgot password").with(CLASS, "dialog-button").with(ONCLICK, "window.location = '" + RestorePassword.TYPE + "';");
-        }
-
-        HtmlGenerator.Tag based = body.add(DIV).with(CLASS, "admin-splash-copyright");
-        based.add(SPAN).with("Based on ");
-        based.add(A).with("Edequate " + Version.getVersion()).with(CLASS, "link").with(HREF, "http://www.edeqa.com/edequate");
-        based.add(SPAN).with(" &copy;2017-18 ");
-        based.add(A).with("Edeqa").with(CLASS, "link").with(HREF, "http://www.edeqa.com");
-
-
-        HtmlGenerator.Tag noscript = html.getBody().add(NOSCRIPT);
-        noscript.add(LINK).with(TYPE, Mime.TEXT_CSS).with(REL, STYLESHEET).with(HREF, "/css/noscript.css");
-
-        HtmlGenerator.Tag header = noscript.add(DIV).with(CLASS, "header");
-        header.add(IMG).with(SRC, "/images/edeqa-logo.svg").with(WIDTH, 24).with(HEIGHT, 24);
-        header.with(arguments.getAppName());
-
-        noscript.add(DIV).with(CLASS, "text").with("This site requires to allow Javascript. Please enable Javascript in your browser and try again or use other browser that supports Javascript.");
-
-        HtmlGenerator.Tag copyright = noscript.add(DIV).with(CLASS, "copyright");
-        copyright.add(A).with("Edequate").with(CLASS, "link").with(HREF, "http://www.edeqa.com/edequate");
-        copyright.add(SPAN).with(" &copy;2017-18 ");
-        copyright.add(A).with("Edeqa").with(CLASS, "link").with(HREF, "http://www.edeqa.com");
-
-        return html;
-    }
-
 
     public class ExpiringHashMap<K,V> extends HashMap<K,V> {
         private HashMap<K,Long> timestamp;
