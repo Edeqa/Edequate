@@ -4,6 +4,7 @@ package com.edeqa.edequate.helpers;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.admin.Admins;
+import com.edeqa.edequate.rest.admin.RestorePassword;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.HtmlGenerator;
 import com.edeqa.helpers.Mime;
@@ -382,6 +383,9 @@ public class DigestAuthenticator extends Authenticator {
     }
 
     private HtmlGenerator fetchSplash(boolean withButtons) {
+
+        Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+
         HtmlGenerator html = new HtmlGenerator();
 
         html.getHead().add(HtmlGenerator.TITLE).with("Edeqa");
@@ -391,26 +395,32 @@ public class DigestAuthenticator extends Authenticator {
         html.getHead().add(HtmlGenerator.SCRIPT).with(HtmlGenerator.ASYNC, true).with(HtmlGenerator.SRC, "/js/Edequate.js").with("data-variable", "u");
 
         HtmlGenerator.Tag body = html.getBody().add(DIV).with(ID, "loading-dialog").with(CLASS, "admin-splash-layout");
-        body.add(DIV).with(CLASS, "admin-splash-logo").with(SRC, "/images/logo.svg");
-        body.add(DIV).with(CLASS, "admin-splash-title").with("Edequate 1.60");
+        body.add(IMG).with(CLASS, "admin-splash-logo").with(SRC, "/images/logo.svg");
+        body.add(DIV).with(CLASS, "admin-splash-title").with(arguments.getAppName() + " " + arguments.getVersion());
+
         body.add(DIV).with(CLASS, "admin-splash-subtitle").with("Admin");
 
         if(withButtons) {
             HtmlGenerator.Tag buttons = body.add(DIV).with(CLASS, "admin-splash-buttons");
 
-            Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-
-            buttons.add(BUTTON).with("Home").with(ONCLICK, "window.location = '/home';");
-            buttons.add(BUTTON).with("Login").with(ONCLICK, "u.clear(this.parentNode);window.location.reload();");
-            buttons.add(BUTTON).with("Forgot password").with(ONCLICK, "window.location = '/restore';");
+            buttons.add(BUTTON).with("Home").with(CLASS, "dialog-button").with(ONCLICK, "window.location = '/home';");
+            buttons.add(BUTTON).with("Login").with(CLASS, "dialog-button").with(ONCLICK, "u.clear(this.parentNode);window.location.reload();");
+            buttons.add(BUTTON).with("Forgot password").with(CLASS, "dialog-button").with(ONCLICK, "window.location = '" + RestorePassword.TYPE + "';");
         }
+
+        HtmlGenerator.Tag based = body.add(DIV).with(CLASS, "admin-splash-copyright");
+        based.add(SPAN).with("Based on ");
+        based.add(A).with("Edequate " + Version.getVersion()).with(CLASS, "link").with(HREF, "http://www.edeqa.com/edequate");
+        based.add(SPAN).with(" &copy;2017-18 ");
+        based.add(A).with("Edeqa").with(CLASS, "link").with(HREF, "http://www.edeqa.com");
+
 
         HtmlGenerator.Tag noscript = html.getBody().add(NOSCRIPT);
         noscript.add(LINK).with(TYPE, Mime.TEXT_CSS).with(REL, STYLESHEET).with(HREF, "/css/noscript.css");
 
         HtmlGenerator.Tag header = noscript.add(DIV).with(CLASS, "header");
         header.add(IMG).with(SRC, "/images/edeqa-logo.svg").with(WIDTH, 24).with(HEIGHT, 24);
-        header.with("Edequate Example");
+        header.with(arguments.getAppName());
 
         noscript.add(DIV).with(CLASS, "text").with("This site requires to allow Javascript. Please enable Javascript in your browser and try again or use other browser that supports Javascript.");
 

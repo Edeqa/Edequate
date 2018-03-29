@@ -1,6 +1,7 @@
 package com.edeqa.edequate.rest;
 
 import com.edeqa.edequate.abstracts.AbstractAction;
+import com.edeqa.edequate.helpers.Version;
 
 import org.json.JSONObject;
 
@@ -77,5 +78,13 @@ public class Arguments extends AbstractAction<String[]> {
 
     public String getRealm() {
         return "edequate";
+    }
+
+    public String getAppName() {
+        return "Edequate";
+    }
+
+    public String getVersion() {
+        return Version.getVersion();
     }
 }

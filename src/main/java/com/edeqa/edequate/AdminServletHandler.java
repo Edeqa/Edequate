@@ -9,6 +9,7 @@ import com.edeqa.edequate.rest.admin.Admins;
 import com.edeqa.edequate.rest.admin.LogsClear;
 import com.edeqa.edequate.rest.admin.LogsLog;
 import com.edeqa.edequate.rest.admin.Pages;
+import com.edeqa.edequate.rest.admin.RestorePassword;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
@@ -42,10 +43,6 @@ public class AdminServletHandler extends RestServletHandler {
     @Override
     public void useDefault() {
         super.useDefault();
-        registerRest();
-    }
-
-    private void registerRest() {
         registerAction(new Files().setFilenameFilter(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -57,7 +54,7 @@ public class AdminServletHandler extends RestServletHandler {
         registerAction(new LogsClear());
         registerAction(new LogsLog());
         registerAction(new Admins().read());
-//        getSystemBus().registerIfAbsent(new Admins());
+        registerAction(new RestorePassword());
     }
 
     @Override

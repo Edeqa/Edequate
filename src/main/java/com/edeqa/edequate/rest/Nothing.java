@@ -26,12 +26,11 @@ public class Nothing extends AbstractAction<RequestWrapper> {
     @Override
     public void call(JSONObject json, RequestWrapper request) {
         json.put(STATUS, STATUS_ERROR);
+        json.put(CODE, ERROR_METHOD_NOT_ALLOWED);
         json.put(MESSAGE, getMessage());
-        json.put(CODE, ERROR_NOT_EXTENDED);
         if(getThrowable() != null) {
             json.put(MESSAGE, getThrowable().getMessage());
         }
-
         try {
             String body = request.getBody();
             if (!Misc.isEmpty(body)) {
