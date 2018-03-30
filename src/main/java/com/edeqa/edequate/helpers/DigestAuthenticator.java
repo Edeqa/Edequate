@@ -34,8 +34,8 @@ public class DigestAuthenticator extends Authenticator {
 
     public static final byte COL = ':';
 
-    private final Set<String> givenNonces = new HashSet<>();
-    private final SecureRandom random = new SecureRandom();
+    private static final Set<String> givenNonces = new HashSet<>();
+    private static final SecureRandom random = new SecureRandom();
     private final String realm;
     private final ExpiringHashMap<String,Object> timestamps = new ExpiringHashMap<String,Object>();//.setTimeout(1000 * 60 * 60L);
 
@@ -299,7 +299,7 @@ public class DigestAuthenticator extends Authenticator {
         }
     }
 
-    public String createNonce() {
+    public static String createNonce() {
         byte[] ret = new byte[16];
         random.nextBytes(ret);
         String retStr = toHexString(ret);

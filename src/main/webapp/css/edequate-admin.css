@@ -182,6 +182,9 @@ div.question {
 .alert-box .dialog-button {
     margin-left: 10px;
 }
+.security-email {
+    background-color: orangered;
+}
 .security-expired {
     background-color: firebrick;
     color: white;

@@ -11,7 +11,6 @@ import com.sun.net.httpserver.HttpExchange;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.security.MessageDigest;
@@ -40,16 +39,15 @@ public class Admins extends AbstractAction<RequestWrapper> {
     private final static String MODE_SAVE = "save";
     private final static String MODE_SELECT = "select";
     private final static String NAME = "name";
-    private final static String PASSWORD = "password";
+    public final static String PASSWORD = "password";
     private final static String REALM = "realm";
-    private static final String RESTORE_TOKEN = "restore_token";
-    private static final String RESTORE_TIMESTAMP = "restore_timestamp";
     private final static String ROLES = "roles";
     private final static String SECURITY = "security";
     private final static String SECURITY_EXPIRED = "expired";
     private final static String SECURITY_EXPIRING_SOON = "expiring soon";
     private final static String SECURITY_MEDIUM = "medium";
     private final static String SECURITY_MISSING = "missing";
+    private final static String SECURITY_MISSING_EMAIL = "email";
     private final static String SECURITY_STRONG = "strong";
     private final static String SECURITY_WEAK = "weak";
 
@@ -133,19 +131,8 @@ public class Admins extends AbstractAction<RequestWrapper> {
             if (json.has(PASSWORD)) admin.storePassword(json.getString(PASSWORD));
             admin.fetchFrom(json);
 
-            JSONObject adminsOut = new JSONObject();
-            for (Map.Entry<String, Admin> entry : admins.entrySet()) {
-                adminsOut.put(entry.getKey(), entry.getValue().getJSON());
-            }
-
-            Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-            WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json.new");
-            try (FileWriter writer = new FileWriter(usersWebPath.path())) {
-                writer.write(adminsOut.toString(2));
-                json.put(STATUS, STATUS_SUCCESS);
-                writer.close();
-                usersWebPath.rename(".admins.json");
-            }
+            save();
+            json.put(STATUS, STATUS_SUCCESS);
         } catch(Exception e) {
             read();
             throw e;
@@ -179,6 +166,17 @@ public class Admins extends AbstractAction<RequestWrapper> {
         return this;
     }
 
+    public Admins save() throws IOException {
+        JSONObject adminsOut = new JSONObject();
+        for (Map.Entry<String, Admin> entry : admins.entrySet()) {
+            adminsOut.put(entry.getKey(), entry.getValue().getJSON());
+        }
+        Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+        new WebPath(arguments.getWebRootDirectory(), "data/.admins.json").save(adminsOut.toString(2));
+
+        return this;
+    }
+
     public boolean exists(String username) {
         return admins.containsKey(username);
     }
@@ -192,30 +190,33 @@ public class Admins extends AbstractAction<RequestWrapper> {
             this.json = json;
         }
 
-        public String fetchPower() {
-            String power = (String) getValue(SECURITY);
-            if(power == null) {
-                power = SECURITY_MISSING;
+        public String fetchStrength() {
+            String strength = (String) getValue(SECURITY);
+            if(strength == null) {
+                strength = SECURITY_MISSING;
             }
-            switch(power) {
+            switch(strength) {
                 case SECURITY_MEDIUM:
                 case SECURITY_STRONG:
                 case SECURITY_WEAK:
                     break;
                 default:
-                    power = SECURITY_MISSING;
+                    strength = SECURITY_MISSING;
             }
             long expiration = getExpiration();
             if(expiration > 0) {
                 Calendar cal = Calendar.getInstance();
                 long now = cal.getTime().getTime();
                 if(expiration - now <= 0) {
-                    power = SECURITY_EXPIRED;
+                    strength = SECURITY_EXPIRED;
                 } else if(expiration - now < 30*24*60*60*1000L) {
-                    power = SECURITY_EXPIRING_SOON;
+                    strength = SECURITY_EXPIRING_SOON;
                 }
             }
-            return power;
+            if(getEmail() == null) {
+                strength = SECURITY_MISSING_EMAIL;
+            }
+            return strength;
         }
 
         private JSONObject toJSON() {
@@ -224,7 +225,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
             user.put(EMAIL, getEmail());
             user.put(EXPIRATION, getExpiration());
             user.put(NAME, getName());
-            user.put(SECURITY, fetchPower());
+            user.put(SECURITY, fetchStrength());
             user.put(REALM, getRealm());
             user.put(ROLES, getRoles());
             return user;
@@ -319,10 +320,6 @@ public class Admins extends AbstractAction<RequestWrapper> {
                '}';
         }
 
-        public void setRestore(String restoreToken) {
-            json.put(RESTORE_TOKEN, restoreToken);
-            json.put(RESTORE_TIMESTAMP, System.currentTimeMillis());
-        }
     }
 
     public Admin get(String login) {

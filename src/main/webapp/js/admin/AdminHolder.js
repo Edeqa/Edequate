@@ -14,6 +14,13 @@ function AdminHolder(main) {
     var dialog;
     var alert;
 
+    var strings = {
+            "expired": "Your password is expired.",
+            "expiring soon": "Your password is expiring soon.",
+            "missing": "Your password is missing.",
+            "email": "Your e-mail is missing.",
+            "weak": "Your password is weak."
+    }
 
     /** @namespace json.message.login */
     this.start = function() {
@@ -21,13 +28,13 @@ function AdminHolder(main) {
         u.getJSON("/admin/rest/data/admins", {mode:"current"}).then(function(json){
             if(json && json.message) {
                 var security = json.message.security || "missing";
-                if(security === "expired" || security === "missing") {
+                if(security === "expired" || security === "missing" || security === "email") {
                     main.turn("password");
-                    editAdmin(json.message, {mode:"Edit admin", action:"password"});
+                    editAdmin(json.message, {mode:"Edit admin", action: security === "email" ? "email" : "password"});
                 }
-                if(security !== "strong" && security !== "medium") {
+                if(strings[security]) {
                     alert = alert || u.create(HTML.DIV, {className: "alert-box"})
-                        .place(HTML.DIV, {innerHTML: "Your password is " + security + "."})
+                        .place(HTML.DIV, {innerHTML: strings[security]})
                         .place(HTML.BUTTON, {innerHTML:"Update", className:"dialog-button", onclick: function() {
                                 main.turn("admin", ["password", json.message.login]);
                             }});
@@ -106,6 +113,11 @@ function AdminHolder(main) {
                             loginNode.focus();
                             return;
                         }
+                        if(!emailNode.value) {
+                            u.toast.error("E-mail not defined");
+                            emailNode.focus();
+                            return;
+                        }
                         if(!passwordNode.value && (dialog.initialOptions.security === "missing" || dialog.initialOptions.security === "expired")) {
                             u.toast.error("Password not defined");
                             passwordNode.focus();
@@ -175,7 +187,7 @@ function AdminHolder(main) {
             strengthNode.firstChild.style = "";
             confirmPasswordNode.placeholder = "";
             if(admin.security !== "missing" && admin.security !== "expired") {
-                passwordNode.placeholder = "Defined, " + admin.security;
+                passwordNode.placeholder = "Defined" + (admin.security !== "email" ? ", " + admin.security : "");
                 confirmPasswordNode.placeholder = "Defined";
             }
 
@@ -200,6 +212,9 @@ function AdminHolder(main) {
             if(options.action === "password") {
                 dialog.focus();
                 passwordNode.focus();
+            } else if(options.action === "email") {
+                dialog.focus();
+                emailNode.focus();
             }
         } catch(e) {
             console.error(e);
