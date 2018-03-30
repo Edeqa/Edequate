@@ -10,8 +10,6 @@ import com.edeqa.helpers.Mime;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
-
 import static com.edeqa.helpers.HtmlGenerator.A;
 import static com.edeqa.helpers.HtmlGenerator.BUTTON;
 import static com.edeqa.helpers.HtmlGenerator.CLASS;
@@ -34,6 +32,9 @@ import static com.edeqa.helpers.HtmlGenerator.WIDTH;
 public class Splash extends AbstractAction<RequestWrapper> {
 
     public static final String TYPE = "/admin/splash";
+    private String info;
+    private String script;
+    private boolean buttons;
 
     @Override
     public String getType() {
@@ -41,11 +42,11 @@ public class Splash extends AbstractAction<RequestWrapper> {
     }
 
     @Override
-    public void call(JSONObject json, final RequestWrapper request) throws IOException {
+    public void call(JSONObject json, final RequestWrapper request) {
 
     }
 
-    public HtmlGenerator fetchSplash(boolean withButtons, boolean withRestore) {
+    public HtmlGenerator fetchSplash() {
 
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
 
@@ -55,8 +56,8 @@ public class Splash extends AbstractAction<RequestWrapper> {
         html.getHead().add(HtmlGenerator.LINK).with(HtmlGenerator.REL, "icon").with(HtmlGenerator.HREF, "/icons/favicon.ico");
         html.getHead().add(HtmlGenerator.STYLE).with("@import url('/css/edequate.css');@import url('/css/edequate-admin.css');");
         html.getHead().add(HtmlGenerator.META).with(HtmlGenerator.NAME, "viewport").with(HtmlGenerator.CONTENT, "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=no");
-        if(withRestore) {
-            html.getHead().add(HtmlGenerator.SCRIPT).with(HtmlGenerator.ASYNC, true).with(HtmlGenerator.SRC, "/js/Edequate.js").with("data-variable", "u").with("data-callback", "u.require('/js/admin/Restore.js', u).then(function(restore){restore.start()})").with("data-export-constants", true);
+        if(getScript() != null) {
+            html.getHead().add(HtmlGenerator.SCRIPT).with(HtmlGenerator.ASYNC, true).with(HtmlGenerator.SRC, "/js/Edequate.js").with("data-variable", "u").with("data-callback", "u.require('" + getScript() + "', u).then(function(script){script.start()})").with("data-export-constants", true);
         } else {
             html.getHead().add(HtmlGenerator.SCRIPT).with(HtmlGenerator.ASYNC, true).with(HtmlGenerator.SRC, "/js/Edequate.js").with("data-variable", "u");
         }
@@ -66,13 +67,22 @@ public class Splash extends AbstractAction<RequestWrapper> {
         body.add(DIV).with(CLASS, "admin-splash-title").with(arguments.getAppName() + " " + arguments.getVersion());
 
         body.add(DIV).with(CLASS, "admin-splash-subtitle").with("Admin");
-        body.add(DIV).with(CLASS, "admin-splash-info");
+        HtmlGenerator.Tag info = body.add(DIV).with(CLASS, "admin-splash-info");
+        if(getInfo() != null) {
+            info.with(getInfo());
+        }
 
-        HtmlGenerator.Tag buttons = body.add(DIV).with(CLASS, "admin-splash-buttons" + (withButtons ? "" : " hidden"));
+        HtmlGenerator.Tag buttons = body.add(DIV);
 
         buttons.add(BUTTON).with("Home").with(CLASS, "dialog-button").with(ONCLICK, "window.location = '/home';");
         buttons.add(BUTTON).with("Login").with(CLASS, "dialog-button").with(ONCLICK, "u.clear(this.parentNode);window.location.reload();");
         buttons.add(BUTTON).with("Forgot password").with(CLASS, "dialog-button").with(ONCLICK, "window.location = '" + RestorePassword.TYPE + "';");
+
+        if(isButtons()) {
+            buttons.with(CLASS, "admin-splash-buttons");
+        } else {
+            buttons.with(CLASS, "admin-splash-buttons hidden");
+        }
 
         HtmlGenerator.Tag based = body.add(DIV).with(CLASS, "admin-splash-copyright");
         based.add(SPAN).with("Based on ");
@@ -95,7 +105,37 @@ public class Splash extends AbstractAction<RequestWrapper> {
         copyright.add(SPAN).with(" &copy;2017-18 ");
         copyright.add(A).with("Edeqa").with(CLASS, "link").with(HREF, "http://www.edeqa.com");
 
+        setInfo(null);
+        setScript(null);
+        setButtons(false);
+
         return html;
     }
 
+    public Splash setInfo(String info) {
+        this.info = info;
+        return this;
+    }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public String getScript() {
+        return script;
+    }
+
+    public Splash setScript(String script) {
+        this.script = script;
+        return this;
+    }
+
+    public boolean isButtons() {
+        return buttons;
+    }
+
+    public Splash setButtons(boolean buttons) {
+        this.buttons = buttons;
+        return this;
+    }
 }

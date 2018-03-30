@@ -153,12 +153,16 @@ public class Admins extends AbstractAction<RequestWrapper> {
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
         WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json");
         try {
-            JSONObject json = new JSONObject(usersWebPath.content());
-            admins = new HashMap<>();
-            Iterator<String> iter = json.keys();
-            while(iter.hasNext()) {
-                String login = iter.next();
-                admins.put(login, new Admin(login, json.getJSONObject(login)));
+            if(usersWebPath.path().exists()) {
+                JSONObject json = new JSONObject(usersWebPath.content());
+                admins = new HashMap<>();
+                Iterator<String> iter = json.keys();
+                while (iter.hasNext()) {
+                    String login = iter.next();
+                    admins.put(login, new Admin(login, json.getJSONObject(login)));
+                }
+            } else {
+                admins = new HashMap<>();
             }
         } catch (IOException e) {
             Misc.err("Admins", "got an error", e);
@@ -181,6 +185,23 @@ public class Admins extends AbstractAction<RequestWrapper> {
         return admins.containsKey(username);
     }
 
+    public boolean exists() {
+        return admins != null && admins.size() > 0;
+    }
+
+    public void generate(String login) throws IOException {
+        Admin admin = new Admin(login, new JSONObject());
+        try {
+            admin.storePassword("");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        admin.setRoles(new ArrayList<String>(){{add("administrator");}});
+        admin.setRoles("administrator");
+        admins.put(admin.login, admin);
+        save();
+    }
+
     public class Admin {
         private String login;
         private JSONObject json;
@@ -199,6 +220,9 @@ public class Admins extends AbstractAction<RequestWrapper> {
                 case SECURITY_MEDIUM:
                 case SECURITY_STRONG:
                 case SECURITY_WEAK:
+                    if(getEmail() == null) {
+                        strength = SECURITY_MISSING_EMAIL;
+                    }
                     break;
                 default:
                     strength = SECURITY_MISSING;
@@ -212,9 +236,6 @@ public class Admins extends AbstractAction<RequestWrapper> {
                 } else if(expiration - now < 30*24*60*60*1000L) {
                     strength = SECURITY_EXPIRING_SOON;
                 }
-            }
-            if(getEmail() == null) {
-                strength = SECURITY_MISSING_EMAIL;
             }
             return strength;
         }
@@ -276,6 +297,10 @@ public class Admins extends AbstractAction<RequestWrapper> {
             return (String) getValue(ROLES);
         }
 
+        public void setRoles(String roles) {
+            setValue(ROLES, roles);
+        }
+
         private Serializable getValue(String key) {
             if(json.has(key)) {
                 return (Serializable) json.get(key);
@@ -284,9 +309,13 @@ public class Admins extends AbstractAction<RequestWrapper> {
             }
         }
 
+        private void setValue(String key, Serializable value) {
+            json.put(key, value);
+        }
+
         public void storePassword(String password) throws Exception {
 
-            if(password == null || password.length() == 0) return;
+            if(password == null/* || password.length() == 0*/) return;
 
             Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
             String realm = arguments.getRealm();
@@ -303,7 +332,9 @@ public class Admins extends AbstractAction<RequestWrapper> {
 
             this.json.put(DIGEST, new String(ha1, "UTF-8"));
 
-            if(password.length() < 9) {
+            if(password.length() == 0) {
+                this.json.put(SECURITY, SECURITY_MISSING);
+            } else if(password.length() < 9) {
                 this.json.put(SECURITY, SECURITY_WEAK);
             } else if(password.length() < 13) {
                 this.json.put(SECURITY, SECURITY_MEDIUM);

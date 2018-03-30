@@ -49,12 +49,18 @@ public class DigestAuthenticator extends Authenticator {
             DigestContext context = getOrCreateContext(httpExchange);
             String authorization = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+            Admins admins = (Admins) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Admins.TYPE);
+            if(!admins.exists()) {
+                admins.generate("admin");
+                return fetchSplash(httpExchange, false, "Admin account have been generated. Please use login <code><b>admin</b></code> and empty password first.");
+            }
+
             if (authorization == null) {
 //                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Login request", "[" + httpExchange.getRequestURI() + "]");
-                return fetchHeaders(httpExchange);
+                return fetchSplash(httpExchange, true, null);
             }
             if (authorization.startsWith("Basic ")) {
-                return fetchHeaders(httpExchange);
+                return fetchSplash(httpExchange, true, null);
             }
 
             if (!authorization.startsWith("Digest ")) {
@@ -78,16 +84,16 @@ public class DigestAuthenticator extends Authenticator {
             HttpPrincipal principal = validateUser(httpExchange, challengeParameters);
 
             if (principal == null) {
-                return fetchHeaders(httpExchange);
+                return fetchSplash(httpExchange, true, null);
             }
             if(timestamps.getTimeout() > 0 && !timestamps.containsKey(principal.getName())) {
                 timestamps.put(principal.getName());
-                return fetchHeaders(httpExchange);
+                return fetchSplash(httpExchange, true, null);
             }
             if(timestamps.expired(principal.getName())) {
                 timestamps.put(principal.getName());
 //                httpExchange.setAttribute("digest-context", null);
-                return fetchHeaders(httpExchange);
+                return fetchSplash(httpExchange, true, null);
             }
 
             if (!context.isAuthenticated()) {
@@ -102,7 +108,7 @@ public class DigestAuthenticator extends Authenticator {
             Headers responseHeaders = httpExchange.getResponseHeaders();
             responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(true));
             return new Authenticator.Retry(401);
-//            return fetchHeaders(httpExchange);
+//            return fetchSplash(httpExchange);
 
         } catch (Exception e) {
             Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "got error", e);
@@ -112,12 +118,14 @@ public class DigestAuthenticator extends Authenticator {
         }
     }
 
-    private Result fetchHeaders(HttpExchange httpExchange) throws IOException {
-        Headers responseHeaders = httpExchange.getResponseHeaders();
-        responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+    private Result fetchSplash(HttpExchange httpExchange, boolean requireAuthentication, String info) throws IOException {
+        if(requireAuthentication) {
+            Headers responseHeaders = httpExchange.getResponseHeaders();
+            responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+        }
 
         Splash splash = (Splash) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Splash.TYPE);
-        String content = splash.fetchSplash(true, false).build();
+        String content = splash.setInfo(info).setButtons(true).fetchSplash().build();
         httpExchange.sendResponseHeaders(401, content.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(content.getBytes());

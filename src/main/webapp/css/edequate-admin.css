@@ -113,6 +113,11 @@ div.question {
     margin-top: 5px;
     width: 100%;
 }
+.admin-splash-buttons {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+}
 .admin-splash-copyright {
     position: absolute;
     bottom: 10px;
@@ -225,7 +230,7 @@ div.question {
         border-radius: 10px;
         margin: 1px;
         padding: 10px;
-        flex: 1 0 50px;
+        /*flex: 1 0 50px;*/
         white-space: nowrap;
     }
 

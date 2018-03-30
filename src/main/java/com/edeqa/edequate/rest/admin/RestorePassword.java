@@ -55,7 +55,7 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
             resetPassword(json, request, options);
         } else {
             Splash splash = (Splash) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Splash.TYPE);
-            String content = splash.fetchSplash(false, true).build();
+            String content = splash.setScript("/js/admin/Restore.js").fetchSplash().build();
             new Content()
                     .setMimeType(new MimeType().setMime(Mime.TEXT_HTML).setText(true))
                     .setResultCode(200)

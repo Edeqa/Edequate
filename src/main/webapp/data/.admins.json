@@ -1,9 +1,0 @@
-{
-  "admin": {
-    "email": "name@domain.com",
-    "name": "Administrator",
-    "digest": "7ffe0f62dba45d70105acb0b61ef97da",
-    "realm": "edequate",
-    "roles": "administrator"
-  }
-}
