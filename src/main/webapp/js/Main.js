@@ -10,6 +10,7 @@
 
 function Main(u) {
     var self = this;
+    window.Main = this;
     this.edequate = u;
 
     this.start = function(arguments) {
@@ -152,41 +153,57 @@ function Main(u) {
                 }
             });
 
-            self.drawer = new u.drawer({
-                title: u.lang.title || "Title",
-                // collapsed: u.load("drawer:collapsed"),
-                logo: {
-                    src: "/images/logo.svg"
-                },
-                onprimaryclick: function(){
-                    console.log("onprimaryclick");
-                },
-                footer: {
-                    className: "drawer-footer-label",
-                    content: [
-                        u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: "Powered with Edequate", onclick: function(){
-                                dialogAbout.open();
-                            }})
-                    ]
-                },
-                sections: {
-                    "0": u.lang.drawer_primary,
-                    "1": u.lang.drawer_summary,
-                    "2": u.lang.drawer_main,
-                    "3": u.lang.drawer_explore,
-                    "4": u.lang.drawer_share,
-                    "5": u.lang.drawer_resources,
-                    "6": u.lang.drawer_miscellaneous,
-                    "7": u.lang.drawer_settings,
-                    "8": u.lang.drawer_help,
-                    "9": u.lang.drawer_last
-                },
-                ontogglesize: function(collapsed) {
-                    if(collapsed !== undefined) self.layout.classList[collapsed ? "add":"remove"]("collapsed");
-                }
-            }, document.body);
+            u.require([{src:"/rest/" + self.mainType, isJSON:true}, {src:"/rest/data", isJSON: true, body: {resource: "pages-" + self.mainType + ".json"}}]).then(function(json, pages){
 
-            u.getJSON("/rest/" + self.mainType).then(function(json){
+                var categories = [
+                    {title: u.lang.drawer_primary},
+                    {title: u.lang.drawer_summary},
+                    {title: u.lang.drawer_main},
+                    {title: u.lang.drawer_explore},
+                    {title: u.lang.drawer_share},
+                    {title: u.lang.drawer_resources},
+                    {title: u.lang.drawer_miscellaneous},
+                    {title: u.lang.drawer_settings},
+                    {title: u.lang.drawer_help},
+                    {title: u.lang.drawer_last}
+                ];
+                if(pages) {
+                    for(var i in pages) {
+                        if(pages[i].section === self.mainType) {
+                            var title = pages[i].title;
+                            if(title) title = u.lang[title] || title;
+                            title = title || categories[pages[i].category].title;
+                            categories[pages[i].category] = {
+                                title: title,
+                                explicit: pages[i].explicit
+                            };
+                        }
+                    }
+                }
+
+                self.drawer = new u.drawer({
+                    title: u.lang.title || "Title",
+                    // collapsed: u.load("drawer:collapsed"),
+                    logo: {
+                        src: "/images/logo.svg"
+                    },
+                    onprimaryclick: function(){
+                        console.log("onprimaryclick");
+                    },
+                    footer: {
+                        className: "drawer-footer-label",
+                        content: [
+                            u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: "Powered with Edequate", onclick: function(){
+                                    dialogAbout.open();
+                                }})
+                        ]
+                    },
+                    sections: categories,
+                    ontogglesize: function(collapsed) {
+                        if(collapsed !== undefined) self.layout.classList[collapsed ? "add":"remove"]("collapsed");
+                    }
+                }, document.body);
+
                 for(var i in json.message) {
                     // noinspection JSUnfilteredForInLoop
                     /** @namespace json.extra */

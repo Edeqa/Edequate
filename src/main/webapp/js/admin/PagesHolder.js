@@ -17,21 +17,6 @@ function PagesHolder(main) {
     var div;
     var dialogConfirm;
 
-
-    var sectionsNames = {
-        "0": "Primary",
-        "1": "Summary",
-        "2": "Main",
-        "3": "Explore",
-        "4": "Share",
-        "5": "Resources",
-        "6": "Miscellaneous",
-        "7": "Settings",
-        "8": "Help",
-        "9": "Last",
-        "10": "[out of menu]"
-    };
-
     this.start = function() {
         div = main.content;
     };
@@ -70,9 +55,9 @@ function PagesHolder(main) {
                             className:"icon notranslate tree-item-icon",
                             onclick: function (e) {
                                 e.stopPropagation();
-                                console.log("add page to", this.parentNode.item.id);
+                                console.log("add page to", this.parentNode.item.path);
                                 self.scrollTop = main.content.scrollTop;
-                                main.turn("page", ["add",this.parentNode.item.id]);
+                                main.turn("page", ["add",this.parentNode.item.path]);
                             }
                         })
                         .place(HTML.BUTTON, {
@@ -98,125 +83,209 @@ function PagesHolder(main) {
                     {src:"/rest/data", body: {resource: "pages-" + id + ".json"}, isJSON:true},
                     {src:"/rest/" + id, isJSON:true}
                 ]).then(function(json, json1){
-                    var structure = parsePages(json);
-                    for(var x in structure) {
-                        var category = this.items[x] || this.add({
-                            id: x,
-                            priority: -(+x),
-                            content: u.create(HTML.DIV, {className:"tree-pages-category"})
-                                .place(HTML.DIV, {innerHTML:sectionsNames[x]})
-                                .place(HTML.BUTTON, {
-                                    innerHTML:"add",
-                                    title: "Add page into section",
-                                    className:"icon notranslate tree-item-icon",
-                                    onclick: function (e) {
-                                        e.stopPropagation();
-                                        console.log("add page to", this.parentNode.item.id);
-                                        self.scrollTop = main.content.scrollTop;
-                                        main.turn("page", ["add",this.parentNode.item.id]);
-                                    }
-                                })
-                        });
-                        for(var y in structure[x]) {
-                            var values = structure[x][y];
-                            category.add({
-                                id: values.type,
-                                priority: values.priority,
-                                content: u.create(HTML.DIV, {className:"tree-pages-item-leaf"})
-                                    .place(HTML.DIV, {
-                                        innerHTML: values.title
-                                    })
+                    try {
+                        var id = this.id;
+                        var structure = parsePages(json, json1);
+
+                        for (var x in structure) {
+                            var category = this.items[x] || this.add({
+                                id: x,
+                                priority: -(+x),
+                                content: u.create(HTML.DIV, {className: "tree-pages-category"})
+                                    .place(HTML.DIV, {innerHTML: structure[x].$options.title.cloneNode(true)})
                                     .place(HTML.BUTTON, {
-                                        innerHTML:"edit",
-                                        title: "Edit page",
-                                        className:"icon notranslate tree-item-icon",
+                                        innerHTML: "add",
+                                        title: "Add page into section",
+                                        className: "icon notranslate tree-item-icon",
                                         onclick: function (e) {
                                             e.stopPropagation();
-                                            console.log("edit page", this.parentNode.item.id);
+                                            console.log("add page to", this.parentNode.item.path);
                                             self.scrollTop = main.content.scrollTop;
-                                            main.turn("page", ["edit",this.parentNode.item.id]);
+                                            main.turn("page", ["add", this.parentNode.item.path]);
                                         }
                                     })
                                     .place(HTML.BUTTON, {
-                                        innerHTML:"clear",
-                                        title: "Remove page",
-                                        className:"icon notranslate tree-item-icon" + (values.persistent ? " hidden" : ""),
+                                        innerHTML: "edit",
+                                        title: "Edit page",
+                                        className: "icon notranslate tree-item-icon hidden",
                                         onclick: function (e) {
                                             e.stopPropagation();
-                                            dialogConfirm = dialogConfirm || new u.dialog({
-                                                title: "Removing page",
-                                                items: [
-                                                    { innerHTML: "Page will be removed. Continue?" }
-                                                ],
-                                                positive: {
-                                                    label: u.create(HTML.SPAN, "Yes"),
-                                                    onclick: function () {
-                                                        console.log(dialogConfirm.current);
-                                                        u.progress.show("Removing page...");
-                                                        var ids = dialogConfirm.current.id.split(":");
-                                                        var options = {
-                                                            category: ids[1],
-                                                            section: ids[0],
-                                                            name: ids[2]
-                                                        };
-                                                        u.post("/admin/rest/page", {remove: options}).then(function(result){
-                                                            u.progress.hide();
-                                                            u.toast.show("Page removed");
-                                                            main.turn("pages");
-                                                            main.drawer.remove(options.name);
-                                                        }).catch(function (code, reason) {
-                                                            u.progress.hide();
-                                                            console.error(code, reason.response);
-                                                            u.toast.error("Error removing page" + (reason && reason.statusText ? ": " + reason.statusText : ""));
-                                                        });
-                                                    }
-                                                },
-                                                negative: {
-                                                    label: u.create(HTML.SPAN, "No")
-                                                }
-                                            });
-                                            dialogConfirm.open();
-                                            dialogConfirm.current = this.parentNode.item;
+                                            self.scrollTop = main.content.scrollTop;
+                                            main.turn("page", ["edit", this.parentNode.item.path]);
                                         }
                                     })
-                                    .place(HTML.A, {
-                                        innerHTML: "[" + values.type + "]",
-                                        // className: "icon notranslate tree-item-icon",
-                                        href:"/" + this.id + "/" + values.type,
-                                        target:"_blank"
+                                    .place(HTML.BUTTON, {
+                                        innerHTML: "check_box",
+                                        title: "Show category title",
+                                        className: "icon notranslate tree-item-icon hidden",
+                                        onclick: function (e) {
+                                            e.stopPropagation();
+                                            console.log("show title", this.parentNode.item.path);
+                                            var category = this.parentNode.item.id;
+                                            var options = {
+                                                path: this.parentNode.item.path,
+                                                explicit: false
+                                            };
+                                            u.post("/admin/rest/page", {section: options}).then(function (result) {
+                                                console.log("title shown");
+                                                if (id === "admin") main.drawer.sections[category].labelNode.hide();
+                                                this.hide();
+                                                this.parentNode.parentNode.parentNode.hideButtonNode.show();
+                                            }.bind(this)).catch(function (code, reason) {
+                                                console.error(code, reason.response);
+                                                u.toast.error("Error switching title" + (reason && reason.statusText ? ": " + reason.statusText : ""));
+                                            });
+                                        }
+                                    })
+                                    .place(HTML.BUTTON, {
+                                        innerHTML: "check_box_outline_blank",
+                                        title: "Hide category title",
+                                        className: "icon notranslate tree-item-icon hidden",
+                                        onclick: function (e) {
+                                            e.stopPropagation();
+                                            console.log("hide title", this.parentNode.item.path);
+                                            var category = this.parentNode.item.id;
+                                            var options = {
+                                                path: this.parentNode.item.path,
+                                                explicit: true
+                                            };
+                                            u.post("/admin/rest/page", {section: options}).then(function (result) {
+                                                console.log("title hidden");
+                                                if (id === "admin") main.drawer.sections[category].labelNode.show();
+                                                this.hide();
+                                                this.parentNode.parentNode.parentNode.showButtonNode.show();
+                                            }.bind(this)).catch(function (code, reason) {
+                                                console.error(code, reason.response);
+                                                u.toast.error("Error switching title" + (reason && reason.statusText ? ": " + reason.statusText : ""));
+                                            });
+                                        }
                                     })
                             });
-                            main.content.scrollTop = self.scrollTop;
-                        }
-                    }
-                    for(var i in json1.message) {
-                        u.require(json1.extra + "/" + json1.message[i], main).then(function(holder) {
-                            var category = holder && holder.category;
-                            category = this.items[""+category]
-                            if(category && "menu" in holder) {
+                            category.editButtonNode = category.titleNode.childNodes[2];
+                            category.showButtonNode = category.titleNode.childNodes[3];
+                            category.hideButtonNode = category.titleNode.childNodes[4];
+                            if (category.id === "10") {
+                                category.editButtonNode.hide();
+                            }
+                            for (var y in structure[x]) {
+                                if (y === "$options") continue;
+                                var values = structure[x][y];
                                 category.add({
-                                    id: holder.type,
-                                    priority: holder.priority,
-                                    content: u.create(HTML.DIV, {className:"tree-item-title"})
+                                    id: values.type,
+                                    priority: values.priority,
+                                    content: u.create(HTML.DIV, {className: "tree-pages-item-leaf"})
                                         .place(HTML.DIV, {
-                                            innerHTML: holder.title || holder.moduleName,
-                                            title: holder.moduleName + "'s responsibility, can not be edited"
+                                            innerHTML: values.title
                                         })
-                                        .place(HTML.DIV, {
-                                            innerHTML: "lock_outline",
+                                        .place(HTML.BUTTON, {
+                                            innerHTML: "edit",
+                                            title: "Edit page",
                                             className: "icon notranslate tree-item-icon",
-                                            title: holder.moduleName + "'s responsibility, can not be edited"
+                                            onclick: function (e) {
+                                                e.stopPropagation();
+                                                console.log("edit page", this.parentNode.item.path);
+                                                self.scrollTop = main.content.scrollTop;
+                                                main.turn("page", ["edit", this.parentNode.item.path]);
+                                            }
+                                        })
+                                        .place(HTML.BUTTON, {
+                                            innerHTML: "clear",
+                                            title: "Remove page",
+                                            className: "icon notranslate tree-item-icon" + (values.persistent ? " hidden" : ""),
+                                            onclick: function (e) {
+                                                e.stopPropagation();
+                                                dialogConfirm = dialogConfirm || new u.dialog({
+                                                    title: "Removing page",
+                                                    items: [
+                                                        {innerHTML: "Page will be removed. Continue?"}
+                                                    ],
+                                                    positive: {
+                                                        label: u.create(HTML.SPAN, "Yes"),
+                                                        onclick: function () {
+                                                            console.log(dialogConfirm.current);
+                                                            u.progress.show("Removing page...");
+                                                            var ids = dialogConfirm.current.path.split(":");
+                                                            var options = {
+                                                                path: dialogConfirm.current.path,
+                                                                name: ids[2]
+                                                            };
+                                                            u.post("/admin/rest/page", {remove: options}).then(function (result) {
+                                                                u.progress.hide();
+                                                                u.toast.show("Page removed");
+                                                                main.turn("pages");
+                                                                // main.drawer.remove(options.name);
+                                                            }).catch(function (code, reason) {
+                                                                u.progress.hide();
+                                                                console.error(code, reason.response);
+                                                                u.toast.error("Error removing page" + (reason && reason.statusText ? ": " + reason.statusText : ""));
+                                                            });
+                                                        }
+                                                    },
+                                                    negative: {
+                                                        label: u.create(HTML.SPAN, "No")
+                                                    }
+                                                });
+                                                dialogConfirm.open();
+                                                dialogConfirm.current = this.parentNode.item;
+                                            }
                                         })
                                         .place(HTML.A, {
-                                            innerHTML: "[" + holder.type + "]",
+                                            innerHTML: "[" + values.type + "]",
                                             // className: "icon notranslate tree-item-icon",
-                                            href:"/" + this.id + "/" + holder.type,
-                                            target:"_blank"
+                                            href: "/" + this.path + "/" + values.type,
+                                            target: "_blank"
                                         })
                                 });
+                                if (category.id !== "10") {
+                                    category.editButtonNode.show();
+                                    if (structure[category.id] && structure[category.id].$options && structure[category.id].$options.explicit) {
+                                        category.showButtonNode.show();
+                                    } else {
+                                        category.hideButtonNode.show();
+                                    }
+                                }
+                                main.content.scrollTop = self.scrollTop;
                             }
-                            main.content.scrollTop = self.scrollTop;
-                        }.bind(this))
+                        }
+                        for (var i in json1.message) {
+                            u.require(json1.extra + "/" + json1.message[i], main).then(function (holder) {
+                                var category = holder && holder.category;
+                                category = this.items["" + category];
+                                if (category && "menu" in holder) {
+                                    category.add({
+                                        id: holder.type,
+                                        priority: holder.priority,
+                                        content: u.create(HTML.DIV, {className: "tree-item-title"})
+                                            .place(HTML.DIV, {
+                                                innerHTML: holder.title || holder.moduleName,
+                                                title: holder.moduleName + "'s responsibility, can not be edited"
+                                            })
+                                            .place(HTML.DIV, {
+                                                innerHTML: "lock_outline",
+                                                className: "icon notranslate tree-item-icon",
+                                                title: holder.moduleName + "'s responsibility, can not be edited"
+                                            })
+                                            .place(HTML.A, {
+                                                innerHTML: "[" + holder.type + "]",
+                                                // className: "icon notranslate tree-item-icon",
+                                                href: "/" + this.path + "/" + holder.type,
+                                                target: "_blank"
+                                            })
+                                    });
+                                    if (category.id !== "10") {
+                                        category.editButtonNode.show();
+                                        if (structure[category.id] && structure[category.id].$options && structure[category.id].$options.explicit) {
+                                            category.showButtonNode.show();
+                                        } else {
+                                            category.hideButtonNode.show();
+                                        }
+                                    }
+                                }
+                                main.content.scrollTop = self.scrollTop;
+                            }.bind(this))
+                        }
+                    } catch(e) {
+                        console.error(e)
                     }
                 }.bind(branch)).catch(function(e,x){
                     console.error(e,x);
@@ -227,21 +296,45 @@ function PagesHolder(main) {
         });
     };
 
-    function parsePages(pages, structure) {
-        structure = structure || {"0":{},"1":{},"2":{},"3":{},"4":{},"5":{},"6":{},"7":{},"8":{},"9":{},"10":{}};
+    function parsePages(page, categories, structure) {
+        structure = structure || [
+            {$options:{title: u.lang.drawer_primary}},
+            {$options:{title: u.lang.drawer_summary}},
+            {$options:{title: u.lang.drawer_main}},
+            {$options:{title: u.lang.drawer_explore}},
+            {$options:{title: u.lang.drawer_share}},
+            {$options:{title: u.lang.drawer_resources}},
+            {$options:{title: u.lang.drawer_miscellaneous}},
+            {$options:{title: u.lang.drawer_settings}},
+            {$options:{title: u.lang.drawer_help}},
+            {$options:{title: u.lang.drawer_last}},
+            {$options:{title: u.create(HTML.SPAN, "[out of menu]")}}
+        ];
         try {
-            if (!pages) return;
-            if (pages.constructor === Object) {
+            if (!page) return;
+            if (page.constructor === Object) {
                 // if (pages.menu) {
-                    var category = pages.category !== undefined ? pages.category : "10";
-                    structure[category] = structure[category] || {};
-                    if(!structure[category][pages.type]) {
-                        structure[category][pages.type] = pages;
+                if(page.resource) {
+                    var category = page.category !== undefined ? page.category : "10";
+                    if(!structure[category][page.type]) {
+                        structure[category][page.type] = page;
                     }
+                } else if(page.section) {
+                    var category = page.category !== undefined ? page.category : "10";
+                    structure[category] = structure[category] || {};
+
+                    var title = page.title;
+                    if(title) title = u.lang[title] || title;
+                    structure[category].$options.title = title || structure[category].$options.title;
+                    if(!(structure[category].$options.title instanceof HTMLElement)) {
+                        structure[category].$options.title = u.create(HTML.SPAN, structure[category].$options.title);
+                    }
+                    structure[category].$options.explicit = page.explicit || structure[category].$options.explicit;
+                }
                 // }
-            } else if (pages.constructor === Array) {
-                for (var i in pages) {
-                    parsePages(pages[i], structure);
+            } else if (page.constructor === Array) {
+                for (var i in page) {
+                    parsePages(page[i], categories, structure);
                 }
             }
         } catch(e) {

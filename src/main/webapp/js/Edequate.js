@@ -535,6 +535,9 @@ function Edequate(options) {
                             }
                         }
                     } else if(x === "variable") {
+                        if(create.variables[properties[x]]) {
+                            console.error("Variable", properties[x], "already defined");
+                        }
                         create.variables[properties[x]] = el;
                     } else if(x === "childName") {
                         if(appendTo ) {
@@ -1884,6 +1887,8 @@ function Edequate(options) {
             if(!object[x] || object[x].constructor === String || object[x].constructor === Number) {
                 // noinspection JSUnfilteredForInLoop
                 o[x] = object[x] || "";
+            } else if(object[x] instanceof HTMLElement) {
+                o[x] = object[x].cloneNode();
             } else {
                 // noinspection JSUnfilteredForInLoop
                 o[x] = cloneAsObject(object[x]);
@@ -2236,16 +2241,18 @@ function Edequate(options) {
         layout.headerTitle = create(HTML.DIV, {className:"drawer-header-title changeable", innerHTML:options.title}, layout.header);
         layout.headerSubtitle = create(HTML.DIV, {className:"drawer-header-subtitle changeable", innerHTML: options.subtitle }, layout.header);
 
-
         layout.menu = create(HTML.DIV, {className:"drawer-menu changeable"}, layout);
         options.sections = options.sections || {};
         for(var i=0;i<10;i++){
             layout.sections[i] = create({order:i, className:"hidden" + (i===9 ? "" : " drawer-menu-divider")}, layout.menu)
                 .place({className: "drawer-menu-section-title media-hidden"})
                 .place({});
-            if(options.sections[i]) {
-                layout.sections[i].firstChild.place({className: "drawer-menu-section-label", innerHTML: options.sections[i]});
+            var category = options.sections[i] || {};
+            if(category instanceof HTMLElement || category.constructor === String) {
+                category.title = category;
+                category.explicit = true;
             }
+            layout.sections[i].labelNode = u.create(HTML.DIV, {className: "drawer-menu-section-label" + (category.explicit ? "" : " hidden"), innerHTML: category.title}, layout.sections[i].firstChild);
 
             /** @namespace options.collapsible */
             if(options.collapsible && options.collapsible.indexOf(i) >= 0) {
@@ -3215,7 +3222,8 @@ function Edequate(options) {
             options = options || {};
             var leafOptions = {};
             leafOptions.id = options.id;
-            delete options.id;
+            leafOptions.path = options.path;
+            // delete options.id;
 
             options.level = options.level || 0;
             if(hideRoot) options.level --;
@@ -3265,11 +3273,9 @@ function Edequate(options) {
                     }
 
                     var ids = [];
-                    if (leaf.id) ids = leaf.id.split(":");
+                    if (leaf.path) ids = leaf.path.split(":");
                     ids.push(options.id);
-                    var oldId = options.id;
-                    var id = ids.join(":");
-                    options.id = id;
+                    options.path = ids.join(":");
 
                     options.level = ids.length;
                     options.priority = options.priority || 0;
@@ -3289,8 +3295,8 @@ function Edequate(options) {
 
                     if(leaf.iconNode) leaf.iconNode.innerHTML = "arrow_drop_down";
 
-                    root.raw[id] = subLeaf;
-                    leaf.items[oldId] = subLeaf;
+                    root.raw[options.path] = subLeaf;
+                    leaf.items[options.id] = subLeaf;
                     return subLeaf;
                 } catch(e) {
                     console.error(e);

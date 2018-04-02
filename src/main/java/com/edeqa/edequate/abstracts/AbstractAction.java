@@ -26,6 +26,7 @@ public abstract class AbstractAction<T> extends AbstractEntityHolder {
     public static final int CODE_STRING = 1;
     public static final int CODE_LIST = 2;
     public static final int CODE_JSON = 3;
+    public static final int CODE_HTML = 4;
 
     public static final int CODE_MOVED_TEMPORARILY = 302;
 

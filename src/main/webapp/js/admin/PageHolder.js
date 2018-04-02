@@ -10,6 +10,7 @@ function PageHolder(main) {
     this.title = "Pages";
     this.preventHistory = true;
     var dialog;
+    var dialogSection;
     var dialogConfirm;
     var dialogAddString;
     var sections;
@@ -23,25 +24,8 @@ function PageHolder(main) {
     var icons;
     var strings;
 
-    var categories = [
-        {"0": "Primary"},
-        {"1": "Summary"},
-        {"2": "Main"},
-        {"3": "Explore"},
-        {"4": "Share"},
-        {"5": "Resources"},
-        {"6": "Miscellaneous"},
-        {"7": "Settings"},
-        {"8": "Help"},
-        {"9": "Last"},
-        {"10": "[out of menu]"}
-    ];
-
     this.start = function() {
         div = main.content;
-
-
-
     };
 
     this.resume = function(action,id) {
@@ -63,7 +47,14 @@ function PageHolder(main) {
         }
         window.history.pushState({}, null, "/admin/page/" + action + (id ? "/" + id : ""));
 
-        u.require([{src:"/rest/locales", isJSON:true}, {src:"/rest/data/types", isJSON:true}, {src:"/rest/resources", body: {resource:"icons.json"}, isJSON: true}]).then(function(jsonLocales, json, jsonIcons){
+        var ids = (id || "").split(":");
+        u.require([
+            {src:"/rest/locales", isJSON:true},
+            {src:"/rest/data/types", isJSON:true},
+            {src:"/rest/resources", body: {resource:"icons.json"}, isJSON: true},
+            {src:"/rest/data", isJSON: true, body: {resource: "pages-" + ids[0] + ".json"}}
+        ]).then(function(jsonLocales, json, jsonIcons, structure){
+
             locales = jsonLocales.message;
             icons = jsonIcons || {};
             {
@@ -75,33 +66,20 @@ function PageHolder(main) {
                 }
             }
 
-            var resolved = false;
-            var ids = (id || "").split(":");
             if(action === "add") {
                 editPage(ids, {initial: true, section: json.message}, {mode:"Add page"});
-                return;
-            }
+            } else if(action === "edit") {
+                var pages = normalizeStructure(structure, [[],[],[],[],[],[],[],[],[],[],[]]);
 
-            for (var i in json.message) {
-                if(ids[0] && json.message[i] === ids[0]) {
-                    resolved = true;
-                    u.getJSON("/rest/data", {resource: "pages-" + json.message[i] + ".json"}).then(function(json) {
-                        var pages = normalizeStructure(json, [[],[],[],[],[],[],[],[],[],[],[]]);
-                        for(var i in pages[+ids[1]]) {
-                            if(pages[+ids[1]][i].type === ids[2]) {
-                                var page = pages[+ids[1]][i];
-                                page.section = ids[0];
-                                page.initial = true;
-                                editPage(ids, page, {mode:"Edit page"});
-                                break;
-                            }
-                        }
-                    }).catch(function(e,x){
-                        console.error(e,x);
-                    });
+                if(ids.length === 2) {
+                    editCategory(ids, pages[+ids[1]].$options);
+                } else {
+                    var page = pages[+ids[1]][ids[2]];
+                    page.section = ids[0];
+                    page.initial = true;
+                    editPage(ids, page, {mode:"Edit page"});
                 }
-            }
-            if(!resolved) {
+            } else {
                 main.turn("pages");
             }
         }).catch(function(e,x){
@@ -110,20 +88,89 @@ function PageHolder(main) {
         });
     };
 
-    function normalizeStructure(json, structure) {
-        if(json instanceof Array) {
-            for(var i in json) {
-                normalizeStructure(json[i], structure);
+    function normalizeStructure(pages, structure) {
+        structure = structure || {"0":{},"1":{},"2":{},"3":{},"4":{},"5":{},"6":{},"7":{},"8":{},"9":{},"10":{}};
+        try {
+            if (!pages) return;
+            if (pages.constructor === Object) {
+                // if (pages.menu) {
+                if(pages.resource) {
+                    var category = pages.category !== undefined ? pages.category : "10";
+                    structure[category] = structure[category] || {};
+                    if(!structure[category][pages.type]) {
+                        structure[category][pages.type] = pages;
+                    }
+                } else if(pages.section) {
+                    var category = pages.category !== undefined ? pages.category : "10";
+                    structure[category] = structure[category] || {};
+                    structure[category].$options = pages;
+                }
+                // }
+            } else if (pages.constructor === Array) {
+                for (var i in pages) {
+                    normalizeStructure(pages[i], structure);
+                }
             }
-        } else if(json instanceof Object) {
-            var category = +(json.category !== undefined ? json.category : 10);
-            if(category < 0 || category > 9) {
-                category = 10;
-                json.category = 10;
-            }
-            structure[category].push(json);
+        } catch(e) {
+            console.error(e);
         }
         return structure;
+    }
+
+    function editCategory(ids, category) {
+        category = category || {};
+        try {
+            dialogSection = dialogSection || u.dialog({
+                title: "Edit category",
+                items: [
+                    {type: HTML.SELECT, label: "Title", onchange: onselect},
+                    {type: HTML.CHECKBOX, label: "Show title"}
+                ],
+                positive: {
+                    label: u.create(HTML.SPAN, "OK"),
+                    dismiss: false,
+                    onclick: function () {
+                        u.progress.show("Saving...");
+                        var options = {
+                            section: ids[0],
+                            category: ids[1],
+                            title: titleNode.value,
+                            explicit: explicitNode.checked
+                        };
+                        u.post("/admin/rest/page", {initial: dialogSection.initialOptions, section: options}).then(function(result){
+                            main.eventBus.holders.$pages.start();
+                            dialogSection.close();
+                            main.turn("pages");
+                            u.progress.hide();
+                            u.toast.show("Section saved");
+                        }).catch(function (code, reason) {
+                            u.progress.hide();
+                            u.toast.error("Error saving section" + (reason && reason.statusText ? ": " + reason.statusText : ""));
+                        });
+                    }
+                },
+                negative: {
+                    label: u.create(HTML.SPAN, "Cancel"),
+                    onclick: function () {
+                        main.turn("pages");
+                    }
+                }
+            }, div.parentNode);
+            titleNode = dialogSection.items[0];
+            var explicitNode = dialogSection.items[1];
+
+            titleNode.value = category.title || "";
+            explicitNode.checked = category.explicit;
+
+            dialogSection.initialOptions = category;
+
+            populateWithLang(ids[0], [category.title], function() {
+                titleNode.value = category.title;
+            });
+            dialogSection.open();
+        } catch(e){
+            console.error(e);
+        }
     }
 
     function editPage(ids, page, options) {
@@ -134,7 +181,7 @@ function PageHolder(main) {
                 className: "page-edit-dialog",
                 items: [
                     {type: HTML.SELECT, label: "Section", values: sections},
-                    {type: HTML.SELECT, label: "Category", values: categories},
+                    {type: HTML.SELECT, label: "Category", values: main.categories},
                     {type: HTML.INPUT, label: "Name"},
                     {type: HTML.SELECT, label: "Language", values: locales, value: locale, onchange: function() {
                             function changeLocale() {
@@ -301,7 +348,7 @@ function PageHolder(main) {
             }
         }
         titleNode.setOptions(json);
-        menuNode.setOptions(json);
+        menuNode && menuNode.setOptions(json);
         if(callback) callback();
     }
 

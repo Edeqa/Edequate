@@ -15,8 +15,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class Pages extends FileRestAction {
 
@@ -26,11 +28,13 @@ public class Pages extends FileRestAction {
 
     private static final String CATEGORY = "category";
     private static final String CONTENT = "content";
+    public static final String EXPLICIT = "explicit";
     public static final String ICON = "icon";
     public static final String INITIAL = "initial";
     private static final String LOCALE = "locale";
     public static final String MENU = "menu";
     public static final String NAME = "name";
+    private static final String PATH = "path";
     private static final String PRIORITY = "priority";
     private static final String RESOURCE = "resource";
     private static final String REMOVE = "remove";
@@ -44,9 +48,10 @@ public class Pages extends FileRestAction {
     }
 
     @Override
-    public void call(JSONObject json, RequestWrapper request) {
-        String body = request.getBody();
-        if(Misc.isEmpty(body)) {
+    public void call(JSONObject json, RequestWrapper request) throws IOException {
+        JSONObject options = request.fetchOptions();
+
+        if(Misc.isEmpty(options)) {
             Misc.err("Pages", "not performed, arguments not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
@@ -54,21 +59,15 @@ public class Pages extends FileRestAction {
             return;
         }
 
-        JSONObject options = new JSONObject(body);
-        try {
-            Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-            directory = new File(arguments.getWebRootDirectory());
+        Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+        directory = new File(arguments.getWebRootDirectory());
 
-            if(options.has(UPDATE)) {
-                updatePage(json, options);
-            } else if(options.has(REMOVE)) {
-                removePage(json, options);
-            }
-        } catch (Exception e) {
-            Misc.err("Pages", e);
-            json.put(STATUS, STATUS_ERROR);
-            json.put(CODE, ERROR_RUNTIME);
-            json.put(MESSAGE, e.getMessage());
+        if(options.has(UPDATE)) {
+            updatePage(json, options);
+        } else if(options.has(REMOVE)) {
+            removePage(json, options);
+        } else if(options.has(SECTION)) {
+            updateSection(json, options);
         }
     }
 
@@ -81,7 +80,7 @@ public class Pages extends FileRestAction {
 
         if (!validate(json, initial, update)) return;
 
-        File updateFile = update.getOptions();
+        File updateFile = update.getOptionsFile();
         PagesStructure pagesStructure;
         if (updateFile.exists()) {
             pagesStructure = new PagesStructure().read(updateFile);
@@ -93,26 +92,12 @@ public class Pages extends FileRestAction {
         }
         pagesStructure.put(update);
 
-        System.out.println(update.getResource().toString());
-        try {
-            new WebPath(update.getResource()).save(update.content);
-            Misc.log("Pages", "file updated:", update.getResource(), "with content length:", update.content.length());
-        } catch (Exception e) {
-            Misc.err("Pages", "saving failed for", update, e);
-            json.put(STATUS, STATUS_ERROR);
-            json.put(CODE, ERROR_RUNTIME);
-            json.put(MESSAGE, e.getMessage());
-        }
-        try {
-            new WebPath(updateFile).save(pagesStructure.toJSON().toString(2));
-            json.put(STATUS, STATUS_SUCCESS);
-            Misc.log("Pages", "has updated:", update.toJSON(), "[" + update.locale + "]");
-        } catch (Exception e) {
-            Misc.err("Pages", "saving failed for", updateFile, e);
-            json.put(STATUS, STATUS_ERROR);
-            json.put(CODE, ERROR_RUNTIME);
-            json.put(MESSAGE, e.getMessage());
-        }
+        new WebPath(update.getResource()).save(update.content);
+        Misc.log("Pages", "file updated:", update.getResource(), "[" + update.content.length() + " byte(s)]");
+
+        new WebPath(updateFile).save(pagesStructure.toJSON().toString(2));
+        json.put(STATUS, STATUS_SUCCESS);
+        Misc.log("Pages", "has updated page:", update.toJSON(), "[" + update.locale + "]");
     }
 
     private void removePage(JSONObject json, JSONObject options) throws IOException {
@@ -121,40 +106,44 @@ public class Pages extends FileRestAction {
 
         if (!validate(json, initial, remove)) return;
 
-        File removeFile = remove.getOptions();
+        File removeFile = remove.getOptionsFile();
         PagesStructure pagesStructure;
-        try {
-            if (removeFile.exists()) {
-                pagesStructure = new PagesStructure().read(removeFile);
-                pagesStructure.remove(remove);
+        if (removeFile.exists()) {
+            pagesStructure = new PagesStructure().read(removeFile);
+            pagesStructure.remove(remove);
 
-                try {
-                    new WebPath(removeFile).save(pagesStructure.toJSON().toString(2));
-                    json.put(STATUS, STATUS_SUCCESS);
-                    Misc.log("Pages", "has removed:", remove.toJSON());
-                } catch (Exception e) {
-                    Misc.err("Pages", "removing failed for", remove, e);
-                    json.put(STATUS, STATUS_ERROR);
-                    json.put(CODE, ERROR_RUNTIME);
-                    json.put(MESSAGE, e.getMessage());
-                }
-            } else {
-                Misc.err("Pages", "not found", remove);
-                json.put(STATUS, STATUS_ERROR);
-                json.put(CODE, ERROR_NOT_FOUND);
-                json.put(MESSAGE, "Page not found");
-            }
-        }catch (Exception e) {
-            e.printStackTrace();
+            new WebPath(removeFile).save(pagesStructure.toJSON().toString(2));
+            json.put(STATUS, STATUS_SUCCESS);
+            Misc.log("Pages", "has removed:", remove.toJSON());
+        } else {
+            Misc.err("Pages", "not found", remove);
+            json.put(STATUS, STATUS_ERROR);
+            json.put(CODE, ERROR_NOT_FOUND);
+            json.put(MESSAGE, "Page not found");
         }
+    }
+
+    private void updateSection(JSONObject json, JSONObject options) throws IOException {
+        Category category = new Category().parse(options.getJSONObject(SECTION));
+        WebPath structureFile = new WebPath(category.getOptionsFile());
+        PagesStructure pagesStructure;
+        if (structureFile.path().exists()) {
+            pagesStructure = new PagesStructure().read(structureFile.path());
+        } else {
+            pagesStructure = new PagesStructure().parse("[]");
+        }
+        pagesStructure.put(category);
+        structureFile.save(pagesStructure.toJSON().toString(2));
+
+        json.put(STATUS, STATUS_SUCCESS);
+        Misc.log("Pages", "has updated category:", category.toJSON());
     }
 
     private boolean validate(JSONObject json, Resource initial, Resource update) throws IOException {
         if(initial != null) {
-            File updateFile = update.getOptions();
+            File updateFile = update.getOptionsFile();
             boolean found = false;
             for(File file: initial.getOptionsMulti()) {
-                System.out.println(file.getCanonicalPath()+":"+updateFile.getCanonicalPath());
                 if(file.getCanonicalPath().equals(updateFile.getCanonicalPath())) {
                     found = true;
                     break;
@@ -201,8 +190,15 @@ public class Pages extends FileRestAction {
 
         Resource parse(JSONObject json) {
             this.json = json;
+            if(json.has(PATH)) {
+                String[] path = json.getString(PATH).split(":");
+                section = path[0];
+                if(path.length > 1) category = path[1];
+                if(path.length > 2) resource = path[2];
+            }
             if(json.has(CATEGORY)) category = json.get(CATEGORY);
             if(category == null) category = 10;
+
             if(json.has(CONTENT)) content = json.getString(CONTENT);
             if(json.has(INITIAL)) initial = json.getBoolean(INITIAL);
             if(json.has(LOCALE)) locale = json.getString(LOCALE);
@@ -238,7 +234,7 @@ public class Pages extends FileRestAction {
             return locale != null ? locale : "en";
         }
 
-        File getOptions() {
+        File getOptionsFile() {
             return new File(directory, "data/pages-" + section + ".json");
         }
 
@@ -265,28 +261,90 @@ public class Pages extends FileRestAction {
         @Override
         public String toString() {
             return "Resource{" +
-                "initial=" + initial +
-                ", priority=" + priority +
-                ", resource='" + resource + '\'' +
-                ", icon='" + icon + '\'' +
-                ", category=" + category +
-                ", menu='" + menu + '\'' +
-                ", section='" + section + '\'' +
-                ", title='" + title + '\'' +
-                ", name='" + name + '\'' +
-                ", locale='" + locale + '\'' +
-                (content != null ? ", content=" + content.length() : "") +
-                "}";
+                           "initial=" + initial +
+                           ", priority=" + priority +
+                           ", resource='" + resource + '\'' +
+                           ", icon='" + icon + '\'' +
+                           ", category=" + category +
+                           ", menu='" + menu + '\'' +
+                           ", section='" + section + '\'' +
+                           ", title='" + title + '\'' +
+                           ", name='" + name + '\'' +
+                           ", locale='" + locale + '\'' +
+                           (content != null ? ", content=" + content.length() : "") +
+                           "}";
+        }
+    }
+
+    class Category {
+        private JSONObject json;
+        private Object section;
+        private boolean flat;
+        private Object category;
+        private String title;
+
+        Category() {
+            flat = true;
+        }
+
+        Category parse(JSONObject json) {
+            this.json = json;
+            if(json.has(PATH)) {
+                String[] path = json.getString(PATH).split(":");
+                section = path[0];
+                if(path.length > 1) category = path[1];
+            }
+            if(json.has(CATEGORY)) category = json.get(CATEGORY);
+            if(category == null) category = 10;
+
+            if(json.has(EXPLICIT)) flat = json.getBoolean(EXPLICIT);
+            if(json.has(SECTION)) section = json.get(SECTION);
+
+            if(json.has(TITLE)) title = json.getString(TITLE);
+
+            return this;
+        }
+
+        public Integer fetchCategory() {
+            return Integer.valueOf("" + category);
+        }
+
+        public JSONObject toJSON() {
+            if(json == null) json = new JSONObject();
+            JSONObject newJson = new JSONObject(json.toString());
+            newJson.put(CATEGORY, fetchCategory());
+            newJson.put(EXPLICIT, flat);
+            newJson.put(SECTION, section);
+            newJson.put(TITLE, title);
+            if(newJson.has(PATH)) newJson.remove(PATH);
+            return newJson;
+        }
+
+        File getOptionsFile() {
+            return new File(directory, "data/pages-" + section + ".json");
+        }
+
+        @Override
+        public String toString() {
+            return "Category{" +
+                           "json=" + json +
+                           ", section=" + section +
+                           ", flat=" + flat +
+                           ", category=" + category +
+                           ", title='" + title + '\'' +
+                           '}';
         }
     }
 
     class PagesStructure {
         private List<JSONArray> categories;
         private JSONArray json;
+        private Map<Integer,Category> categoriesOptions;
 
         PagesStructure parse(String string) {
             json = new JSONArray(string);
             categories = new ArrayList<>();
+            categoriesOptions = new HashMap<>();
             for(int i = 0; i < 11; i++) {
                 categories.add(new JSONArray());
             }
@@ -307,13 +365,20 @@ public class Pages extends FileRestAction {
         }
 
         private void parse(JSONObject object) {
-            Resource resource = new Resource().parse(object);
-            put(resource);
+            if(object.has(RESOURCE)) {
+                put(new Resource().parse(object));
+            } else if(object.has(SECTION)) {
+                put(new Category().parse(object));
+            }
         }
 
         public void put(Resource resource) {
             remove(resource);
             categories.get(Integer.valueOf(resource.category.toString())).put(resource.toJSON());
+        }
+
+        public void put(Category category) {
+            categoriesOptions.put(category.fetchCategory(), category);
         }
 
         public void remove(Resource resource) {
@@ -333,6 +398,9 @@ public class Pages extends FileRestAction {
                 if (category.length() > 0) {
                     json.put(category);
                 }
+            }
+            for (Map.Entry<Integer,Category> entry : categoriesOptions.entrySet()) {
+                json.put(entry.getValue().toJSON());
             }
             return json;
         }

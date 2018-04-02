@@ -44,6 +44,9 @@ public class Splash extends AbstractAction<RequestWrapper> {
     @Override
     public void call(JSONObject json, final RequestWrapper request) {
 
+        json.put(STATUS, STATUS_SUCCESS);
+        json.put(CODE, CODE_HTML);
+        json.put(MESSAGE, fetchSplash().build());
     }
 
     public HtmlGenerator fetchSplash() {
