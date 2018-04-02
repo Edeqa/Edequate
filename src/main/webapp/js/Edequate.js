@@ -1396,7 +1396,6 @@ function Edequate(options) {
                 }, titleLayout);
                 dialog.filterButton = create(HTML.DIV, {
                     className: "icon dialog-filter-button notranslate",
-                    innerHTML: "search",
                     onclick: function() {
                         dialog.filterButton.hide();
                         dialog.filterInput.classList.remove("hidden");
@@ -1461,8 +1460,7 @@ function Edequate(options) {
                     }
                 }, dialog.filterLayout);
                 dialog.filterClear = create(HTML.DIV, {
-                    className: "icon dialog-filter-clear hidden notranslate",
-                    innerHTML: "clear",
+                    className: "icon dialog-filter-clear hidden",
                     onclick: function() {
                         dialog.filterInput.value = "";
                         dialog.filterInput.focus();
@@ -1643,7 +1641,7 @@ function Edequate(options) {
 
         /** @namespace options.help */
         if(options.help) {
-            create(HTML.BUTTON, {className:"dialog-help-button icon", onclick:options.help, innerHTML:"help_outline"}, dialog);
+            create(HTML.BUTTON, {className:"dialog-help-button icon", onclick:options.help}, dialog);
         }
         /** @namespace options.resizeable */
         if(options.resizeable) {
@@ -2272,8 +2270,8 @@ function Edequate(options) {
                         save("drawer:section:collapsed:"+this.parentNode.order, true);
                     }
                 }, {passive: true});
-                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-expand notranslate" + (sectionCollapsed ? "" : " hidden"), innerHTML: "expand_more"});
-                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-collapse notranslate" + (sectionCollapsed ? " hidden" : ""), innerHTML: "expand_less"});
+                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-expand" + (sectionCollapsed ? "" : " hidden")});
+                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-collapse" + (sectionCollapsed ? " hidden" : "")});
             }
         }
 
@@ -2476,7 +2474,7 @@ function Edequate(options) {
                 }
             }
         });
-        create(HTML.SPAN, {innerHTML:"menu", className:"actionbar-button icon notranslate", onclick: options.onbuttonclick, onfocus:function(){}}, actionbar);
+        create(HTML.SPAN, {className:"actionbar-button icon", onclick: options.onbuttonclick, onfocus:function(){}}, actionbar);
         var label = create(HTML.DIV, {className:"actionbar-label changeable"}, actionbar);
         actionbar.titleNode = create(HTML.DIV, {className:"actionbar-label-title changeable", innerHTML: options.title || ""}, label);
         actionbar.subtitle = create(HTML.DIV, {className:"actionbar-label-subtitle changeable", innerHTML: options.subtitle || ""}, label);
@@ -2717,15 +2715,14 @@ function Edequate(options) {
                     }
                 }
                 var cell = create(HTML.DIV, item, table.head);
-                cell.sortIcon = create(HTML.DIV,{className:"icon table-sort notranslate hidden", innerHTML: "sort"}, cell);
+                cell.sortIcon = create(HTML.DIV,{className:"icon table-sort hidden"}, cell);
                 cell.label = create(HTML.SPAN, {innerHTML: item.innerHTML || item.label}, cell);
                 //cell.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;}
 
                 if(item.selectable) {
                     selectable = true;
                     cell.selectButton = create(HTML.DIV, {
-                        className:"icon table-select notranslate",
-                        innerHTML:"expand_more",
+                        className:"icon table-select",
                         onclick: function(e){
                             var cell = this.parentNode;
                             progressHolder.show();
@@ -2801,8 +2798,7 @@ function Edequate(options) {
 
             if((options.filter === undefined || options.filter) || (options.sort === undefined || options.sort) || selectable) {
                 table.resetButton = create(HTML.DIV, {
-                    className: "icon table-reset-button notranslate",
-                    innerHTML: "clear_all",
+                    className: "icon table-reset-button",
                     title: "Reset customizations",
                     onclick: function() {
                         table._sorts = [];
@@ -2833,8 +2829,7 @@ function Edequate(options) {
                 }, table);
 
                 table.filterButton = create(HTML.DIV, {
-                    className: "icon table-filter-button notranslate",
-                    innerHTML: "search",
+                    className: "icon table-filter-button",
                     title: "Filter",
                     onclick: function() {
                         table.filterButton.hide();
@@ -2887,8 +2882,7 @@ function Edequate(options) {
                     }
                 }, table.filterLayout);
                 table.filterClear = create(HTML.DIV, {
-                    className: "icon table-filter-clear hidden notranslate",
-                    innerHTML: "clear",
+                    className: "icon table-filter-clear hidden",
                     onclick: function() {
                         table.filterInput.value = "";
                         table.filterInput.focus();
