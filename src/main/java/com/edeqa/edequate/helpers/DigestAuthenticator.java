@@ -73,10 +73,12 @@ public class DigestAuthenticator extends Authenticator {
                 Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logout/" + context.getPrincipal());
 
                 httpExchange.setAttribute("digest-context", null);
-                Headers responseHeaders = httpExchange.getResponseHeaders();
-                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+                return fetchSplash(httpExchange, true, null);
 
-                return new Authenticator.Retry(401);
+//                Headers responseHeaders = httpExchange.getResponseHeaders();
+//                responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
+//
+//                return new Authenticator.Retry(401);
             }
             String challenge = authorization.substring(7);
             Map<String, String> challengeParameters = parseDigestChallenge(challenge);

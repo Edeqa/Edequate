@@ -51,7 +51,7 @@ function Restore(u) {
             var options = (url.search || "").split("&");
             for(var i in options) {
                 var x = options[i].split("=", 2);
-                if(x.length > 1 && x[0] === "request") {
+                if(x.length > 1 && x[0] === "once") {
                     u.getJSON("/admin/restore/password", {token:x[1]}).then(function(json) {
                         u.progress.hide();
                         showResetDialog(json.message);
@@ -123,7 +123,6 @@ function Restore(u) {
                             console.error(error,e,xhr);
                         }
                     });
-
                 }
             },
             negative: {

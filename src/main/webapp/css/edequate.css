@@ -763,6 +763,8 @@ button:hover, button:active {
     border-width: 0;
     background-color: white;
     opacity: 1;
+    width: auto;
+    z-index: 10000;
 }
 .menu .dialog-title {
     display: none;
