@@ -85,7 +85,7 @@ function PagesHolder(main) {
                 ]).then(function(json, json1){
                     try {
                         var id = this.id;
-                        var structure = parsePages(json, json1);
+                        var structure = normalizeStructure(json, json1);
 
                         for (var x in structure) {
                             var category = this.items[x] || this.add({
@@ -296,7 +296,7 @@ function PagesHolder(main) {
         });
     };
 
-    function parsePages(page, categories, structure) {
+    function normalizeStructure(page, categories, structure) {
         structure = structure || [
             {$options:{title: u.lang.drawer_primary}},
             {$options:{title: u.lang.drawer_summary}},
@@ -334,7 +334,7 @@ function PagesHolder(main) {
                 // }
             } else if (page.constructor === Array) {
                 for (var i in page) {
-                    parsePages(page[i], categories, structure);
+                    normalizeStructure(page[i], categories, structure);
                 }
             }
         } catch(e) {

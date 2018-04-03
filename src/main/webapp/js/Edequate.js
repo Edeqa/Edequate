@@ -624,6 +624,11 @@ function Edequate(options) {
                         if(!!properties[x]) {
                             el.setAttribute(x, "");
                         }
+                    } else if(x === "className") {
+                        var classes = (properties[x] || "").split(" ");
+                        for(var i in classes) {
+                            if(classes[i]) el.classList.add(classes[i]);
+                        }
                     } else {
                         var propertyName = normalizeName(x), value = properties[x];
                         if(value != undefined) {
@@ -1386,8 +1391,8 @@ function Edequate(options) {
                 //dialog.titleLayout
             };
 
-            if(options.title.button && options.title.button.icon) {
-                create(HTML.DIV, {className:"icon dialog-title-button notranslate" + optionalClassName(options.title.button.className), innerHTML:options.title.button.icon, onclick:options.title.button.onclick}, titleLayout);
+            if(options.title.button) {
+                create(HTML.DIV, {className:"icon dialog-title-button notranslate" + optionalClassName(options.title.button.className), innerHTML:options.title.button.icon || "", onclick:options.title.button.onclick}, titleLayout);
             }
 
             if(options.title.filter) {
@@ -3182,6 +3187,15 @@ function Edequate(options) {
 
         menu._add = menu.add;
         menu.add = function(item) {
+            if(item instanceof Array) {
+                if(item.length) {
+                    for(var i = 0; i < item.length; i++) {
+                        menu.add(item[i]);
+                    }
+                }
+                return menu;
+            }
+
             item._onclick = item.onclick;
             item.onclick = function(evt) {
                 if(this._onclick) this._onclick(evt);
@@ -3190,7 +3204,7 @@ function Edequate(options) {
             item.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;};
             menu._add(item);
         };
-        menu.addItems(items);
+        menu.add(items);
 
         menu._open = menu.open;
         menu.open = function(aroundNode) {

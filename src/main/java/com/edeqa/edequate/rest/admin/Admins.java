@@ -128,7 +128,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
             if (!add) {
                 admin = admins.get(login);
             }
-            if (json.has(PASSWORD)) admin.storePassword(json.getString(PASSWORD));
+            if (json.has(PASSWORD) && json.getString(PASSWORD).length() > 0) admin.storePassword(json.getString(PASSWORD));
             admin.fetchFrom(json);
 
             save();

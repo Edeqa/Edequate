@@ -23,6 +23,7 @@ function PageHolder(main) {
     var contentNode;
     var icons;
     var strings;
+    var categories;
 
     this.start = function() {
         div = main.content;
@@ -65,11 +66,14 @@ function PageHolder(main) {
                     sections.push(section);
                 }
             }
-
             if(action === "add") {
                 editPage(ids, {initial: true, section: json.message}, {mode:"Add page"});
             } else if(action === "edit") {
-                var pages = normalizeStructure(structure, [[],[],[],[],[],[],[],[],[],[],[]]);
+                var pages = normalizeStructure(structure);
+                categories = {};
+                for(var i in pages) {
+                    categories[i] = pages[i].$options.title;
+                }
 
                 if(ids.length === 2) {
                     editCategory(ids, pages[+ids[1]].$options);
@@ -88,34 +92,6 @@ function PageHolder(main) {
         });
     };
 
-    function normalizeStructure(pages, structure) {
-        structure = structure || {"0":{},"1":{},"2":{},"3":{},"4":{},"5":{},"6":{},"7":{},"8":{},"9":{},"10":{}};
-        try {
-            if (!pages) return;
-            if (pages.constructor === Object) {
-                // if (pages.menu) {
-                if(pages.resource) {
-                    var category = pages.category !== undefined ? pages.category : "10";
-                    structure[category] = structure[category] || {};
-                    if(!structure[category][pages.type]) {
-                        structure[category][pages.type] = pages;
-                    }
-                } else if(pages.section) {
-                    var category = pages.category !== undefined ? pages.category : "10";
-                    structure[category] = structure[category] || {};
-                    structure[category].$options = pages;
-                }
-                // }
-            } else if (pages.constructor === Array) {
-                for (var i in pages) {
-                    normalizeStructure(pages[i], structure);
-                }
-            }
-        } catch(e) {
-            console.error(e);
-        }
-        return structure;
-    }
 
     function editCategory(ids, category) {
         category = category || {};
@@ -132,16 +108,19 @@ function PageHolder(main) {
                     onclick: function () {
                         u.progress.show("Saving...");
                         var options = {
-                            section: ids[0],
-                            category: ids[1],
+                            section: dialogSection.initialOptions[0],
+                            category: dialogSection.initialOptions[1],
                             title: titleNode.value,
                             explicit: explicitNode.checked
                         };
-                        u.post("/admin/rest/page", {initial: dialogSection.initialOptions, section: options}).then(function(result){
+                        u.post("/admin/rest/page", {section: options}).then(function(result){
                             main.eventBus.holders.$pages.start();
                             dialogSection.close();
                             main.turn("pages");
                             u.progress.hide();
+                            if(options.section === "admin") {
+                                u.lang.updateNode(main.drawer.sections[options.category].labelNode, u.lang[options.title] || options.title);
+                            }
                             u.toast.show("Section saved");
                         }).catch(function (code, reason) {
                             u.progress.hide();
@@ -159,10 +138,11 @@ function PageHolder(main) {
             titleNode = dialogSection.items[0];
             var explicitNode = dialogSection.items[1];
 
+            dialogSection.setTitle("Edit category: %s/%s".sprintf(ids[0], ids[1]));
             titleNode.value = category.title || "";
             explicitNode.checked = category.explicit;
 
-            dialogSection.initialOptions = category;
+            dialogSection.initialOptions = ids;
 
             populateWithLang(ids[0], [category.title], function() {
                 titleNode.value = category.title;
@@ -181,7 +161,7 @@ function PageHolder(main) {
                 className: "page-edit-dialog",
                 items: [
                     {type: HTML.SELECT, label: "Section", values: sections},
-                    {type: HTML.SELECT, label: "Category", values: main.categories},
+                    {type: HTML.SELECT, label: "Category", values: categories},
                     {type: HTML.INPUT, label: "Name"},
                     {type: HTML.SELECT, label: "Language", values: locales, value: locale, onchange: function() {
                             function changeLocale() {
@@ -414,5 +394,52 @@ function PageHolder(main) {
             dialogAddString.open();
             stringNode.focus();
         }
+    }
+
+    function normalizeStructure(page, categories, structure) {
+        structure = structure || [
+            {$options:{title: u.lang.drawer_primary}},
+            {$options:{title: u.lang.drawer_summary}},
+            {$options:{title: u.lang.drawer_main}},
+            {$options:{title: u.lang.drawer_explore}},
+            {$options:{title: u.lang.drawer_share}},
+            {$options:{title: u.lang.drawer_resources}},
+            {$options:{title: u.lang.drawer_miscellaneous}},
+            {$options:{title: u.lang.drawer_settings}},
+            {$options:{title: u.lang.drawer_help}},
+            {$options:{title: u.lang.drawer_last}},
+            {$options:{title: u.create(HTML.SPAN, "[out of menu]")}}
+        ];
+        try {
+            if (!page) return;
+            if (page.constructor === Object) {
+                // if (pages.menu) {
+                if(page.resource) {
+                    var category = page.category !== undefined ? page.category : "10";
+                    if(!structure[category][page.type]) {
+                        structure[category][page.type] = page;
+                    }
+                } else if(page.section) {
+                    var category = page.category !== undefined ? page.category : "10";
+                    structure[category] = structure[category] || {};
+
+                    var title = page.title;
+                    if(title) title = u.lang[title] || title;
+                    structure[category].$options.title = title || structure[category].$options.title;
+                    if(!(structure[category].$options.title instanceof HTMLElement)) {
+                        structure[category].$options.title = u.create(HTML.SPAN, structure[category].$options.title);
+                    }
+                    structure[category].$options.explicit = page.explicit || structure[category].$options.explicit;
+                }
+                // }
+            } else if (page.constructor === Array) {
+                for (var i in page) {
+                    normalizeStructure(page[i], categories, structure);
+                }
+            }
+        } catch(e) {
+            console.error(e);
+        }
+        return structure;
     }
 }
