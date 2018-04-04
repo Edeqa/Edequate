@@ -391,19 +391,13 @@ public class DigestAuthenticator extends Authenticator {
             if(containsKey(key)) {
                 Long last = timestamp.get(key);
                 long now = Calendar.getInstance().getTimeInMillis();
-                if(timeout > 0 && now - last > timeout) {
-                    return true;
-                }
+                return timeout > 0 && now - last > timeout;
             }
             return false;
         }
 
         public boolean valid(Object key) {
-            if(containsKey(key) && !expired(key)) {
-                return true;
-            } else {
-                return false;
-            }
+            return containsKey(key) && !expired(key);
         }
 
         @Override

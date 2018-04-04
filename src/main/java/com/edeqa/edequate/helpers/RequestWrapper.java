@@ -166,7 +166,7 @@ public class RequestWrapper {
         }
     }
 
-    public OutputStream getOutputStream() throws IOException {
+    public OutputStream getOutputStream() {
         try {
             if(mode == MODE_SERVLET) {
                 return httpServletResponse.getOutputStream();
@@ -200,7 +200,7 @@ public class RequestWrapper {
         return null;
     }
 
-    public InputStream getRequestBody() throws IOException {
+    public InputStream getRequestBody() {
         return getInputStream();
     }
 
@@ -216,7 +216,7 @@ public class RequestWrapper {
         }
     }
 
-    public PrintWriter getPrintWriter() throws IOException {
+    public PrintWriter getPrintWriter() {
         try {
             if(mode == MODE_SERVLET) {
                 return httpServletResponse.getWriter();
@@ -363,7 +363,7 @@ public class RequestWrapper {
         sendResult(code, Mime.TEXT_PLAIN, string.getBytes());
     }
 
-    public void sendRedirect(String redirectLink) throws IOException {
+    public void sendRedirect(String redirectLink) {
         try {
             if(mode == MODE_SERVLET) {
                 setHeader(HttpHeaders.SERVER, "Edequate/" + Version.getVersion());

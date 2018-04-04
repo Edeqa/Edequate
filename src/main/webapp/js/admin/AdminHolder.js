@@ -20,7 +20,7 @@ function AdminHolder(main) {
             "missing": "Your password is missing.",
             "email": "Your e-mail is missing.",
             "weak": "Your password is weak."
-    }
+    };
 
     /** @namespace json.message.login */
     this.start = function() {

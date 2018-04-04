@@ -52,10 +52,10 @@ function EPromise() {
 	var values,error;
   this.setResult = function(result) {
   	values = result;
-  }
+  };
   this.setError = function(err) {
   	error = err;
-  }
+  };
 	this.then = function(callback) {
   	if(error) return this;
   	try {
