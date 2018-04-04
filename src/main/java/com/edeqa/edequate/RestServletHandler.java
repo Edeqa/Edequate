@@ -4,12 +4,13 @@ package com.edeqa.edequate;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
 import com.edeqa.edequate.rest.Resource;
 import com.edeqa.edequate.rest.Version;
+import com.edeqa.edequate.rest.system.Arguments;
+import com.edeqa.edequate.rest.system.OneTime;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 
@@ -50,6 +51,8 @@ public class RestServletHandler extends AbstractServletHandler {
 
         Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
 
+        getSystemBus().registerIfAbsent(new OneTime());
+
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("content").setActionName("/rest/content"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data"));
@@ -60,7 +63,7 @@ public class RestServletHandler extends AbstractServletHandler {
         registerAction(new Nothing());
     }
 
-    public AbstractAction<RequestWrapper> registerAction(AbstractAction<RequestWrapper> actionHolder) {
+    protected AbstractAction<RequestWrapper> registerAction(AbstractAction<RequestWrapper> actionHolder) {
         String actionName = actionHolder.getType();
 
 //        if(pool.containsKey(actionName)) {

@@ -2,10 +2,10 @@ package com.edeqa.edequate.rest.admin;
 
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.DigestAuthenticator;
-import com.edeqa.edequate.helpers.OneTimeAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Content;
+import com.edeqa.edequate.rest.system.Arguments;
+import com.edeqa.edequate.rest.system.OneTime;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
@@ -16,11 +16,11 @@ import org.json.JSONObject;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import static com.edeqa.edequate.helpers.OneTimeAction.LINK;
-import static com.edeqa.edequate.helpers.OneTimeAction.NONCE;
-import static com.edeqa.edequate.helpers.OneTimeAction.TIMEOUT;
-import static com.edeqa.edequate.helpers.OneTimeAction.TIMESTAMP;
 import static com.edeqa.edequate.rest.admin.Admins.PASSWORD;
+import static com.edeqa.edequate.rest.system.OneTime.LINK;
+import static com.edeqa.edequate.rest.system.OneTime.NONCE;
+import static com.edeqa.edequate.rest.system.OneTime.TIMEOUT;
+import static com.edeqa.edequate.rest.system.OneTime.TIMESTAMP;
 
 public class RestorePassword extends AbstractAction<RequestWrapper> {
 
@@ -36,15 +36,17 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
     @Override
     public void call(JSONObject json, RequestWrapper request) throws Exception {
 
+        //noinspection unchecked
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+        //noinspection unchecked
         Admins admins = (Admins) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Admins.TYPE);
 
         json.put(STATUS, STATUS_ERROR);
 
         JSONObject options = request.fetchOptions();
 
-        OneTimeAction oneTimeAction = new OneTimeAction();
-        oneTimeAction.setRequestWrapper(request);
+        //noinspection unchecked
+        OneTime.Action oneTimeAction = ((OneTime) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(OneTime.TYPE)).create();
         oneTimeAction.setRequestOptions(options);
         oneTimeAction.setOnFetchToken(DigestAuthenticator::createNonce);
         oneTimeAction.setOnError(error -> {
@@ -53,6 +55,7 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
             json.put(MESSAGE, "Request expired");
         });
         oneTimeAction.setOnWelcome(() -> {
+            //noinspection unchecked
             Splash splash = (Splash) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Splash.TYPE);
             String content = splash.setScript("/js/admin/Restore.js").fetchSplash().build();
             new Content()

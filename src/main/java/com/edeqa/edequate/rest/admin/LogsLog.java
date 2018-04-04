@@ -3,7 +3,7 @@ package com.edeqa.edequate.rest.admin;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.Version;
-import com.edeqa.edequate.rest.Arguments;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.Misc;
@@ -33,6 +33,7 @@ public class LogsLog extends AbstractAction<RequestWrapper> {
     public void call(JSONObject json, final RequestWrapper request) throws IOException {
         json.put(STATUS, STATUS_DELAYED);
 
+        //noinspection unchecked
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
 
         //noinspection HardCodedStringLiteral
@@ -68,38 +69,35 @@ public class LogsLog extends AbstractAction<RequestWrapper> {
         final PrintWriter pw = request.getPrintWriter();
         final BufferedReader input = new BufferedReader(new FileReader(file));
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String currentLine;
-                    long counter = 0;
+        new Thread(() -> {
+            try {
+                String currentLine;
+                long counter = 0;
 
-                    pw.println();
-                    while (!pw.checkError()) {
-                        if ((currentLine = input.readLine()) != null) {
-                            pw.print("data: ");
-                            pw.println(currentLine);
-                            pw.println();
-                            pw.flush();
-                            continue;
-                        }
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
+                pw.println();
+                while (!pw.checkError()) {
+                    if ((currentLine = input.readLine()) != null) {
+                        pw.print("data: ");
+                        pw.println(currentLine);
+                        pw.println();
+                        pw.flush();
+                        continue;
                     }
                     try {
-                        input.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
                     }
-                    pw.close();
-                } catch (Exception e) {
+                }
+                try {
+                    input.close();
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
+                pw.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }).start();
     }

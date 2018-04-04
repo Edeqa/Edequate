@@ -2,7 +2,6 @@ package com.edeqa.edequate;
 
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
-import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.admin.Admins;
@@ -11,6 +10,7 @@ import com.edeqa.edequate.rest.admin.LogsLog;
 import com.edeqa.edequate.rest.admin.Pages;
 import com.edeqa.edequate.rest.admin.RestorePassword;
 import com.edeqa.edequate.rest.admin.Splash;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;

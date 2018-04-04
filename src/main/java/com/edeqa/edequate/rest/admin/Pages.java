@@ -4,7 +4,7 @@ import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.FileRestAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
-import com.edeqa.edequate.rest.Arguments;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 
@@ -28,7 +28,7 @@ public class Pages extends FileRestAction {
 
     private static final String CATEGORY = "category";
     private static final String CONTENT = "content";
-    public static final String EXPLICIT = "explicit";
+    private static final String EXPLICIT = "explicit";
     public static final String ICON = "icon";
     public static final String INITIAL = "initial";
     private static final String LOCALE = "locale";
@@ -59,6 +59,7 @@ public class Pages extends FileRestAction {
             return;
         }
 
+        //noinspection unchecked
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
         directory = new File(arguments.getWebRootDirectory());
 

@@ -5,8 +5,8 @@ import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.DigestAuthenticator;
 import com.edeqa.edequate.helpers.ServletHandlerOptions;
 import com.edeqa.edequate.helpers.Version;
-import com.edeqa.edequate.rest.Arguments;
 import com.edeqa.edequate.rest.SecureContext;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 import com.sun.net.httpserver.HttpContext;
@@ -42,7 +42,9 @@ public class EdequateServer {
 
     static {
         EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);
+        //noinspection unchecked
         restBus = (EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS);
+        //noinspection unchecked
         systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
     }
 
@@ -93,7 +95,7 @@ public class EdequateServer {
 
     }
 
-    private static void setupServletHandlers() throws Exception {
+    private static void setupServletHandlers() {
         MainServletHandler mainServletHandler = new MainServletHandler();
         RestServletHandler restServletHandler = new RestServletHandler();
         AdminServletHandler adminServletHandler = new AdminServletHandler();

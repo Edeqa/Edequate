@@ -1,4 +1,4 @@
-package com.edeqa.edequate.rest;
+package com.edeqa.edequate.rest.system;
 
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.Version;

@@ -3,7 +3,7 @@ package com.edeqa.edequate.rest.admin;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
-import com.edeqa.edequate.rest.Arguments;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 import com.sun.net.httpserver.HttpExchange;
@@ -150,6 +150,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
     }
 
     public Admins read() {
+        //noinspection unchecked
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
         WebPath usersWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.admins.json");
         try {
@@ -175,6 +176,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
         for (Map.Entry<String, Admin> entry : admins.entrySet()) {
             adminsOut.put(entry.getKey(), entry.getValue().getJSON());
         }
+        //noinspection unchecked
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
         new WebPath(arguments.getWebRootDirectory(), "data/.admins.json").save(adminsOut.toString(2));
 
@@ -317,6 +319,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
 
             if(password == null/* || password.length() == 0*/) return;
 
+            //noinspection unchecked
             Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
             String realm = arguments.getRealm();
 
@@ -328,7 +331,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
             md5.update(password.getBytes());
 
             byte[] ha1 = toHexBytes(md5.digest());
-            Misc.log("Admins", "store login:", login, ", realm:"+realm+", digest:"+new String(ha1, "UTF-8"));
+            Misc.log("Admins", "store login:", login + ", realm:", realm + ", digest:", new String(ha1, "UTF-8"));
 
             this.json.put(DIGEST, new String(ha1, "UTF-8"));
 
@@ -350,7 +353,6 @@ public class Admins extends AbstractAction<RequestWrapper> {
                ", json=" + json +
                '}';
         }
-
     }
 
     public Admin get(String login) {

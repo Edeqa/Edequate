@@ -3,7 +3,7 @@ package com.edeqa.edequate.rest.admin;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.Version;
-import com.edeqa.edequate.rest.Arguments;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.HtmlGenerator;
 import com.edeqa.helpers.Mime;
@@ -51,6 +51,7 @@ public class Splash extends AbstractAction<RequestWrapper> {
 
     public HtmlGenerator fetchSplash() {
 
+        //noinspection unchecked
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
 
         HtmlGenerator html = new HtmlGenerator();

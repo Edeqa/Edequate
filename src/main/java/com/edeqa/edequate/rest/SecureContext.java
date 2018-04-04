@@ -1,6 +1,7 @@
 package com.edeqa.edequate.rest;
 
 import com.edeqa.edequate.abstracts.AbstractAction;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.helpers.Misc;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;

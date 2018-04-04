@@ -18,7 +18,6 @@ function Restore(u) {
     this.start = function(arguments) {
         self.arguments = arguments = arguments || {};
 
-        var info = arguments.info;
         self.mainType = arguments.type || "main";
         self.eventBus = u.eventBus;
 
@@ -94,7 +93,7 @@ function Restore(u) {
             positive: {
                 label: u.lang.ok,
                 dismiss: false,
-                onclick: function(event) {
+                onclick: function() {
                     var login = dialogRequest.items[0].value;
                     if(!login) {
                         u.toast.error("Login is not defined");
@@ -127,7 +126,7 @@ function Restore(u) {
             },
             negative: {
                 label: u.lang.cancel,
-                onclick: function(event) {
+                onclick: function() {
                     window.location = "/admin/";
                 }
             }
@@ -152,7 +151,7 @@ function Restore(u) {
             positive: {
                 label: u.lang.ok,
                 dismiss: false,
-                onclick: function(event) {
+                onclick: function() {
 
                     if(!passwordNode.value) {
                         u.toast.error("Password not defined");
@@ -172,7 +171,7 @@ function Restore(u) {
 
                     dialogReset.close();
                     u.progress.show("Wait...");
-                    u.getJSON("/admin/restore/password", {nonce: options.nonce, password:dialogReset.items[0].value}).then(function(json){
+                    u.getJSON("/admin/restore/password", {nonce: options.nonce, password:dialogReset.items[0].value}).then(function(){
                         u.progress.hide();
                         u.toast.show("Password has been updated");
                         window.location = "/admin/";
@@ -192,7 +191,7 @@ function Restore(u) {
             },
             negative: {
                 label: u.lang.cancel,
-                onclick: function(event) {
+                onclick: function() {
                     window.location = "/admin/";
                 }
             }

@@ -2,7 +2,7 @@ package com.edeqa.edequate.rest.admin;
 
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.rest.Arguments;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 
@@ -24,6 +24,7 @@ public class LogsClear extends AbstractAction<RequestWrapper> {
     @Override
     public void call(JSONObject json, final RequestWrapper request) throws Exception {
 
+        //noinspection unchecked
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
 
         File file = new File(arguments.getLogFile());
