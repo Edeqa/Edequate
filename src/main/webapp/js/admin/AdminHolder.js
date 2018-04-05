@@ -29,7 +29,7 @@ function AdminHolder(main) {
             if(json && json.message) {
                 var security = json.message.security || "missing";
                 if(security === "expired" || security === "missing" || security === "email") {
-                    main.turn("password");
+                    main.turn("security");
                     editAdmin(json.message, {mode:"Edit admin", action: security === "email" ? "email" : "password"});
                 }
                 if(strings[security]) {
@@ -149,7 +149,8 @@ function AdminHolder(main) {
                             u.toast.show("Admin saved");
                             dialog.close();
                             if(data.user === resultOptions.login) {
-                                window.location = "/admin/home";
+                                main.turn("logout");
+                                // window.location = "/admin/home";
                             } else {
                                 main.turn("admins");
                             }
@@ -164,7 +165,9 @@ function AdminHolder(main) {
                 negative: {
                     label: u.create(HTML.SPAN, "Cancel"),
                     onclick: function () {
-                        main.turn("admins");
+                        if(dialog.optionals.action !== "password" && dialog.optionals.action !== "email") {
+                            main.turn("admins");
+                        }
                     }
                 }
             }, div.parentNode);

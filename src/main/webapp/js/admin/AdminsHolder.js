@@ -12,7 +12,7 @@ function AdminsHolder(main) {
     this.title = "Admins";
     this.menu = "Admins";
     this.icon = "group";
-    this.priority = -10;
+    this.priority = -1;
     this.scrollTop = 0;
     var div;
 
@@ -28,7 +28,7 @@ function AdminsHolder(main) {
                 self.scrollTop = main.content.scrollTop;
                 main.turn("admin", ["add"]);
             }}, titleNode);
-        u.create(HTML.BUTTON, { className:"icon notranslate button-inline", innerHTML: "beenhere", title:"Roles", onclick: function(){
+        u.create(HTML.BUTTON, { className:"icon notranslate button-inline", innerHTML: "security", title:"Roles", onclick: function(){
                 self.scrollTop = main.content.scrollTop;
                 main.turn("roles");
             }}, titleNode);
