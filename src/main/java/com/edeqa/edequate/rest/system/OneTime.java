@@ -92,12 +92,7 @@ public class OneTime extends AbstractAction<Void> {
         }
 
         protected void addAction(String nonce, JSONObject json) throws IOException {
-            JSONObject tokens;
-            try {
-                tokens = new JSONObject(tokensFile.content());
-            } catch (Exception e) {
-                tokens = new JSONObject();
-            }
+            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
             tokens.put(nonce, json);
             tokensFile.save(tokens.toString(2));
         }
@@ -149,13 +144,8 @@ public class OneTime extends AbstractAction<Void> {
             }
         }
 
-        protected JSONObject getAction(String token) {
-            JSONObject tokens;
-            try {
-                tokens = new JSONObject(tokensFile.content());
-            } catch (Exception e) {
-                tokens = new JSONObject();
-            }
+        protected JSONObject getAction(String token) throws IOException {
+            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
             if(tokens.has(token)) {
                 return tokens.getJSONObject(token);
             } else {
@@ -164,12 +154,7 @@ public class OneTime extends AbstractAction<Void> {
         }
 
         protected void removeAction(String token) throws IOException {
-            JSONObject tokens;
-            try {
-                tokens = new JSONObject(tokensFile.content());
-            } catch (Exception e) {
-                tokens = new JSONObject();
-            }
+            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
             if(tokens.has(token)) {
                 tokens.remove(token);
                 tokensFile.save(tokens.toString(2));
@@ -177,7 +162,7 @@ public class OneTime extends AbstractAction<Void> {
         }
 
         protected void removeExpiredActions() throws IOException {
-            JSONObject tokens = new JSONObject(tokensFile.content());
+            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
             Iterator<String> iter = tokens.keys();
             boolean removed = false;
             while (iter.hasNext()) {

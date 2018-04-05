@@ -99,7 +99,7 @@ function Restore(u) {
                         u.toast.error("Login is not defined");
                         return;
                     }
-
+                    u.save("restore:login", login);
                     u.progress.show("Wait...");
                     u.getJSON("/admin/restore/password", {login:login}).then(function(json){
                         u.progress.hide();

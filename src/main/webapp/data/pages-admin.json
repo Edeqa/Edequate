@@ -17,10 +17,9 @@
       "persistent": true
     },
     {
-      "resource": "admin-password.html",
-      "title": "Admins",
-      "type": "password",
-      "description": "Descr",
+      "resource": "admin-security.html",
+      "title": "Security",
+      "type": "security",
       "persistent": true
     }
   ]

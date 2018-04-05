@@ -27,6 +27,7 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
     public static final String TYPE = "/admin/restore/password";
 
     private static final String LOGIN = "login";
+    private static final String REALM = "realm";
 
     @Override
     public String getType() {
@@ -81,6 +82,7 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
             }
             oneTimeAction.setPayload(new HashMap<String, Serializable>() {{
                 put(LOGIN, login);
+                put(REALM, arguments.getRealm());
             }});
             oneTimeAction.setStrong(true);
             oneTimeAction.setOnStart(token -> {

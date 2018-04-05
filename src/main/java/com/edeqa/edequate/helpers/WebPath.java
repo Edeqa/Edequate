@@ -82,7 +82,6 @@ public class WebPath {
             while ((c = reader.read()) != -1) {
                 fileContent.append((char) c);
             }
-            reader.close();
         }
         return fileContent.toString();
     }
@@ -101,8 +100,6 @@ public class WebPath {
             writer.close();
             if(path().exists()) path().delete();
             tempName.renameTo(path());
-        } catch(Exception e) {
-            throw e;
         }
     }
 }
