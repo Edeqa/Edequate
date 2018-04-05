@@ -178,13 +178,9 @@ public class Pages extends FileRestAction {
     class Resource {
         private JSONObject json;
         private boolean initial;
-        private int priority;
         private String resource;
-        private String icon;
         private Object category;
-        private String menu;
         private Object section;
-        private String title;
         private String name;
         private String locale;
         private String content;
@@ -263,13 +259,9 @@ public class Pages extends FileRestAction {
         public String toString() {
             return "Resource{" +
                            "initial=" + initial +
-                           ", priority=" + priority +
                            ", resource='" + resource + '\'' +
-                           ", icon='" + icon + '\'' +
                            ", category=" + category +
-                           ", menu='" + menu + '\'' +
                            ", section='" + section + '\'' +
-                           ", title='" + title + '\'' +
                            ", name='" + name + '\'' +
                            ", locale='" + locale + '\'' +
                            (content != null ? ", content=" + content.length() : "") +

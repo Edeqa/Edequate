@@ -118,7 +118,7 @@ function PagesHolder(main) {
                                                 path: this.parentNode.item.path,
                                                 explicit: false
                                             };
-                                            u.post("/admin/rest/page", {section: options}).then(function (result) {
+                                            u.post("/admin/rest/page", {section: options}).then(function () {
                                                 if (id === "admin") main.drawer.sections[category].labelNode.hide();
                                                 this.hide();
                                                 this.parentNode.parentNode.parentNode.hideButtonNode.show();
@@ -138,7 +138,7 @@ function PagesHolder(main) {
                                                 path: this.parentNode.item.path,
                                                 explicit: true
                                             };
-                                            u.post("/admin/rest/page", {section: options}).then(function (result) {
+                                            u.post("/admin/rest/page", {section: options}).then(function () {
                                                 if (id === "admin") main.drawer.sections[category].labelNode.show();
                                                 this.hide();
                                                 this.parentNode.parentNode.parentNode.showButtonNode.show();
@@ -200,7 +200,7 @@ function PagesHolder(main) {
                                                                 path: dialogConfirm.current.path,
                                                                 name: ids[2]
                                                             };
-                                                            u.post("/admin/rest/page", {remove: options}).then(function (result) {
+                                                            u.post("/admin/rest/page", {remove: options}).then(function () {
                                                                 u.progress.hide();
                                                                 u.toast.show("Page removed");
                                                                 main.turn("pages");
@@ -304,7 +304,7 @@ function PagesHolder(main) {
                         structure[category][page.type] = page;
                     }
                 } else if(page.section) {
-                    var category = page.category !== undefined ? page.category : "10";
+                    category = page.category !== undefined ? page.category : "10";
                     structure[category] = structure[category] || {};
 
                     var title = page.title;

@@ -83,14 +83,12 @@ public class Resource extends FileRestAction {
                 }
             }
         }
-
         Iterator<WebPath> iter = files.iterator();
         while(iter.hasNext()) {
             if(!iter.next().path().exists()) {
                 iter.remove();
             }
         }
-
         if(files.isEmpty()) {
             Misc.log("Resource", "not found");
             json.put(STATUS, STATUS_ERROR);
@@ -114,7 +112,6 @@ public class Resource extends FileRestAction {
             json.put(MESSAGE, path);
             return;
         }
-
         Object jsonContent = null;
         iter = files.iterator();
         while(iter.hasNext()) {

@@ -63,7 +63,7 @@ function PagesHolder(main) {
         }
     };
 
-    function setUpPages(pages, onlyBuildStructure) {
+    function setUpPages(pages) {
         try {
             if (!pages) return;
             if (self.isInstalled) return;

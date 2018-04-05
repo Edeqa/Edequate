@@ -34,10 +34,10 @@ import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
 @SuppressWarnings("unchecked")
 public class RestServletHandler extends AbstractServletHandler {
 
-    private EventBus<AbstractAction> restBus;
-    private EventBus<AbstractAction> systemBus;
+    private final EventBus<AbstractAction> restBus;
+    private final EventBus<AbstractAction> systemBus;
 
-    private Map<String, AbstractAction> pool;
+    private final Map<String, AbstractAction> pool;
 
     public RestServletHandler() {
         EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);

@@ -71,7 +71,7 @@ function PageHolder(main) {
             } else if(action === "edit") {
                 var pages = normalizeStructure(structure);
                 categories = {};
-                for(var i in pages) {
+                for(i in pages) {
                     categories[i] = pages[i].$options.title;
                 }
 
@@ -113,7 +113,7 @@ function PageHolder(main) {
                             title: titleNode.value,
                             explicit: explicitNode.checked
                         };
-                        u.post("/admin/rest/page", {section: options}).then(function(result){
+                        u.post("/admin/rest/page", {section: options}).then(function(){
                             main.eventBus.holders.$pages.start();
                             dialogSection.close();
                             main.turn("pages");
@@ -231,7 +231,7 @@ function PageHolder(main) {
                             priority: priorityNode.value,
                             content: contentNode.getValue()
                         };
-                        u.post("/admin/rest/page", {initial: dialog.initialOptions, update: options}).then(function(result){
+                        u.post("/admin/rest/page", {initial: dialog.initialOptions, update: options}).then(function(){
                             contentNode.changed = false;
                             main.eventBus.holders.$pages.start();
                             dialog.close();
@@ -422,7 +422,7 @@ function PageHolder(main) {
                         structure[category][page.type] = page;
                     }
                 } else if(page.section) {
-                    var category = page.category !== undefined ? page.category : "10";
+                    category = page.category !== undefined ? page.category : "10";
                     structure[category] = structure[category] || {};
 
                     var title = page.title;

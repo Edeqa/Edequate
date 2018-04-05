@@ -1,7 +1,6 @@
 package com.edeqa.edequate;
 
 import com.edeqa.edequate.abstracts.AbstractAction;
-import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.DigestAuthenticator;
 import com.edeqa.edequate.helpers.ServletHandlerOptions;
 import com.edeqa.edequate.helpers.Version;
@@ -17,7 +16,6 @@ import java.io.File;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -32,12 +30,11 @@ import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
 public class EdequateServer {
 
     private static final String LOG = "EdequateServer";
-    private static EventBus<AbstractAction> restBus;
-    private static EventBus<AbstractAction> systemBus;
+    private static final EventBus<AbstractAction> restBus;
+    private static final EventBus<AbstractAction> systemBus;
     private static HttpServer server;
     private static HttpsServer sslServer;
     private static HttpsServer adminServer;
-    private static Map<String, AbstractServletHandler> servletHandlers;
     private static Arguments arguments;
 
     static {
@@ -176,10 +173,6 @@ public class EdequateServer {
 
     protected static void setAdminServer(HttpsServer adminServer) {
         EdequateServer.adminServer = adminServer;
-    }
-
-    protected static Map<String, AbstractServletHandler> getServletHandlers() {
-        return servletHandlers;
     }
 
     protected static Arguments getArguments() {

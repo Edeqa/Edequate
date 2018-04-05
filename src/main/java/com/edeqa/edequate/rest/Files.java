@@ -21,12 +21,7 @@ public class Files extends FileRestAction {
     private Comparator<File> comparator;
     private boolean includeDirectories;
     private boolean includeFiles;
-    private Callable1<String,String> filenameProcess = new Callable1<String, String>() {
-        @Override
-        public String call(String name) {
-            return name;
-        }
-    };
+    private Callable1<String,String> filenameProcess = name -> name;
 
     public Files() {
         super();

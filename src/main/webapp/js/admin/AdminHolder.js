@@ -4,7 +4,6 @@
  * Created 3/21/18.
  */
 function AdminHolder(main) {
-    var self = this;
     var u = main.edequate;
 
     this.type = "admin";
@@ -144,7 +143,7 @@ function AdminHolder(main) {
                             roles: rolesNode.value,
                             add: dialog.optionals.action === "add"
                         };
-                        u.post("/admin/rest/data/admins", {initial: dialog.initialOptions, mode:"save", admin: resultOptions}).then(function(result){
+                        u.post("/admin/rest/data/admins", {initial: dialog.initialOptions, mode:"save", admin: resultOptions}).then(function(){
                             u.progress.hide();
                             u.toast.show("Admin saved");
                             dialog.close();

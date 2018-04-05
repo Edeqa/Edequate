@@ -37,7 +37,7 @@ public class DigestAuthenticator extends Authenticator {
     private static final Set<String> givenNonces = new HashSet<>();
     private static final SecureRandom random = new SecureRandom();
     private final String realm;
-    private final ExpiringHashMap<String,Object> timestamps = new ExpiringHashMap<String,Object>();//.setTimeout(1000 * 60 * 60L);
+    private final ExpiringHashMap<String,Object> timestamps = new ExpiringHashMap<>();//.setTimeout(1000 * 60 * 60L);
 
     public DigestAuthenticator(String realm) {
         this.realm = realm;
@@ -49,6 +49,7 @@ public class DigestAuthenticator extends Authenticator {
             DigestContext context = getOrCreateContext(httpExchange);
             String authorization = httpExchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+            //noinspection unchecked
             Admins admins = (Admins) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Admins.TYPE);
             if(!admins.exists()) {
                 admins.generate("admin");
@@ -126,6 +127,7 @@ public class DigestAuthenticator extends Authenticator {
             responseHeaders.add(HttpHeaders.WWW_AUTHENTICATE, "Digest " + getChallenge(false));
         }
 
+        //noinspection unchecked
         Splash splash = (Splash) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Splash.TYPE);
         String content = splash.setInfo(info).setButtons(true).fetchSplash().build();
         httpExchange.sendResponseHeaders(401, content.length());
@@ -143,6 +145,7 @@ public class DigestAuthenticator extends Authenticator {
             return null;
         }
 
+        //noinspection unchecked
         Admins admins = (Admins) ((EventBus<AbstractAction>) EventBus.getOrCreate(RESTBUS)).getHolder(Admins.TYPE);
         if(!admins.exists(username)) {
             Misc.err("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "not found user [" + username + "]");
@@ -371,7 +374,7 @@ public class DigestAuthenticator extends Authenticator {
     }
 
     public class ExpiringHashMap<K,V> extends HashMap<K,V> {
-        private HashMap<K,Long> timestamp;
+        private final HashMap<K,Long> timestamp;
         private Long timeout = 0L;
         private int max = 100;
 

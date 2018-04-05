@@ -562,14 +562,14 @@ function Edequate(options) {
                         var nodes = [];
                         if(properties[x] instanceof HTMLElement) {
                             if(properties[x].childNodes) {
-                                for (var i = 0; i < properties[x].childNodes.length; i++) {
+                                for (i = 0; i < properties[x].childNodes.length; i++) {
                                     nodes.push(properties[x].childNodes[i]);
                                 }
                             }
                         } else if (properties[x].constructor === Array) {
                             nodes = properties[x];
                         }
-                        for(var i = 0; i < nodes.length; i++) {
+                        for(i = 0; i < nodes.length; i++) {
                             if(nodes[i] instanceof HTMLElement) {
                                 el.appendChild(nodes[i]);
                             }
@@ -626,7 +626,7 @@ function Edequate(options) {
                         }
                     } else if(x === "className") {
                         var classes = (properties[x] || "").split(" ");
-                        for(var i in classes) {
+                        for(i in classes) {
                             if(classes[i]) el.classList.add(classes[i]);
                         }
                     } else {
@@ -1129,7 +1129,7 @@ function Edequate(options) {
 
             if(item.order) {
                 var appended = false;
-                for(var i in appendTo.childNodes) {
+                for(i in appendTo.childNodes) {
                     if(!appendTo.childNodes.hasOwnProperty(i)) continue;
                     if(appendTo.childNodes[i].order > item.order) {
                         appendTo.insertBefore(div, appendTo.childNodes[i]);
@@ -1148,7 +1148,7 @@ function Edequate(options) {
 
         dialog.setItems = function(items) {
             dialog.clearItems();
-            dialog.addItems(items);
+            dialog.add(items);
             return dialog;
         };
 
@@ -1270,7 +1270,7 @@ function Edequate(options) {
             } else {
                 dialog.close();
             }
-            if(options.title && options.title.button == defaultCloseButton) {
+            if(options.title && options.title.button === defaultCloseButton) {
                 window.addEventListener("popstate", backButtonAction, {passive: true});
             }
             return dialog;
@@ -1716,6 +1716,7 @@ function Edequate(options) {
 
     function NodeSelect(options, appendTo) {
         options = options || {};
+        /** @namespace options.optionClassName */
         var optionClassName = options.optionClassName;
         delete options.optionClassName;
         var values = options.values || options.options;
@@ -1737,7 +1738,7 @@ function Edequate(options) {
                 for (var i in values) {
                     // noinspection JSUnfilteredForInLoop
                     var value = values[i];
-                    for (y in value) {
+                    for (var y in value) {
                         // noinspection JSUnfilteredForInLoop
                         var valueOptions = {
                             value: y,
@@ -2255,7 +2256,7 @@ function Edequate(options) {
                 category.title = category;
                 category.explicit = true;
             }
-            layout.sections[i].labelNode = u.create(HTML.DIV, {className: "drawer-menu-section-label" + (category.explicit ? "" : " hidden"), innerHTML: category.title}, layout.sections[i].firstChild);
+            layout.sections[i].labelNode = create(HTML.DIV, {className: "drawer-menu-section-label" + (category.explicit ? "" : " hidden"), innerHTML: category.title}, layout.sections[i].firstChild);
 
             /** @namespace options.collapsible */
             if(options.collapsible && options.collapsible.indexOf(i) >= 0) {
@@ -2638,6 +2639,7 @@ function Edequate(options) {
                 table.head.cells[index].firstChild.classList[sort > 0 ? "add" : "remove"]("table-sort-descend");
 
                 var rows = [];
+                /** @namespace table.body.childNodes */
                 for(var i = 0; i < table.body.childNodes.length; i++) {
                     rows.push(table.body.childNodes[i]);
                 }

@@ -72,7 +72,6 @@ public class OneTime extends AbstractAction<Void> {
 
         /**
          * Generates and stores the token using the payload was set with {@code setPayload}. After all calls {@code onStart} with token. Thus, {@code setPayload} and {@code setOnStart} must be called before {@code start}.
-         * @throws Exception
          */
         public void start() throws Exception {
             removeExpiredActions();

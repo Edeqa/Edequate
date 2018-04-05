@@ -183,7 +183,7 @@ public class RequestWrapper {
         return null;
     }
 
-    public OutputStream getResponseBody() throws IOException {
+    public OutputStream getResponseBody() {
         return getOutputStream();
     }
 
@@ -259,9 +259,8 @@ public class RequestWrapper {
                 Map<String, List<String>> headers = new HashMap<>();
                 Map.Entry<String, List<String>> entry;
 
-                Iterator<Map.Entry<String, List<String>>> iter = httpExchange.getRequestHeaders().entrySet().iterator();
-                while (iter.hasNext()) {
-                    entry = iter.next();
+                for (Map.Entry<String, List<String>> stringListEntry : httpExchange.getRequestHeaders().entrySet()) {
+                    entry = stringListEntry;
                     headers.put(entry.getKey(), entry.getValue());
                 }
                 return headers;

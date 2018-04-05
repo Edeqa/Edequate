@@ -44,6 +44,7 @@ public class MainServletHandler extends AbstractServletHandler {
 
     public MainServletHandler() {
         EventBus.setMainRunner(EventBus.RUNNER_SINGLE_THREAD);
+        //noinspection unchecked
         systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
         setMimeTypes(new MimeTypes().useDefault());
         setReplacements(new Replacements());
@@ -52,6 +53,7 @@ public class MainServletHandler extends AbstractServletHandler {
     @Override
     public void init() throws ServletException {
         super.init();
+        //noinspection unchecked
         systemBus = (EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS);
     }
 
@@ -70,7 +72,6 @@ public class MainServletHandler extends AbstractServletHandler {
             return;
         }
 
-        String host = requestWrapper.getRequestedHost();
         String referer = requestWrapper.getReferer();
         String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
         WebPath webPath = new WebPath(getWebDirectory(), uri.getPath());
@@ -83,9 +84,11 @@ public class MainServletHandler extends AbstractServletHandler {
             resultCode = 403;
             webPath = new WebPath(getWebDirectory(), "403.html");
 //                Utils.sendResult.onEvent(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
-        } else if(!webPath.path().exists() || webPath.path().getName().startsWith(".")) {
+        } else if(!webPath.path().exists() || webPath.path().getName().startsWith("\\.")) {
             String beginWeb = webPath.web(1);
-            if("/main".startsWith(beginWeb) || "/rest".startsWith(beginWeb) || "/admin".startsWith(beginWeb)) {
+            String[] parts = beginWeb.split("/");
+
+            if ("/main".startsWith(beginWeb) || "/rest".startsWith(beginWeb) || "/admin".startsWith(beginWeb)) {
                 webPath = new WebPath(getWebDirectory(), "index.html");
                 if (!webPath.path().exists()) {
                     new Content()
@@ -97,6 +100,23 @@ public class MainServletHandler extends AbstractServletHandler {
                     return;
                 }
             } else {
+
+//                String[] parts = webPath.web().split("/");
+//                System.out.println(parts[0] + ":"+ parts[1]);
+//                if(parts.length > 1 ) {
+//                    WebPath subWebPath = new WebPath(getWebDirectory(), "index-" + parts[1] + ".html");
+//                    if (subWebPath.path().exists()) {
+//                        MimeType mimeType = getMimeTypes().fetchMimeFor(subWebPath.path().getName());
+//                        new Content()
+//                                .setReplacements(getReplacements())
+//                                .setMimeType(mimeType)
+//                                .setWebPath(subWebPath)
+//                                .setResultCode(resultCode)
+//                                .call(null, requestWrapper);
+//                        return;
+//                    }
+//                }
+
                 Misc.err("Main", "[" + ipRemote + "]", uri.getPath(), "[404 - not found]", (referer != null ? "referer: " + referer : ""));
                 requestWrapper.sendError(404, "File not found");
                 return;
@@ -108,6 +128,7 @@ public class MainServletHandler extends AbstractServletHandler {
             // Object does not exist or is not a file: reject with 404 error.
 
             boolean found = false;
+
 //            String[] parts = path.split("/");
 //            if(parts.length > 1) {
 //                for (int i = 0; i < OPTIONS.getPages().length(); i++) {

@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class ServletHandlerOptions {
 
-    private static Map<HttpServer, Bundle> bundles = new HashMap<>();
+    private static final Map<HttpServer, Bundle> bundles = new HashMap<>();
 
     private HttpServer server;
     private String context;
@@ -56,7 +56,7 @@ public class ServletHandlerOptions {
 
     public static class Bundle {
         private final HttpServer server;
-        private Map<String, ServletHandlerOptions> items;
+        private final Map<String, ServletHandlerOptions> items;
 
         Bundle(HttpServer server) {
             this.server = server;

@@ -16,6 +16,7 @@ function LogsHolder(main) {
     var logBody;
     var logCaption;
     var div;
+    var newTimestamp;
 
     this.start = function() {
         div = main.content;

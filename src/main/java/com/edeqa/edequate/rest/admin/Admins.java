@@ -108,7 +108,7 @@ public class Admins extends AbstractAction<RequestWrapper> {
     private void saveAdmin(JSONObject json, JSONObject initial) throws Exception {
         read();
         try {
-            String login = null, password = null;
+            String login = null;
             if (json.has(LOGIN)) login = json.getString(LOGIN);
 
             boolean add = false;
@@ -205,8 +205,8 @@ public class Admins extends AbstractAction<RequestWrapper> {
     }
 
     public class Admin {
-        private String login;
-        private JSONObject json;
+        private final String login;
+        private final JSONObject json;
 
         public Admin(String login, JSONObject json) {
             this.login = login;

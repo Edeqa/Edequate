@@ -203,9 +203,6 @@ Arguments object will be stored as the property `arguments`.
     require
     save
 
-
-#### Main methods
-
 #### Actionbar
 
 #### Dialog
