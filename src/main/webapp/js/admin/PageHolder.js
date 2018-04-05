@@ -138,14 +138,15 @@ function PageHolder(main) {
             titleNode = dialogSection.items[0];
             var explicitNode = dialogSection.items[1];
 
-            dialogSection.setTitle("Edit category: %s/%s".sprintf(ids[0], ids[1]));
-            titleNode.value = category.title || "";
+            titleNode.value = category.title && category.title.dataset && category.title.dataset.lang || category.title && category.title.innerText || category.title || "";
             explicitNode.checked = category.explicit;
+
+            dialogSection.setTitle("Edit category: %s / %s".sprintf((ids[0] || "").toUpperCaseFirst(), category.title ? category.title.innerText || category.title : ids[1]));
 
             dialogSection.initialOptions = ids;
 
             populateWithLang(ids[0], [category.title], function() {
-                titleNode.value = category.title;
+                titleNode.value = category.title && category.title.dataset && category.title.dataset.lang || category.title && category.title.innerText || category.title || "";
             });
             dialogSection.open();
         } catch(e){
@@ -322,8 +323,10 @@ function PageHolder(main) {
         json[""] = "[ Add ]";
         if(optional) {
             for(var i in optional) {
-                if(optional[i] && !json[optional[i]]) {
-                    json[optional[i]] = optional[i];
+                if(!optional[i]) continue;
+                var value = optional[i].innerText || optional[i];
+                if(value && !json[value]) {
+                    json[value] = value;
                 }
             }
         }
@@ -343,7 +346,6 @@ function PageHolder(main) {
                     locale: locale
                 }).then(function (xhr) {
                     contentNode.setValue(xhr.response);
-                    u.progress.hide();
                 }).catch(function (error, json) {
                     console.error("Error", error, json);
                     contentNode.setValue("");

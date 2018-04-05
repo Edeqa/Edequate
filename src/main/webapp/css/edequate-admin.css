@@ -83,13 +83,14 @@ div.question {
     font-family: monospace;
 }
 .button-inline {
-    stroke: darkslategray;
-    color: darkslategray;
     background-color: transparent;
-    outline: none;
     border: 0;
+    color: darkslategray;
+    font-size: 14px;
+    height: 24px;
+    outline: none;
+    stroke: darkslategray;
     width: 32px;
-    height: 27px;
 }
 .button-inline:hover, .button-inline:focus {
     stroke: darkslategray;

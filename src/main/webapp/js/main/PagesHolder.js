@@ -19,40 +19,44 @@ function PagesHolder(main) {
     this.isInstalled = false;
     this.currentType = null;
     this.preventHistory = true;
+    this.preventState = true;
 
 
-    this.start = function() {
+    this.start = function () {
         console.log("Starting PagesHolder");
-        u.getJSON("/rest/data", {resource: "pages-" + main.mainType + ".json"}).then(function(json){
+        u.getJSON("/rest/data", {resource: "pages-" + main.mainType + ".json"}).then(function (json) {
             self.origin = json;
             setUpPages(json);
-        }).catch(function(e,x){
-            console.error(e,x);
+        }).catch(function (e, x) {
+            console.error(e, x);
         });
     };
 
-    this.resume = function(type) {
+    this.resume = function (type) {
         u.progress.show(u.lang.loading);
-        if(type) {
+        if (type) {
             this.currentType = type;
         } else {
             type = this.currentType;
         }
 
-        if(!self.pages) {
-            u.getJSON("/rest/data", {resource: "pages-" + main.mainType + ".json", locale: main.selectLang.value}).then(function(json){
+        if (!self.pages) {
+            u.getJSON("/rest/data", {
+                resource: "pages-" + main.mainType + ".json",
+                locale: main.selectLang.value
+            }).then(function (json) {
                 setUpPages(json);
                 processPage(type);
-            }).catch(function(e,x){
-                console.error(e,x);
+            }).catch(function (e, x) {
+                console.error(e, x);
             });
         } else /*if(self.pages[type])*/ {
             processPage(type);
         }
     };
 
-    this.onEvent = function(event, object) {
-        switch(event) {
+    this.onEvent = function (event) {
+        switch (event) {
             case "loaded":
                 setUpPages(self.pages);
                 break;
@@ -66,16 +70,16 @@ function PagesHolder(main) {
             if (pages.constructor === Object) {
                 if (pages.type) {
                     self.pages = self.pages || {};
-                    if(!self.pages[pages.type]) {
+                    if (!self.pages[pages.type]) {
                         self.pages[pages.type] = pages;
                         var icon = pages.icon;
-                        if(icon && icon.split("/").length > 1) {
+                        if (icon && icon.split("/").length > 1) {
                             icon = u.create(HTML.IMG, {
                                 src: icon,
                                 className: "icon drawer-menu-item-icon"
                             })
                         }
-                        if(pages.menu) {
+                        if (pages.menu) {
                             pages.drawerItem = main.drawer.add({
                                 section: pages.category,
                                 id: pages.type,
@@ -96,7 +100,7 @@ function PagesHolder(main) {
                                 }.bind(pages)
                             });
                         }
-                    } else if(main.drawer.items[pages.type]) {
+                    } else if (main.drawer.items[pages.type]) {
                         u.lang.updateNode(main.drawer.items[pages.type].labelNode, u.lang[pages.menu] || pages.menu);
                     }
                 }
@@ -105,7 +109,7 @@ function PagesHolder(main) {
                     setUpPages(pages[i]);
                 }
             }
-        } catch(e) {
+        } catch (e) {
             console.error(e);
         }
     }
@@ -113,26 +117,22 @@ function PagesHolder(main) {
     function processPage(type) {
         try {
             var page = self.pages[type];
-            if(!page) {
+            if (!page) {
                 main.holder = u.eventBus.holders[404];
                 // main.turn(404, type);
-                if(main.holder) {
-                    if(type) {
+                if (main.holder) {
+                    if (type) {
                         main.holder.resume(type);
                     } else {
                         main.holder.resume();
                     }
-                    // if(!main.holder.preventState) {
-                    //     main.history.add(holderType, options);
-                        main.actionbar.setTitle(main.holder.title);
-                        u.lang.updateNode(main.drawer.headerPrimary, main.holder.title);
-                    // }
+                    main.actionbar.setTitle(main.holder.title);
+                    u.lang.updateNode(main.drawer.headerPrimary, main.holder.title);
                 } else {
                     window.location = "/";
                 }
                 return;
             }
-
             u.post("/rest/content", {
                 resource: page.resource,
                 locale: main.selectLang.value
@@ -154,12 +154,11 @@ function PagesHolder(main) {
                 main.eventBus.fire("pages_done", type);
                 u.progress.hide();
             });
-
             window.history.pushState({}, null, "/" + main.mainType + "/" + type);
             main.history.add(self.type, [type]);
             main.actionbar.setTitle(u.lang[page.title] || page.title);
             u.lang.updateNode(main.drawer.headerPrimary, u.lang[page.title] || page.title);
-        } catch(e) {
+        } catch (e) {
             console.error(e);
         }
     }

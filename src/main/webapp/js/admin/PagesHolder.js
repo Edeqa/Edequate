@@ -28,11 +28,6 @@ function PagesHolder(main) {
         var tree = new u.tree({hideRoot:true, expanded:true});
         div.appendChild(tree);
 
-        u.create(HTML.BUTTON, { className:"icon button-inline", innerHTML: "add", title:"Add page", onclick: function(){
-                console.log("add");
-                self.scrollTop = main.content.scrollTop;
-                main.turn("page", ["add"]);
-            }}, titleNode);
         u.create(HTML.BUTTON, { className:"icon button-inline", innerHTML: "expand_more", title:"Expand all", onclick: function(){
                 tree.expand();
             }}, titleNode);
@@ -55,7 +50,6 @@ function PagesHolder(main) {
                             className:"icon notranslate tree-item-icon",
                             onclick: function (e) {
                                 e.stopPropagation();
-                                console.log("add page to", this.parentNode.item.path);
                                 self.scrollTop = main.content.scrollTop;
                                 main.turn("page", ["add",this.parentNode.item.path]);
                             }
@@ -99,7 +93,6 @@ function PagesHolder(main) {
                                         className: "icon notranslate tree-item-icon",
                                         onclick: function (e) {
                                             e.stopPropagation();
-                                            console.log("add page to", this.parentNode.item.path);
                                             self.scrollTop = main.content.scrollTop;
                                             main.turn("page", ["add", this.parentNode.item.path]);
                                         }
@@ -120,19 +113,16 @@ function PagesHolder(main) {
                                         className: "icon notranslate tree-item-icon hidden",
                                         onclick: function (e) {
                                             e.stopPropagation();
-                                            console.log("show title", this.parentNode.item.path);
                                             var category = this.parentNode.item.id;
                                             var options = {
                                                 path: this.parentNode.item.path,
                                                 explicit: false
                                             };
                                             u.post("/admin/rest/page", {section: options}).then(function (result) {
-                                                console.log("title shown");
                                                 if (id === "admin") main.drawer.sections[category].labelNode.hide();
                                                 this.hide();
                                                 this.parentNode.parentNode.parentNode.hideButtonNode.show();
                                             }.bind(this)).catch(function (code, reason) {
-                                                console.error(code, reason.response);
                                                 u.toast.error("Error switching title" + (reason && reason.statusText ? ": " + reason.statusText : ""));
                                             });
                                         }
@@ -143,19 +133,16 @@ function PagesHolder(main) {
                                         className: "icon notranslate tree-item-icon hidden",
                                         onclick: function (e) {
                                             e.stopPropagation();
-                                            console.log("hide title", this.parentNode.item.path);
                                             var category = this.parentNode.item.id;
                                             var options = {
                                                 path: this.parentNode.item.path,
                                                 explicit: true
                                             };
                                             u.post("/admin/rest/page", {section: options}).then(function (result) {
-                                                console.log("title hidden");
                                                 if (id === "admin") main.drawer.sections[category].labelNode.show();
                                                 this.hide();
                                                 this.parentNode.parentNode.parentNode.showButtonNode.show();
                                             }.bind(this)).catch(function (code, reason) {
-                                                console.error(code, reason.response);
                                                 u.toast.error("Error switching title" + (reason && reason.statusText ? ": " + reason.statusText : ""));
                                             });
                                         }
@@ -183,10 +170,15 @@ function PagesHolder(main) {
                                             className: "icon notranslate tree-item-icon",
                                             onclick: function (e) {
                                                 e.stopPropagation();
-                                                console.log("edit page", this.parentNode.item.path);
                                                 self.scrollTop = main.content.scrollTop;
                                                 main.turn("page", ["edit", this.parentNode.item.path]);
                                             }
+                                        })
+                                        .place(HTML.A, {
+                                            innerHTML: "[" + values.type + "]",
+                                            // className: "icon notranslate tree-item-icon",
+                                            href: "/" + this.path + "/" + values.type,
+                                            target: "_blank"
                                         })
                                         .place(HTML.BUTTON, {
                                             innerHTML: "clear",
@@ -202,7 +194,6 @@ function PagesHolder(main) {
                                                     positive: {
                                                         label: u.create(HTML.SPAN, "Yes"),
                                                         onclick: function () {
-                                                            console.log(dialogConfirm.current);
                                                             u.progress.show("Removing page...");
                                                             var ids = dialogConfirm.current.path.split(":");
                                                             var options = {
@@ -216,7 +207,6 @@ function PagesHolder(main) {
                                                                 // main.drawer.remove(options.name);
                                                             }).catch(function (code, reason) {
                                                                 u.progress.hide();
-                                                                console.error(code, reason.response);
                                                                 u.toast.error("Error removing page" + (reason && reason.statusText ? ": " + reason.statusText : ""));
                                                             });
                                                         }
@@ -228,12 +218,6 @@ function PagesHolder(main) {
                                                 dialogConfirm.open();
                                                 dialogConfirm.current = this.parentNode.item;
                                             }
-                                        })
-                                        .place(HTML.A, {
-                                            innerHTML: "[" + values.type + "]",
-                                            // className: "icon notranslate tree-item-icon",
-                                            href: "/" + this.path + "/" + values.type,
-                                            target: "_blank"
                                         })
                                 });
                                 if (category.id !== "10") {

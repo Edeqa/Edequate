@@ -69,6 +69,11 @@ button:hover, button:active {
     border: 1px solid darkslategray;
     box-sizing: border-box;
 }
+.content-normal p img, .content-centered p img {
+    max-width: 100%;
+    border: 1px solid darkslategray;
+    box-sizing: border-box;
+}
 
 /* CLASSES */
 .layout {
@@ -1282,6 +1287,7 @@ button:hover, button:active {
         display: block;
         outline: none;
         max-width: 240px;
+        background-color: azure;
         box-shadow: 20px 0 60px 10px rgba(0,0,0,0.75);
     }
     .drawer:focus {

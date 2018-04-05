@@ -280,12 +280,12 @@ public class Pages extends FileRestAction {
     class Category {
         private JSONObject json;
         private Object section;
-        private boolean flat;
+        private boolean explicit;
         private Object category;
         private String title;
 
         Category() {
-            flat = true;
+            explicit = true;
         }
 
         Category parse(JSONObject json) {
@@ -298,7 +298,7 @@ public class Pages extends FileRestAction {
             if(json.has(CATEGORY)) category = json.get(CATEGORY);
             if(category == null) category = 10;
 
-            if(json.has(EXPLICIT)) flat = json.getBoolean(EXPLICIT);
+            if(json.has(EXPLICIT)) explicit = json.getBoolean(EXPLICIT);
             if(json.has(SECTION)) section = json.get(SECTION);
 
             if(json.has(TITLE)) title = json.getString(TITLE);
@@ -314,7 +314,7 @@ public class Pages extends FileRestAction {
             if(json == null) json = new JSONObject();
             JSONObject newJson = new JSONObject(json.toString());
             newJson.put(CATEGORY, fetchCategory());
-            newJson.put(EXPLICIT, flat);
+            newJson.put(EXPLICIT, explicit);
             newJson.put(SECTION, section);
             newJson.put(TITLE, title);
             if(newJson.has(PATH)) newJson.remove(PATH);
@@ -330,7 +330,7 @@ public class Pages extends FileRestAction {
             return "Category{" +
                            "json=" + json +
                            ", section=" + section +
-                           ", flat=" + flat +
+                           ", explicit=" + explicit +
                            ", category=" + category +
                            ", title='" + title + '\'' +
                            '}';
@@ -379,7 +379,17 @@ public class Pages extends FileRestAction {
         }
 
         public void put(Category category) {
-            categoriesOptions.put(category.fetchCategory(), category);
+            if(categoriesOptions.containsKey(category.fetchCategory())) {
+                Category existing = categoriesOptions.get(category.fetchCategory());
+                if(category.json.has(TITLE)) {
+                    existing.title = category.title;
+                }
+                if(category.json.has(EXPLICIT)) {
+                    existing.explicit = category.explicit;
+                }
+            } else {
+                categoriesOptions.put(category.fetchCategory(), category);
+            }
         }
 
         public void remove(Resource resource) {
