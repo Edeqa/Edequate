@@ -617,7 +617,9 @@ function Edequate(options) {
                     } else if(x.indexOf("on") === 0) {
                         var action = x.substr(2).toLowerCase();
                         call = properties[x];
-                        if(call) {
+                        if(call && call.constructor === String) {
+                            el.setAttribute(x, properties[x]);
+                        } else if(call) {
                             el.addEventListener(action, call, {passive: true});
                         }
                     } else if(x === "async" || x === "defer") {

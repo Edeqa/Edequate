@@ -1,16 +1,5 @@
 package com.edeqa.edequate.helpers;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 public class SectionStructure {
 
     private static final String CATEGORIES = "categories";
@@ -29,6 +18,7 @@ public class SectionStructure {
     public static final String SECTION = "section";
     private static final String TITLE = "title";
 
+/*
     private List<Category> categories;
     private JSONObject json;
 
@@ -243,5 +233,6 @@ public class SectionStructure {
                            '}';
         }
     }
+*/
 
 }

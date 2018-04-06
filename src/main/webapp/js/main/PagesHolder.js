@@ -101,6 +101,7 @@ function PagesHolder(main) {
                 }
             }
             if (!page) {
+                console.error("Page not found:", type);
                 main.holder = u.eventBus.holders[404];
                 // main.turn(404, type);
                 if (main.holder) {
@@ -121,9 +122,32 @@ function PagesHolder(main) {
                 locale: main.selectLang.value
             }).then(function (xhr) {
                 u.clear(main.content);
+
+                var content = xhr.response;
+                var head = content.match(/<head>([\s\S]+?)<\/head>/);
+                if(head) {
+                    head = head[1];
+                    content = content.replace(/<head>[\s\S]+?<\/head>/, "");
+                    var temp = u.create(HTML.DIV);
+                    temp.innerHTML = head;
+                    while (temp.firstChild) {
+                        if(temp.firstChild.nodeName !== "#text" && temp.firstChild.nodeName !== "#comment") {
+                            u.create(temp.firstChild.nodeName, {
+                                innerHTML: temp.firstChild.innerHTML,
+                                src: temp.firstChild.src,
+                                onload: temp.firstChild.onload,
+                                rel: temp.firstChild.rel,
+                                href: temp.firstChild.href,
+                                name: temp.firstChild.name,
+                                async: temp.firstChild.async
+                            }, document.head);
+                        }
+                        temp.firstChild.parentNode.removeChild(temp.firstChild);
+                    }
+                }
                 u.create(HTML.DIV, {
                     className: "content-normal",
-                    innerHTML: xhr.response
+                    innerHTML: content
                 }, main.content);
                 main.eventBus.fire("pages_done", type);
                 u.progress.hide();

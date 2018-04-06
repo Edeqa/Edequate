@@ -3,8 +3,6 @@ package com.edeqa.edequate.rest.admin;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.FileRestAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
-import com.edeqa.edequate.helpers.SectionStructure;
-import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
@@ -13,9 +11,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-
-import static com.edeqa.edequate.helpers.SectionStructure.INITIAL;
-import static com.edeqa.edequate.helpers.SectionStructure.SECTION;
 
 public class Pages extends FileRestAction {
 
@@ -47,16 +42,16 @@ public class Pages extends FileRestAction {
         Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
         directory = new File(arguments.getWebRootDirectory());
 
-        if(options.has(UPDATE)) {
-            updatePage(json, options);
-        } else if(options.has(REMOVE)) {
-            removePage(json, options);
-        } else if(options.has(SECTION)) {
-            updateSection(json, options);
-        }
+//        if(options.has(UPDATE)) {
+//            updatePage(json, options);
+//        } else if(options.has(REMOVE)) {
+//            removePage(json, options);
+//        } else if(options.has(SECTION)) {
+//            updateSection(json, options);
+//        }
     }
 
-    private void updatePage(JSONObject json, JSONObject options) throws IOException {
+    /*private void updatePage(JSONObject json, JSONObject options) throws IOException {
 
         String section = options.getJSONObject(UPDATE).getString(SECTION);
         File file = new File(getWebDirectory(), "data/pages-" + section + ".json");
@@ -164,6 +159,6 @@ public class Pages extends FileRestAction {
         }
         return true;
     }
-
+*/
 
 }
