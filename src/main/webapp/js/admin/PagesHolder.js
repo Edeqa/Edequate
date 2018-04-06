@@ -79,17 +79,17 @@ function PagesHolder(main) {
                 ]).then(function(json, json1){
                     try {
                         var id = this.id;
-                        var structure = normalizeStructure(json, json1);
+                        var structure = main.buildTree(json);
 
-                        for (var x in structure) {
+                        for (var x in structure.categories) {
                             var category = this.items[x] || this.add({
                                 id: x,
                                 priority: -(+x),
                                 content: u.create(HTML.DIV, {className: "tree-pages-category"})
-                                    .place(HTML.DIV, {innerHTML: structure[x].$options.title.cloneNode(true)})
+                                    .place(HTML.DIV, {innerHTML: structure.categories[x].title.cloneNode(true)})
                                     .place(HTML.BUTTON, {
                                         innerHTML: "add",
-                                        title: "Add page into section",
+                                        title: "Add page into category",
                                         className: "icon notranslate tree-item-icon",
                                         onclick: function (e) {
                                             e.stopPropagation();
@@ -99,7 +99,7 @@ function PagesHolder(main) {
                                     })
                                     .place(HTML.BUTTON, {
                                         innerHTML: "edit",
-                                        title: "Edit page",
+                                        title: "Edit category",
                                         className: "icon notranslate tree-item-icon hidden",
                                         onclick: function (e) {
                                             e.stopPropagation();
@@ -151,13 +151,9 @@ function PagesHolder(main) {
                             category.editButtonNode = category.titleNode.childNodes[2];
                             category.showButtonNode = category.titleNode.childNodes[3];
                             category.hideButtonNode = category.titleNode.childNodes[4];
-                            if (category.id === "10") {
-                                category.editButtonNode.hide();
-                            }
-                            for (var y in structure[x]) {
-                                if (y === "$options") continue;
-                                var values = structure[x][y];
-                                category.add({
+                            for (var y in structure.categories[x].pages) {
+                                var values = structure.categories[x].pages[y];
+                               category.add({
                                     id: values.type,
                                     priority: values.priority,
                                     content: u.create(HTML.DIV, {className: "tree-pages-item-leaf"})
@@ -222,7 +218,7 @@ function PagesHolder(main) {
                                 });
                                 if (category.id !== "10") {
                                     category.editButtonNode.show();
-                                    if (structure[category.id] && structure[category.id].$options && structure[category.id].$options.explicit) {
+                                    if (structure.categories[category.id].explicit) {
                                         category.showButtonNode.show();
                                     } else {
                                         category.hideButtonNode.show();
@@ -258,7 +254,7 @@ function PagesHolder(main) {
                                     });
                                     if (category.id !== "10") {
                                         category.editButtonNode.show();
-                                        if (structure[category.id] && structure[category.id].$options && structure[category.id].$options.explicit) {
+                                        if (structure.categories[category.id].explicit) {
                                             category.showButtonNode.show();
                                         } else {
                                             category.hideButtonNode.show();
@@ -279,51 +275,4 @@ function PagesHolder(main) {
             console.error(e,x);
         });
     };
-
-    function normalizeStructure(page, categories, structure) {
-        structure = structure || [
-            {$options:{title: u.lang.drawer_primary}},
-            {$options:{title: u.lang.drawer_summary}},
-            {$options:{title: u.lang.drawer_main}},
-            {$options:{title: u.lang.drawer_explore}},
-            {$options:{title: u.lang.drawer_share}},
-            {$options:{title: u.lang.drawer_resources}},
-            {$options:{title: u.lang.drawer_miscellaneous}},
-            {$options:{title: u.lang.drawer_settings}},
-            {$options:{title: u.lang.drawer_help}},
-            {$options:{title: u.lang.drawer_last}},
-            {$options:{title: u.create(HTML.SPAN, "[out of menu]")}}
-        ];
-        try {
-            if (!page) return;
-            if (page.constructor === Object) {
-                // if (pages.menu) {
-                if(page.resource) {
-                    var category = page.category !== undefined ? page.category : "10";
-                    if(!structure[category][page.type]) {
-                        structure[category][page.type] = page;
-                    }
-                } else if(page.section) {
-                    category = page.category !== undefined ? page.category : "10";
-                    structure[category] = structure[category] || {};
-
-                    var title = page.title;
-                    if(title) title = u.lang[title] || title;
-                    structure[category].$options.title = title || structure[category].$options.title;
-                    if(!(structure[category].$options.title instanceof HTMLElement)) {
-                        structure[category].$options.title = u.create(HTML.SPAN, structure[category].$options.title);
-                    }
-                    structure[category].$options.explicit = page.explicit || structure[category].$options.explicit;
-                }
-                // }
-            } else if (page.constructor === Array) {
-                for (var i in page) {
-                    normalizeStructure(page[i], categories, structure);
-                }
-            }
-        } catch(e) {
-            console.error(e);
-        }
-        return structure;
-    }
 }

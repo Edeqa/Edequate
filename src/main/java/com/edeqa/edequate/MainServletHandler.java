@@ -17,6 +17,7 @@ import com.edeqa.helpers.Misc;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 
 import javax.servlet.ServletException;
 
@@ -84,13 +85,26 @@ public class MainServletHandler extends AbstractServletHandler {
             resultCode = 403;
             webPath = new WebPath(getWebDirectory(), "403.html");
 //                Utils.sendResult.onEvent(exchange, 403, Constants.MIME.TEXT_PLAIN, "403 Forbidden\n".getBytes());
-        } else if(!webPath.path().exists() || webPath.path().getName().startsWith("\\.")) {
+        } else if(webPath.path().getName().startsWith("\\.")) {
+            Misc.err("Main", "[" + ipRemote + "]", uri.getPath(), "[404 - not found, forbidden request]", (referer != null ? "referer: " + referer : ""));
+            requestWrapper.sendError(404, "File not found");
+            return;
+        } else if(!webPath.path().exists()) {
             String beginWeb = webPath.web(1);
-            String[] parts = beginWeb.split("/");
 
-            if ("/main".startsWith(beginWeb) || "/rest".startsWith(beginWeb) || "/admin".startsWith(beginWeb)) {
-                webPath = new WebPath(getWebDirectory(), "index.html");
-                if (!webPath.path().exists()) {
+            WebPath dataPath = new WebPath(getWebDirectory(), "data");
+            File[] files = dataPath.path().listFiles(pathname -> pathname.isFile() && pathname.getName().contains("pages-"));
+            ArrayList<String> types = new ArrayList<>();
+            for(File file: files) {
+                types.add(file.getName().replaceAll("pages-(.*?)\\.json", "$1"));
+            }
+
+            System.out.println(beginWeb + ":" + types + ":" + types.contains(beginWeb));
+            if(types.contains(beginWeb)) {
+                webPath = new WebPath(getWebDirectory(), "index-" + beginWeb + ".html");
+            }
+            if(!webPath.path().exists()) {
+                if ("main".startsWith(beginWeb)) {
                     new Content()
                             .setReplacements(getReplacements())
                             .setMimeType(new MimeType().setMime(Mime.TEXT_HTML).setText(true).setGzip(true))
@@ -98,8 +112,7 @@ public class MainServletHandler extends AbstractServletHandler {
                             .setResultCode(200)
                             .call(null, requestWrapper);
                     return;
-                }
-            } else {
+                } else {
 
 //                String[] parts = webPath.web().split("/");
 //                System.out.println(parts[0] + ":"+ parts[1]);
@@ -117,9 +130,10 @@ public class MainServletHandler extends AbstractServletHandler {
 //                    }
 //                }
 
-                Misc.err("Main", "[" + ipRemote + "]", uri.getPath(), "[404 - not found]", (referer != null ? "referer: " + referer : ""));
-                requestWrapper.sendError(404, "File not found");
-                return;
+                    Misc.err("Main", "[" + ipRemote + "]", uri.getPath(), "[404 - not found]", (referer != null ? "referer: " + referer : ""));
+                    requestWrapper.sendError(404, "File not found");
+                    return;
+                }
             }
         } else if (webPath.path().isDirectory()) {
             webPath = webPath.webPath("index.html");

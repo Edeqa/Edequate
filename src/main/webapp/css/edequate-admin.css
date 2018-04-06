@@ -172,6 +172,9 @@ div.question {
     width: 80%;
     z-index: 10000;
 }
+.page-changed-dialog {
+    z-index: 10001;
+}
 .alert-box {
     display: flex;
     background-color: gold;

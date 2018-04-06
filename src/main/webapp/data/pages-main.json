@@ -1,36 +1,36 @@
-[
-  [
+{
+  "title": "Edequate",
+  "section": "main",
+  "copyright": "Powered with Edequate",
+  "categories": [
     {
-      "category": 9,
-      "icon": "help",
-      "menu": "privacy",
-      "resource": "privacy-policy.html",
-      "title": "privacy_policy",
-      "type": "privacy"
+      "category": 0,
+      "explicit": true,
+    },
+    {
+      "category": 5,
+      "explicit": true,
     },
     {
       "category": 9,
-      "icon": "info_outline",
-      "menu": "about",
-      "priority": -10,
-      "resource": "main-about.html",
-      "title": "about",
-      "type": "about"
+      "explicit": true,
+      "pages": [
+        {
+          "icon": "help",
+          "menu": "privacy",
+          "resource": "privacy-policy.html",
+          "title": "privacy_policy",
+          "type": "privacy"
+        },
+        {
+          "icon": "info_outline",
+          "menu": "about",
+          "priority": -10,
+          "resource": "main-about.html",
+          "title": "about",
+          "type": "about"
+        }
+      ]
     }
-  ],
-  {
-    "explicit": true,
-    "section": "main",
-    "category": 0
-  },
-  {
-    "explicit": true,
-    "section": "main",
-    "category": 5
-  },
-  {
-    "explicit": true,
-    "section": "main",
-    "category": 9
-  }
-]
+  ]
+}

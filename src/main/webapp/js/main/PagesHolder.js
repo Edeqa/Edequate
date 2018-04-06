@@ -24,12 +24,7 @@ function PagesHolder(main) {
 
     this.start = function () {
         console.log("Starting PagesHolder");
-        u.getJSON("/rest/data", {resource: "pages-" + main.mainType + ".json"}).then(function (json) {
-            self.origin = json;
-            setUpPages(json);
-        }).catch(function (e, x) {
-            console.error(e, x);
-        });
+        setUpPages();
     };
 
     this.resume = function (type) {
@@ -39,53 +34,39 @@ function PagesHolder(main) {
         } else {
             type = this.currentType;
         }
-
-        if (!self.pages) {
-            u.getJSON("/rest/data", {
-                resource: "pages-" + main.mainType + ".json",
-                locale: main.selectLang.value
-            }).then(function (json) {
-                setUpPages(json);
-                processPage(type);
-            }).catch(function (e, x) {
-                console.error(e, x);
-            });
-        } else /*if(self.pages[type])*/ {
-            processPage(type);
-        }
+        processPage(type);
     };
 
     this.onEvent = function (event) {
         switch (event) {
             case "loaded":
-                setUpPages(self.pages);
+                setUpPages();
                 break;
         }
     };
 
-    function setUpPages(pages) {
+    function setUpPages() {
         try {
-            if (!pages) return;
+            if (!main.structure) return;
             if (self.isInstalled) return;
-            if (pages.constructor === Object) {
-                if (pages.type) {
-                    self.pages = self.pages || {};
-                    if (!self.pages[pages.type]) {
-                        self.pages[pages.type] = pages;
-                        var icon = pages.icon;
+            for(var i in main.structure.categories) {
+                if(main.structure.categories[i].pages) {
+                    for(var j in main.structure.categories[i].pages) {
+                        var page = main.structure.categories[i].pages[j];
+                        var icon = page.icon;
                         if (icon && icon.split("/").length > 1) {
                             icon = u.create(HTML.IMG, {
                                 src: icon,
                                 className: "icon drawer-menu-item-icon"
                             })
                         }
-                        if (pages.menu) {
-                            pages.drawerItem = main.drawer.add({
-                                section: pages.category,
-                                id: pages.type,
-                                name: u.lang[pages.menu] || pages.menu,
+                        if (page.menu && !main.drawer.items[page.type]) {
+                            page.drawerItem = main.drawer.add({
+                                section: i,
+                                id: page.type,
+                                name: u.lang[page.menu] || page.menu,
                                 icon: icon,
-                                priority: pages.priority,
+                                priority: page.priority,
                                 callback: function () {
                                     main.holder = self;
                                     main.drawer.toggleSize(false);
@@ -97,16 +78,10 @@ function PagesHolder(main) {
                                     window.history.pushState({}, null, "/" + main.mainType + "/" + this.type);
                                     self.resume(this.type);
                                     return false;
-                                }.bind(pages)
+                                }.bind(page)
                             });
                         }
-                    } else if (main.drawer.items[pages.type]) {
-                        u.lang.updateNode(main.drawer.items[pages.type].labelNode, u.lang[pages.menu] || pages.menu);
                     }
-                }
-            } else if (pages.constructor === Array) {
-                for (var i in pages) {
-                    setUpPages(pages[i]);
                 }
             }
         } catch (e) {
@@ -116,7 +91,15 @@ function PagesHolder(main) {
 
     function processPage(type) {
         try {
-            var page = self.pages[type];
+            var page = null;
+            for(var i in main.structure.categories) {
+                for(var j in main.structure.categories[i].pages) {
+                    if(main.structure.categories[i].pages[j].type === type) {
+                        page = main.structure.categories[i].pages[j];
+                        break;
+                    }
+                }
+            }
             if (!page) {
                 main.holder = u.eventBus.holders[404];
                 // main.turn(404, type);

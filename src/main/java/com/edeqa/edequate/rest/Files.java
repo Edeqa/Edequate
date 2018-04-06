@@ -18,7 +18,7 @@ import java.util.List;
 public class Files extends FileRestAction {
 
     private FilenameFilter filenameFilter;
-    private Comparator<File> comparator;
+    private Comparator<File> comparator = Comparator.naturalOrder();;
     private boolean includeDirectories;
     private boolean includeFiles;
     private Callable1<String,String> filenameProcess = name -> name;

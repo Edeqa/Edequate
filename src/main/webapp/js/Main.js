@@ -153,36 +153,14 @@ function Main(u) {
                 }
             });
 
-            u.require([{src:"/rest/" + self.mainType, isJSON:true}, {src:"/rest/data", isJSON: true, body: {resource: "pages-" + self.mainType + ".json"}}]).then(function(json, pages){
+            u.require([{src:"/rest/" + self.mainType, isJSON:true}, {src:"/rest/data", isJSON: true, body: {resource: "pages-" + self.mainType + ".json"}}]).then(function(json, jsonStructure){
 
-                var categories = [
-                    {title: u.lang.drawer_primary},
-                    {title: u.lang.drawer_summary},
-                    {title: u.lang.drawer_main},
-                    {title: u.lang.drawer_explore},
-                    {title: u.lang.drawer_share},
-                    {title: u.lang.drawer_resources},
-                    {title: u.lang.drawer_miscellaneous},
-                    {title: u.lang.drawer_settings},
-                    {title: u.lang.drawer_help},
-                    {title: u.lang.drawer_last}
-                ];
-                if(pages) {
-                    for(var i in pages) {
-                        if(pages[i].section === self.mainType) {
-                            var title = pages[i].title;
-                            if(title) title = u.lang[title] || title;
-                            title = title || categories[pages[i].category].title;
-                            categories[pages[i].category] = {
-                                title: title,
-                                explicit: pages[i].explicit
-                            };
-                        }
-                    }
+                self.structure = self.buildTree(jsonStructure);
+                if(self.structure.title) {
+                    document.title = u.lang[self.structure.title] || self.structure.title || u.lang.title;
                 }
-
                 self.drawer = new u.drawer({
-                    title: u.lang.title || "Title",
+                    title: u.lang[self.structure.title] || self.structure.title || u.lang.title || "Edequate",
                     // collapsed: u.load("drawer:collapsed"),
                     logo: {
                         src: "/images/logo.svg"
@@ -192,13 +170,12 @@ function Main(u) {
                     },
                     footer: {
                         className: "drawer-footer-label",
-                        content: [
-                            u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: "Powered with Edequate", onclick: function(){
-                                    dialogAbout.open();
-                                }})
-                        ]
+                        content: u.create(HTML.DIV, { className: "drawer-footer-link", innerHTML: u.lang[self.structure.copyright] || self.structure.copyright || "Edequate &copy;2017-18 Edeqa", onclick: function(e){
+                                dialogAbout.open();
+                                e.stopPropagation();
+                            }})
                     },
-                    sections: categories,
+                    sections: self.structure.categories,
                     ontogglesize: function(collapsed) {
                         if(collapsed !== undefined) self.layout.classList[collapsed ? "add":"remove"]("collapsed");
                     }
@@ -335,6 +312,28 @@ function Main(u) {
             }
             if(!self.buttonScrollTop.isHidden) self.buttonScrollTop.hide(/*HIDING.OPACITY*/);
         }
+    }
+
+    this.buildTree = function(json) {
+        var categories = [
+            {category: 0, title: u.lang.drawer_primary},
+            {category: 1, title: u.lang.drawer_summary},
+            {category: 2, title: u.lang.drawer_main},
+            {category: 3, title: u.lang.drawer_explore},
+            {category: 4, title: u.lang.drawer_share},
+            {category: 5, title: u.lang.drawer_resources},
+            {category: 6, title: u.lang.drawer_miscellaneous},
+            {category: 7, title: u.lang.drawer_settings},
+            {category: 8, title: u.lang.drawer_help},
+            {category: 9, title: u.lang.drawer_last},
+            {category: 10, title: u.create(HTML.SPAN, {innerHTML: "[out of menu]", dataLang: "out_of_menu"})}
+        ];
+        for(var x in json.categories) {
+            if(!json.categories[x].title) json.categories[x].title = categories[json.categories[x].category].title;
+            categories[json.categories[x].category] = json.categories[x];
+        }
+        json.categories = categories;
+        return json;
     }
 
 }

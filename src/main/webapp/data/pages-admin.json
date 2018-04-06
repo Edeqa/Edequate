@@ -1,26 +1,37 @@
-[
-  [
+{
+  "title": "Edequate Admin",
+  "copyright": "Edequate &copy;2017-18 Edeqa\nVersion 1.60",
+  "section": "admin",
+  "categories": [
     {
       "category": 0,
-      "icon": "home",
-      "menu": "home",
-      "resource": "admin-home.html",
-      "title": "home",
-      "type": "home"
-    }
-  ],
-  [
-    {
-      "resource": "admin-roles.html",
-      "title": "Admin roles",
-      "type": "roles",
-      "persistent": true
+      "explicit": true,
+      "pages": [
+        {
+          "icon": "home",
+          "menu": "home",
+          "resource": "admin-home.html",
+          "title": "home",
+          "type": "home"
+        }
+      ]
     },
     {
-      "resource": "admin-security.html",
-      "title": "Security",
-      "type": "security",
-      "persistent": true
+      "category": 10,
+      "pages": [
+        {
+          "resource": "admin-roles.html",
+          "title": "Admin roles",
+          "type": "roles",
+          "persistent": true
+        },
+        {
+          "resource": "admin-security.html",
+          "title": "Security",
+          "type": "security",
+          "persistent": true
+        }
+      ]
     }
   ]
-]
+}

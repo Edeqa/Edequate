@@ -13,7 +13,6 @@ function PageHolder(main) {
     var dialogSection;
     var dialogConfirm;
     var dialogAddString;
-    var sections;
     var locales;
     var locale;
     var div;
@@ -23,7 +22,8 @@ function PageHolder(main) {
     var contentNode;
     var icons;
     var strings;
-    var categories;
+    var structure;
+    var categoriesSelect;
 
     this.start = function() {
         div = main.content;
@@ -51,37 +51,32 @@ function PageHolder(main) {
         var ids = (id || "").split(":");
         u.require([
             {src:"/rest/locales", isJSON:true},
-            {src:"/rest/data/types", isJSON:true},
             {src:"/rest/resources", body: {resource:"icons.json"}, isJSON: true},
             {src:"/rest/data", isJSON: true, body: {resource: "pages-" + ids[0] + ".json"}}
-        ]).then(function(jsonLocales, json, jsonIcons, structure){
+        ]).then(function(jsonLocales, jsonIcons, jsonStructure){
 
             locales = jsonLocales.message;
             icons = jsonIcons || {};
-            {
-                sections = [];
-                for (var i in json.message) {
-                    var section = {};
-                    section[json.message[i]] = json.message[i].toUpperCaseFirst();
-                    sections.push(section);
-                }
-            }
-            if(action === "add") {
-                editPage(ids, {initial: true, section: json.message}, {mode:"Add page"});
-            } else if(action === "edit") {
-                var pages = normalizeStructure(structure);
-                categories = {};
-                for(i in pages) {
-                    categories[i] = pages[i].$options.title;
-                }
+            structure = main.buildTree(jsonStructure);
 
+            categoriesSelect = [];
+            for(var i in structure.categories) {
+                var option = {};
+                option[structure.categories[i].category] = structure.categories[i].title;
+                categoriesSelect.push(option);
+            }
+
+            if(action === "add") {
+                if(ids.length === 1) {
+                    editPage(ids, {mode: "add"});
+                } else if(ids.length === 2) {
+                    editPage(ids, {mode: "add", category: structure.categories[ids[1]]});
+                }
+            } else if(action === "edit") {
                 if(ids.length === 2) {
-                    editCategory(ids, pages[+ids[1]].$options);
+                    editCategory(ids, structure.categories[ids[1]]);
                 } else {
-                    var page = pages[+ids[1]][ids[2]];
-                    page.section = ids[0];
-                    page.initial = true;
-                    editPage(ids, page, {mode:"Edit page"});
+                    editPage(ids, {mode: "edit", category: structure.categories[ids[1]]});
                 }
             } else {
                 main.turn("pages");
@@ -149,20 +144,34 @@ function PageHolder(main) {
                 titleNode.value = category.title && category.title.dataset && category.title.dataset.lang || category.title && category.title.innerText || category.title || "";
             });
             dialogSection.open();
+            titleNode.focus();
         } catch(e){
             console.error(e);
         }
     }
 
-    function editPage(ids, page, options) {
+    function editPage(ids, options) {
         try {
+            var page = {
+                section: ids[0],
+                category: ids[1]
+            };
+            if(options.category && options.category.pages) {
+                for (var i in options.category.pages) {
+                    if (options.category.pages[i].type === ids[2]) {
+                        page = options.category.pages[i];
+                        page.section = ids[0];
+                        page.category = ids[1];
+                    }
+                }
+            }
             dialog = dialog || u.dialog({
-                title: options.mode,
+                title: "Edit page",
                 resizeable: true,
                 className: "page-edit-dialog",
                 items: [
-                    {type: HTML.SELECT, label: "Section", values: sections},
-                    {type: HTML.SELECT, label: "Category", values: categories},
+                    {type: HTML.INPUT, label: "Section", value: ids[0].toUpperCaseFirst(), disabled: true},
+                    {type: HTML.SELECT, label: "Category", values: categoriesSelect},
                     {type: HTML.INPUT, label: "Name"},
                     {type: HTML.SELECT, label: "Language", values: locales, value: locale, onchange: function() {
                             function changeLocale() {
@@ -178,6 +187,7 @@ function PageHolder(main) {
                             if(contentNode.changed) {
                                 dialogConfirm = dialogConfirm || new u.dialog({
                                     title: "Page changed",
+                                    className: "page-changed-dialog",
                                     items: [
                                         { innerHTML: "Page was changed. Do you want to discard changes and reload page?" }
                                     ],
@@ -251,7 +261,7 @@ function PageHolder(main) {
                     }
                 }
             }, div.parentNode);
-            dialog.setTitle(options.mode);
+            dialog.setTitle(options.mode === "edit" ? "Edit page" : "Add page");
             var sectionNode = dialog.items[0];
             var categoryNode = dialog.items[1];
             var nameNode = dialog.items[2];
@@ -260,9 +270,9 @@ function PageHolder(main) {
             menuNode = menuNode || dialog.items[5];
             titleNode = titleNode || dialog.items[6];
             var priorityNode = dialog.items[7];
-            contentNode = contentNode || dialog.items[8];//.lastChild.lastChild;
+            contentNode = contentNode || dialog.items[8];
 
-            if(ids[1] == 10) {
+            if(ids[1] === "10") {
                 categoryNode.parentNode.hide();
                 iconNode.parentNode.hide();
                 menuNode.parentNode.hide();
@@ -272,13 +282,11 @@ function PageHolder(main) {
                 menuNode.parentNode.show();
             }
 
-            sectionNode.value = ids[0];
-            sectionNode.disabled = !!ids[0];
+            sectionNode.value = page.section;
+            categoryNode.value = page.category;
+            categoryNode.disabled = !!page.category;
 
-            categoryNode.value = ids[1];
-            categoryNode.disabled = !!ids[1];
-
-            nameNode.value = ids[2] || "";
+            nameNode.value = page.type || "";
             iconNode.value = page.icon || "";
             priorityNode.value = page.priority || 0;
 
@@ -291,6 +299,15 @@ function PageHolder(main) {
             populateContent(page.resource);
 
             dialog.open();
+
+            if(options.mode === "add" && ids.length === 1) {
+                categoryNode.focus();
+            } else if(options.mode === "add") {
+                nameNode.focus();
+            } else if(options.mode === "edit") {
+                contentNode.focus();
+            }
+
         } catch(e){
             console.error(e);
         }
@@ -398,50 +415,4 @@ function PageHolder(main) {
         }
     }
 
-    function normalizeStructure(page, categories, structure) {
-        structure = structure || [
-            {$options:{title: u.lang.drawer_primary}},
-            {$options:{title: u.lang.drawer_summary}},
-            {$options:{title: u.lang.drawer_main}},
-            {$options:{title: u.lang.drawer_explore}},
-            {$options:{title: u.lang.drawer_share}},
-            {$options:{title: u.lang.drawer_resources}},
-            {$options:{title: u.lang.drawer_miscellaneous}},
-            {$options:{title: u.lang.drawer_settings}},
-            {$options:{title: u.lang.drawer_help}},
-            {$options:{title: u.lang.drawer_last}},
-            {$options:{title: u.create(HTML.SPAN, "[out of menu]")}}
-        ];
-        try {
-            if (!page) return;
-            if (page.constructor === Object) {
-                // if (pages.menu) {
-                if(page.resource) {
-                    var category = page.category !== undefined ? page.category : "10";
-                    if(!structure[category][page.type]) {
-                        structure[category][page.type] = page;
-                    }
-                } else if(page.section) {
-                    category = page.category !== undefined ? page.category : "10";
-                    structure[category] = structure[category] || {};
-
-                    var title = page.title;
-                    if(title) title = u.lang[title] || title;
-                    structure[category].$options.title = title || structure[category].$options.title;
-                    if(!(structure[category].$options.title instanceof HTMLElement)) {
-                        structure[category].$options.title = u.create(HTML.SPAN, structure[category].$options.title);
-                    }
-                    structure[category].$options.explicit = page.explicit || structure[category].$options.explicit;
-                }
-                // }
-            } else if (page.constructor === Array) {
-                for (var i in page) {
-                    normalizeStructure(page[i], categories, structure);
-                }
-            }
-        } catch(e) {
-            console.error(e);
-        }
-        return structure;
-    }
 }

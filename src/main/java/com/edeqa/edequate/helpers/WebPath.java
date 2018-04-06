@@ -68,7 +68,7 @@ public class WebPath {
         List<String> parts = Arrays.asList(child.split("/"));
         if(trim > parts.size()) trim = parts.size();
         parts = parts.subList(0, trim);
-        return "/" + Misc.join("/", parts);
+        return Misc.join("/", parts);
     }
 
     public String toString() {

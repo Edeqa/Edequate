@@ -155,6 +155,8 @@ Arguments object will be stored as the property `arguments`.
 * `buttonScrollTop`
 
 * `edequate` - instance of Edequate
+
+* `structure` - pages structure of current section
  
  
 #### Methods
