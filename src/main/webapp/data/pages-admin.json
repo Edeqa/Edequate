@@ -1,11 +1,9 @@
 {
-  "title": "Edequate Admin",
-  "copyright": "Edequate &copy;2017-18 Edeqa\nVersion 1.60",
+  "copyright": "Powered with Edequate",
   "section": "admin",
   "categories": [
     {
       "category": 0,
-      "explicit": true,
       "pages": [
         {
           "icon": "home",

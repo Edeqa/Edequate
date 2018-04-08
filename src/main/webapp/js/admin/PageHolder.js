@@ -11,6 +11,7 @@ function PageHolder(main) {
     this.preventHistory = true;
     var dialog;
     var dialogSection;
+    var dialogCategory;
     var dialogConfirm;
     var dialogAddString;
     var locales;
@@ -73,7 +74,9 @@ function PageHolder(main) {
                     editPage(ids, {mode: "add", category: structure.categories[ids[1]]});
                 }
             } else if(action === "edit") {
-                if(ids.length === 2) {
+                if(ids.length === 1) {
+                    editSection(ids, structure);
+                } else if(ids.length === 2) {
                     editCategory(ids, structure.categories[ids[1]]);
                 } else {
                     editPage(ids, {mode: "edit", category: structure.categories[ids[1]]});
@@ -88,25 +91,23 @@ function PageHolder(main) {
     };
 
 
-    function editCategory(ids, category) {
-        category = category || {};
+    function editSection(ids, section) {
+        section = section || {};
         try {
             dialogSection = dialogSection || u.dialog({
-                title: "Edit category",
+                title: "Edit section",
                 items: [
-                    {type: HTML.SELECT, label: "Title", onchange: onselect},
-                    {type: HTML.CHECKBOX, label: "Show title"}
+                    {type: HTML.INPUT, label: "Section", disabled: true},
+                    {type: HTML.INPUT, label: "Title"}
                 ],
                 positive: {
                     label: u.create(HTML.SPAN, "OK"),
                     dismiss: false,
                     onclick: function () {
-                        u.progress.show("Saving...");
+                        u.progress.show("Saving section...");
                         var options = {
                             section: dialogSection.initialOptions[0],
-                            category: dialogSection.initialOptions[1],
-                            title: titleNode.value,
-                            explicit: explicitNode.checked
+                            title: titleNode.value
                         };
                         u.post("/admin/rest/page", {section: options}).then(function(){
                             main.eventBus.holders.$pages.start();
@@ -114,7 +115,7 @@ function PageHolder(main) {
                             main.turn("pages");
                             u.progress.hide();
                             if(options.section === "admin") {
-                                u.lang.updateNode(main.drawer.sections[options.category].labelNode, u.lang[options.title] || options.title);
+                                window.location.reload(true);
                             }
                             u.toast.show("Section saved");
                         }).catch(function (code, reason) {
@@ -130,20 +131,80 @@ function PageHolder(main) {
                     }
                 }
             }, div.parentNode);
-            titleNode = dialogSection.items[0];
-            var explicitNode = dialogSection.items[1];
+            var sectionNode = dialogSection.items[0];
+            sectionNode.value = ids[0];
+
+            titleNode = dialogSection.items[1];
+
+            titleNode.value = section.title && section.title.dataset && section.title.dataset.lang || section.title && section.title.innerText || section.title || "";
+
+            dialogSection.setTitle("Edit section: %s".sprintf((ids[0] || "").toUpperCaseFirst()));
+
+            dialogSection.initialOptions = ids;
+
+            dialogSection.open();
+            titleNode.focus();
+        } catch(e){
+            console.error(e);
+        }
+    }
+
+    function editCategory(ids, category) {
+        category = category || {};
+        try {
+            dialogCategory = dialogCategory || u.dialog({
+                title: "Edit category",
+                items: [
+                    {type: HTML.SELECT, label: "Title", onchange: onselect},
+                    {type: HTML.CHECKBOX, label: "Show title"}
+                ],
+                positive: {
+                    label: u.create(HTML.SPAN, "OK"),
+                    dismiss: false,
+                    onclick: function () {
+                        u.progress.show("Saving category...");
+                        var options = {
+                            section: dialogCategory.initialOptions[0],
+                            category: dialogCategory.initialOptions[1],
+                            title: titleNode.value,
+                            explicit: explicitNode.checked
+                        };
+                        u.post("/admin/rest/page", {category: options}).then(function(){
+                            main.eventBus.holders.$pages.start();
+                            dialogCategory.close();
+                            main.turn("pages");
+                            u.progress.hide();
+                            if(options.section === "admin") {
+                                u.lang.updateNode(main.drawer.sections[options.category].labelNode, u.lang[options.title] || options.title);
+                            }
+                            u.toast.show("Category saved");
+                        }).catch(function (code, reason) {
+                            u.progress.hide();
+                            u.toast.error("Error saving category" + (reason && reason.statusText ? ": " + reason.statusText : ""));
+                        });
+                    }
+                },
+                negative: {
+                    label: u.create(HTML.SPAN, "Cancel"),
+                    onclick: function () {
+                        main.turn("pages");
+                    }
+                }
+            }, div.parentNode);
+            titleNode = dialogCategory.items[0];
+            var explicitNode = dialogCategory.items[1];
 
             titleNode.value = category.title && category.title.dataset && category.title.dataset.lang || category.title && category.title.innerText || category.title || "";
             explicitNode.checked = category.explicit;
 
-            dialogSection.setTitle("Edit category: %s / %s".sprintf((ids[0] || "").toUpperCaseFirst(), category.title ? category.title.innerText || category.title : ids[1]));
+            dialogCategory.setTitle("Edit category: %s / %s".sprintf((ids[0] || "").toUpperCaseFirst(), category.title ? category.title.innerText || category.title : ids[1]));
 
-            dialogSection.initialOptions = ids;
+            dialogCategory.initialOptions = ids;
 
             populateWithLang(ids[0], [category.title], function() {
                 titleNode.value = category.title && category.title.dataset && category.title.dataset.lang || category.title && category.title.innerText || category.title || "";
             });
-            dialogSection.open();
+            dialogCategory.open();
             titleNode.focus();
         } catch(e){
             console.error(e);
@@ -170,7 +231,7 @@ function PageHolder(main) {
                 resizeable: true,
                 className: "page-edit-dialog",
                 items: [
-                    {type: HTML.INPUT, label: "Section", value: ids[0].toUpperCaseFirst(), disabled: true},
+                    {type: HTML.SELECT, label: "Section", disabled: true},
                     {type: HTML.SELECT, label: "Category", values: categoriesSelect},
                     {type: HTML.INPUT, label: "Name"},
                     {type: HTML.SELECT, label: "Language", values: locales, value: locale, onchange: function() {
@@ -243,6 +304,7 @@ function PageHolder(main) {
                         };
                         u.post("/admin/rest/page", {initial: dialog.initialOptions, update: options}).then(function(){
                             contentNode.changed = false;
+                            /** @namespace main.eventBus.holders.$pages */
                             main.eventBus.holders.$pages.start();
                             dialog.close();
                             main.turn("pages");
@@ -265,12 +327,12 @@ function PageHolder(main) {
             var sectionNode = dialog.items[0];
             var categoryNode = dialog.items[1];
             var nameNode = dialog.items[2];
-            localeNode = localeNode || dialog.items[3];
+            localeNode = dialog.items[3];
             var iconNode = dialog.items[4];
-            menuNode = menuNode || dialog.items[5];
-            titleNode = titleNode || dialog.items[6];
+            menuNode = dialog.items[5];
+            titleNode = dialog.items[6];
             var priorityNode = dialog.items[7];
-            contentNode = contentNode || dialog.items[8];
+            contentNode = dialog.items[8];
 
             if(ids[1] === "10") {
                 categoryNode.parentNode.hide();
@@ -282,6 +344,8 @@ function PageHolder(main) {
                 menuNode.parentNode.show();
             }
 
+            var opts = {};opts[page.section] = page.section.toUpperCaseFirst();
+            sectionNode.setOptions(opts);
             sectionNode.value = page.section;
             categoryNode.value = page.category;
             categoryNode.disabled = !!page.category;
@@ -414,5 +478,4 @@ function PageHolder(main) {
             stringNode.focus();
         }
     }
-
 }

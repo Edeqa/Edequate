@@ -25,5 +25,10 @@ function SettingsHolder(main) {
         u.clear(div);
         var titleNode = u.create(HTML.H2, "Settings", div);
 
+        var settingsNode = u.create(HTML.DIV, {}, div);
+
+        main.eventBus.fire("settings", settingsNode);
+
     }
+
 }

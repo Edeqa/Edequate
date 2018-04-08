@@ -2261,7 +2261,7 @@ function Edequate(options) {
             layout.sections[i].labelNode = create(HTML.DIV, {className: "drawer-menu-section-label" + (category.explicit ? "" : " hidden"), innerHTML: category.title}, layout.sections[i].firstChild);
 
             /** @namespace options.collapsible */
-            if(options.collapsible && options.collapsible.indexOf(i) >= 0) {
+            if(category.collapsible || (options.collapsible && options.collapsible.indexOf(i) >= 0)) {
                 var sectionCollapsed = load("drawer:section:collapsed:"+i);
                 if(sectionCollapsed) layout.sections[i].lastChild.hide();
 
@@ -3138,12 +3138,13 @@ function Edequate(options) {
                 var module = self.eventBus.modules[i];
                 if(self.eventBus.holders[module] && self.eventBus.holders[module].onEvent) {
                     try {
+                        var res;
                         if(event.constructor === Function) {
-                            var res = event.call(this, self.eventBus.holders[self.eventBus.modules[i]]);
-                            if(res !== undefined && !res) break;
+                            res = event.call(this, self.eventBus.holders[self.eventBus.modules[i]]);
                         } else {
-                            if (!self.eventBus.holders[module].onEvent.call(this, event, object)) break;
+                            res = self.eventBus.holders[module].onEvent.call(this, event, object);
                         }
+                        if(res !== undefined && !res) break;
                     } catch(e) {
                         console.error(module, event, e);
                     }

@@ -104,6 +104,9 @@ public class MainServletHandler extends AbstractServletHandler {
                 webPath = new WebPath(getWebDirectory(), "index-" + beginWeb + ".html");
             }
             if(!webPath.path().exists()) {
+                webPath = new WebPath(getWebDirectory(), "index.html");
+            }
+            if(!webPath.path().exists()) {
                 if ("main".startsWith(beginWeb)) {
                     new Content()
                             .setReplacements(getReplacements())

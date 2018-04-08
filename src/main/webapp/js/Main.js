@@ -329,7 +329,11 @@ function Main(u) {
             {category: 10, title: u.create(HTML.SPAN, {innerHTML: "[out of menu]", dataLang: "out_of_menu"})}
         ];
         for(var x in json.categories) {
-            if(!json.categories[x].title) json.categories[x].title = categories[json.categories[x].category].title;
+            if(json.categories[x].title) {
+                json.categories[x].title = u.lang[json.categories[x].title] || u.create(HTML.SPAN, {dataLang: json.categories[x].title, innerHTML:json.categories[x].title});
+            } else {
+                json.categories[x].title = categories[json.categories[x].category].title;
+            }
             categories[json.categories[x].category] = json.categories[x];
         }
         json.categories = categories;

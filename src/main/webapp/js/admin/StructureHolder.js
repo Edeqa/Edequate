@@ -3,7 +3,7 @@
  *
  * Created 3/8/18.
  */
-function PagesHolder(main) {
+function StructureHolder(main) {
     var self = this;
     var u = main.edequate;
 
@@ -43,7 +43,7 @@ function PagesHolder(main) {
                     id: id,
                     titleClassName: "tree-pages-item-title",
                     content: u.create(HTML.DIV, {className:"tree-pages-root"})
-                        .place(HTML.DIV, {innerHTML:id.toUpperCaseFirst()})
+                        .place(HTML.DIV, {innerHTML: id.toUpperCaseFirst()})
                         .place(HTML.BUTTON, {
                             innerHTML:"add",
                             title: "Add page into section",
@@ -52,6 +52,16 @@ function PagesHolder(main) {
                                 e.stopPropagation();
                                 self.scrollTop = main.content.scrollTop;
                                 main.turn("page", ["add",this.parentNode.item.path]);
+                            }
+                        })
+                        .place(HTML.BUTTON, {
+                            innerHTML: "edit",
+                            title: "Edit section",
+                            className: "icon notranslate tree-item-icon",
+                            onclick: function (e) {
+                                e.stopPropagation();
+                                self.scrollTop = main.content.scrollTop;
+                                main.turn("page", ["edit", this.parentNode.item.path]);
                             }
                         })
                         .place(HTML.BUTTON, {
@@ -81,6 +91,8 @@ function PagesHolder(main) {
                         var id = this.id;
                         var structure = main.buildTree(json);
 
+                        if(structure.title) u.lang.updateNode(this.titleNode.firstChild, u.lang[structure.title] || structure.title);
+
                         for (var x in structure.categories) {
                             var category = this.items[x] || this.add({
                                 id: x,
@@ -108,8 +120,8 @@ function PagesHolder(main) {
                                         }
                                     })
                                     .place(HTML.BUTTON, {
-                                        innerHTML: "check_box",
-                                        title: "Show category title",
+                                        innerHTML: "visibility",
+                                        title: "Category title is shown",
                                         className: "icon notranslate tree-item-icon hidden",
                                         onclick: function (e) {
                                             e.stopPropagation();
@@ -118,7 +130,7 @@ function PagesHolder(main) {
                                                 path: this.parentNode.item.path,
                                                 explicit: false
                                             };
-                                            u.post("/admin/rest/page", {section: options}).then(function () {
+                                            u.post("/admin/rest/page", {category: options}).then(function () {
                                                 if (id === "admin") main.drawer.sections[category].labelNode.hide();
                                                 this.hide();
                                                 this.parentNode.parentNode.parentNode.hideButtonNode.show();
@@ -128,8 +140,8 @@ function PagesHolder(main) {
                                         }
                                     })
                                     .place(HTML.BUTTON, {
-                                        innerHTML: "check_box_outline_blank",
-                                        title: "Hide category title",
+                                        innerHTML: "visibility_off",
+                                        title: "Category title is hidden",
                                         className: "icon notranslate tree-item-icon hidden",
                                         onclick: function (e) {
                                             e.stopPropagation();
@@ -138,7 +150,7 @@ function PagesHolder(main) {
                                                 path: this.parentNode.item.path,
                                                 explicit: true
                                             };
-                                            u.post("/admin/rest/page", {section: options}).then(function () {
+                                            u.post("/admin/rest/page", {category: options}).then(function () {
                                                 if (id === "admin") main.drawer.sections[category].labelNode.show();
                                                 this.hide();
                                                 this.parentNode.parentNode.parentNode.showButtonNode.show();
@@ -153,7 +165,7 @@ function PagesHolder(main) {
                             category.hideButtonNode = category.titleNode.childNodes[4];
                             for (var y in structure.categories[x].pages) {
                                 var values = structure.categories[x].pages[y];
-                               category.add({
+                                category.add({
                                     id: values.type,
                                     priority: values.priority,
                                     content: u.create(HTML.DIV, {className: "tree-pages-item-leaf"})
@@ -275,4 +287,13 @@ function PagesHolder(main) {
             console.error(e,x);
         });
     };
+
+    this.onEvent = function(event, object) {
+        switch(event) {
+            case "settings":
+                object.appendChild(u.create(HTML.DIV, "Structure settings"));
+                break;
+        }
+        return true;
+    }
 }

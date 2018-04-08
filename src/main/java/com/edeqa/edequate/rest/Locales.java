@@ -5,6 +5,8 @@ import com.edeqa.edequate.helpers.RequestWrapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Map;
+
 public class Locales extends Files {
 
     public Locales() {
@@ -43,6 +45,12 @@ public class Locales extends Files {
             json.put(CODE, CODE_JSON);
             json.put(MESSAGE, map);
         }
+    }
+
+    public Map<String, Object> fetchLocales() {
+        JSONObject json = new JSONObject();
+        call(json, null);
+        return json.getJSONObject(MESSAGE).toMap();
     }
 }
 

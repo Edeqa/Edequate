@@ -31,7 +31,7 @@ public class Resource extends FileRestAction {
 
 //        String body = request.getBody();
         if(options.length() == 0) {
-            Misc.err("Resource", "not performed, arguments not defined");
+            Misc.err("Page", "not performed, arguments not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
             json.put(MESSAGE, "Arguments not defined.");
@@ -39,10 +39,10 @@ public class Resource extends FileRestAction {
         }
 
 //        JSONObject options = new JSONObject(body);
-        Misc.log("Resource", "requested: " + options);
+        Misc.log("Page", "requested: " + options);
 
         if(!options.has(RESOURCE)) {
-            Misc.err("Resource", "not defined");
+            Misc.err("Page", "not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
             json.put(MESSAGE, options);
@@ -59,7 +59,7 @@ public class Resource extends FileRestAction {
         } else if(options.get(RESOURCE) instanceof String) {
             resources.add(options.get(RESOURCE));
         } else {
-            Misc.err("Resource", "defined is invalid");
+            Misc.err("Page", "defined is invalid");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_BAD_REQUEST);
             json.put(MESSAGE, options);
@@ -90,14 +90,14 @@ public class Resource extends FileRestAction {
             }
         }
         if(files.isEmpty()) {
-            Misc.log("Resource", "not found");
+            Misc.log("Page", "not found");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_FOUND);
             json.put(MESSAGE, options);
             return;
         }
         if(files.get(0).path().getName().startsWith(".")) {
-            Misc.err("Resource", "requested illegal:", options);
+            Misc.err("Page", "requested illegal:", options);
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_FOUND);
             json.put(MESSAGE, options);
@@ -105,7 +105,7 @@ public class Resource extends FileRestAction {
         }
         if(!files.get(files.size() - 1).path().getName().endsWith(".json")) {
             String path = files.get(files.size() - 1).web();
-            Misc.log("Resource", "->", path);
+            Misc.log("Page", "->", path);
 
             json.put(STATUS, STATUS_SUCCESS);
             json.put(CODE, CODE_MOVED_TEMPORARILY);
@@ -124,7 +124,7 @@ public class Resource extends FileRestAction {
                     try {
                         object = new JSONArray(content);
                     } catch (JSONException e1) {
-                        Misc.log("Resource", "json file damaged: " + files);
+                        Misc.log("Page", "json file damaged: " + files);
 //                        json.put(STATUS, STATUS_ERROR);
 //                        json.put(CODE, ERROR_INTERNAL_SERVER_ERROR);
 //                        json.put(MESSAGE, options);

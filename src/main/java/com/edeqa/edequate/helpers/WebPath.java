@@ -24,6 +24,10 @@ public class WebPath {
         this.directory = directory;
     }
 
+    public WebPath(File directory, String child) {
+        this(directory.getPath(), child);
+    }
+
     public WebPath(String child) throws UnsupportedEncodingException {
         this(URLDecoder.decode(Thread.currentThread().getContextClassLoader().getResource("").getPath(), "UTF-8").split("/WEB-INF/classes/")[0], child);
     }

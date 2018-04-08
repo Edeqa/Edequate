@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<web-fragment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd" id="WebAppFragment_ID" version="3.0">
+<web-fragment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd"
+    id="WebAppFragment_ID" version="3.0">
 
     <name>edequate</name>
 
@@ -60,10 +62,10 @@
     </welcome-file-list>
 
     <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>all</web-resource-name>
+        <web-page-collection>
+            <web-page-name>all</web-page-name>
             <url-pattern>/*</url-pattern>
-        </web-resource-collection>
+        </web-page-collection>
         <user-data-constraint>
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
