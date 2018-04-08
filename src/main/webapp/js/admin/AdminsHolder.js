@@ -77,4 +77,12 @@ function AdminsHolder(main) {
         });
     };
 
+    this.onEvent = function(event, object) {
+        switch(event) {
+            case "settings":
+                object.appendChild(u.create(HTML.DIV, "Admins settings"));
+                break;
+        }
+        return true;
+    }
 }

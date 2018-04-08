@@ -100,7 +100,7 @@ public class DigestAuthenticator extends Authenticator {
             }
 
             if (!context.isAuthenticated()) {
-                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logged in/" + principal);
+                Misc.log("DigestAuthenticator", "[" + httpExchange.getRemoteAddress().getAddress().getHostAddress() + "]", "Logged in", "[" + principal + "]");
             }
 
             if (useNonce(challengeParameters.get("nonce"))) {

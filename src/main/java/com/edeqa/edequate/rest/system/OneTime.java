@@ -17,6 +17,7 @@ public class OneTime extends AbstractAction<Void> {
 
     public static final String TYPE = "/rest/onetime";
 
+    private static final String FINISHED = "finished";
     public static final String LINK = "link";
     private static final String MODE = "mode";
     public static final String NONCE = "nonce";
@@ -84,9 +85,7 @@ public class OneTime extends AbstractAction<Void> {
             if (isStrong()) json.put(STRONG, true);
 
             String nonce = onFetchToken.call();
-
             addAction(nonce, json);
-
             getOnStart().call(nonce);
         }
 
@@ -101,19 +100,23 @@ public class OneTime extends AbstractAction<Void> {
                 String token = getRequestOptions().getString(TOKEN);
                 JSONObject requested = getAction(token);
                 if (requested == null) {
-                    getOnError().call(new Throwable("Token not found"));
+                    getOnError().call(new Throwable("Session not found"));
                     return;
                 }
-                if(getOnCheck() != null || !requested.has(STRONG) || !requested.getBoolean(STRONG)) {
-                    requested.put(ORIGIN, token);
-                } else {
-                    removeAction(token);
+                if(requested.has(FINISHED)) {
+                    getOnError().call(new Throwable("Session is already used"));
+                    return;
                 }
                 if (System.currentTimeMillis() - requested.getLong(TIMESTAMP) > requested.getLong(TIMEOUT)) {
-                    getOnError().call(new Throwable("Token expired"));
+                    getOnError().call(new Throwable("Session expired"));
                     return;
                 }
-
+                if(requested.has(STRONG) && requested.getBoolean(STRONG)) {
+                    finishAction(token);
+                }
+                if(getOnCheck() != null) {
+                    requested.put(ORIGIN, token);
+                }
                 if(getOnCheck() == null) {
                     getOnSuccess().call(requested.getJSONObject(PAYLOAD));
                 } else {
@@ -126,15 +129,19 @@ public class OneTime extends AbstractAction<Void> {
                 String nonce = getRequestOptions().getString(NONCE);
                 JSONObject requested = getAction(nonce);
                 if (requested == null) {
-                    getOnError().call(new Throwable("Nonce not registered"));
+                    getOnError().call(new Throwable("Intent not registered"));
+                    return;
+                }
+                if(requested.has(FINISHED)) {
+                    getOnError().call(new Throwable("Intent is already used"));
                     return;
                 }
                 if (requested.has(ORIGIN)) {
-                    removeAction(requested.getString(ORIGIN));
+                    finishAction(requested.getString(ORIGIN));
                 }
-                removeAction(nonce);
+                finishAction(nonce);
                 if (System.currentTimeMillis() - requested.getLong(TIMESTAMP) > requested.getLong(TIMEOUT)) {
-                    getOnError().call(new Throwable("Nonce expired"));
+                    getOnError().call(new Throwable("Intent expired"));
                     return;
                 }
                 getOnSuccess().call(requested.getJSONObject(PAYLOAD));
@@ -156,6 +163,15 @@ public class OneTime extends AbstractAction<Void> {
             JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
             if(tokens.has(token)) {
                 tokens.remove(token);
+                tokensFile.save(tokens.toString(2));
+            }
+        }
+
+        protected void finishAction(String token) throws IOException {
+            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
+            if(tokens.has(token)) {
+                JSONObject action = tokens.getJSONObject(token);
+                action.put(FINISHED, System.currentTimeMillis());
                 tokensFile.save(tokens.toString(2));
             }
         }

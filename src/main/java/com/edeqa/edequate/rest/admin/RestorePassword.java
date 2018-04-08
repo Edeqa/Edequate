@@ -53,7 +53,7 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
         oneTimeAction.setOnError(error -> {
             Misc.err("RestorePassword", "failed:", error.getMessage(), options);
             json.put(CODE, ERROR_REQUEST_TIMEOUT);
-            json.put(MESSAGE, "Request expired");
+            json.put(MESSAGE, error.getMessage());
         });
         oneTimeAction.setOnWelcome(() -> {
             //noinspection unchecked
