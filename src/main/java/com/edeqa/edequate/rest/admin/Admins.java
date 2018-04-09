@@ -78,7 +78,11 @@ public class Admins extends AbstractAction<RequestWrapper> {
         switch(options.getString(MODE)) {
             case MODE_CURRENT:
                 Misc.log("Admins", "requested for current", "[" + request.getUserName() + "]");
-                result = current(request).toJSON();
+                if(request.getUserName() != null) {
+                    result = current(request).toJSON();
+                } else {
+                    result = null;
+                }
                 break;
             case MODE_LIST:
                 Misc.log("Admins", "requested list");

@@ -42,12 +42,19 @@ public class AdminServletHandler extends RestServletHandler {
     @Override
     public void useDefault() {
         super.useDefault();
-        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("Holder")).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
-        registerAction(new Pages());
+        String appEngineVersion = System.getProperty("com.google.appengine.runtime.version");
 
+        registerAction(new Admins().read());
+        registerAction(new Files().setFilenameFilter((dir, name) -> {
+            if(appEngineVersion != null && appEngineVersion.length() > 0) {
+                return name.contains("AppEngineHolder");
+            } else {
+                return name.contains("Holder") && !name.contains("AppEngineHolder");
+            }
+        }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
         registerAction(new LogsClear());
         registerAction(new LogsLog());
-        registerAction(new Admins().read());
+        registerAction(new Pages());
         registerAction(new RestorePassword());
         registerAction(new Splash());
     }

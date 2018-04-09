@@ -48,30 +48,22 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     public void useDefault() {
-
         Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
 
         getSystemBus().registerIfAbsent(new OneTime());
 
+        registerAction(new Locales().setWebDirectory(arguments.getWebRootDirectory()));
+        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("Holder")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/main").setActionName("/rest/main"));
+        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("pages-")).setFilenameProcess(name -> name.replaceAll("pages-(.*?)\\.json", "$1")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data/types"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("content").setActionName("/rest/content"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data"));
-        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("Holder")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/main").setActionName("/rest/main"));
-        registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("pages-")).setFilenameProcess(name -> name.replaceAll("pages-(.*?)\\.json", "$1")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data/types"));
-        registerAction(new Locales().setWebDirectory(arguments.getWebRootDirectory()));
         registerAction(new Version());
-        registerAction(new Nothing());
+//        registerAction(new Nothing());
     }
 
     protected AbstractAction<RequestWrapper> registerAction(AbstractAction<RequestWrapper> actionHolder) {
-        String actionName = actionHolder.getType();
-
-//        if(pool.containsKey(actionName)) {
-//            Misc.log("Rest", "override:", actionHolder.getClass().getName(), "[" + actionName + "]");
-//        } else {
-//            Misc.log("Rest", "register:", actionHolder.getClass().getName(), "[" + actionName + "]");
-//        }
-        pool.put(actionName, actionHolder);
+        pool.put(actionHolder.getType(), actionHolder);
         return actionHolder;
     }
 
@@ -93,7 +85,6 @@ public class RestServletHandler extends AbstractServletHandler {
     }
 
     public void perform(RequestWrapper requestWrapper) throws IOException {
-
         String path = requestWrapper.getRequestURI().getPath().replaceFirst("/$", "");
 
         Map<String, List<String>> arguments = requestWrapper.getParameterMap();
