@@ -20,7 +20,6 @@ public class Resource extends FileRestAction {
     private final static String RESOURCE = "resource";
     private final static String TYPE = "type";
 
-
     public Resource() {
         super();
     }
@@ -147,6 +146,7 @@ public class Resource extends FileRestAction {
                 .call(null, request);
         json.put(STATUS, STATUS_DELAYED);
     }
+
 }
 
 

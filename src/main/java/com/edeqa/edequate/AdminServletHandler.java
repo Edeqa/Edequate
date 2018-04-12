@@ -44,14 +44,17 @@ public class AdminServletHandler extends RestServletHandler {
         super.useDefault();
         String appEngineVersion = System.getProperty("com.google.appengine.runtime.version");
 
+        Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
+
         registerAction(new Admins().read());
+        registerAction(new Content().setWebPath(new WebPath(arguments.getWebRootDirectory(), "data/.settings.json")).setPersistent(true).setActionName("/admin/rest/data/settings"));
         registerAction(new Files().setFilenameFilter((dir, name) -> {
             if(appEngineVersion != null && appEngineVersion.length() > 0) {
                 return name.contains("AppEngineHolder");
             } else {
                 return name.contains("Holder") && !name.contains("AppEngineHolder");
             }
-        }).setWebDirectory(((Arguments) getSystemBus().getHolder(Arguments.TYPE)).getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
+        }).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
         registerAction(new LogsClear());
         registerAction(new LogsLog());
         registerAction(new Pages());

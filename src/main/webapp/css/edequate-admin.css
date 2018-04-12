@@ -212,6 +212,21 @@ div.question {
 .security-weak {
     background-color: bisque;
 }
+.settings-item {
+    display: flex;
+    width: 100%;
+    margin: 10px;
+}
+.settings-item-label {
+    flex: 0 0 150px;
+}
+.settings-item-input {
+    flex: 1 1 auto;
+    display: flex;
+}
+.settings-item-button {
+    margin-left: 5px;
+}
 
 @media screen and (max-width: 1000px) {
     html, body {

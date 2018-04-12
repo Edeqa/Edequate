@@ -52,12 +52,12 @@ public class RestServletHandler extends AbstractServletHandler {
 
         getSystemBus().registerIfAbsent(new OneTime());
 
-        registerAction(new Locales().setWebDirectory(arguments.getWebRootDirectory()));
         registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("Holder")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/main").setActionName("/rest/main"));
         registerAction(new Files().setFilenameFilter((dir, name) -> name.contains("pages-")).setFilenameProcess(name -> name.replaceAll("pages-(.*?)\\.json", "$1")).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data/types"));
+        registerAction(new Locales().setWebDirectory(arguments.getWebRootDirectory()));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("content").setActionName("/rest/content"));
-        registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data"));
+        registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Version());
 //        registerAction(new Nothing());
     }

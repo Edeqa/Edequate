@@ -29,6 +29,7 @@ public class Content extends FileRestAction {
     private MimeType mimeType;
     private Replacements replacements;
     private int resultCode;
+    private boolean persistent;
 
     public Content() {
         super();
@@ -126,6 +127,7 @@ public class Content extends FileRestAction {
                 if (!getMimeType().isGzip()) {
                     requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(string.length()));
                 }
+                if(getResultCode() == 0) setResultCode(200);
                 requestWrapper.sendResponseHeaders(getResultCode(), 0);
 
                 try(OutputStream os = requestWrapper.getResponseBody()) {
@@ -135,6 +137,7 @@ public class Content extends FileRestAction {
                 requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, getMimeType().fetchContentType());
                 if (!getMimeType().isGzip())
                     requestWrapper.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(webPath.path().length()));
+                if(getResultCode() == 0) setResultCode(200);
                 requestWrapper.sendResponseHeaders(getResultCode(), 0);
 
                 try (OutputStream os = requestWrapper.getResponseBody()) {
@@ -156,11 +159,14 @@ public class Content extends FileRestAction {
                         }
                     }
                 }
+                if(json != null) json.put(STATUS, STATUS_DELAYED);
             }
         } catch(Exception e) {
             Misc.err("Content", "failed for", webPath, requestWrapper.getRequestURI(), e);
         }
-        clear();
+        if(!isPersistent()) {
+            clear();
+        }
     }
 
     public void clear() {
@@ -212,6 +218,15 @@ public class Content extends FileRestAction {
 
     public Content setContent(String content) {
         this.content = content;
+        return this;
+    }
+
+    public boolean isPersistent() {
+        return persistent;
+    }
+
+    public Content setPersistent(boolean persistent) {
+        this.persistent = persistent;
         return this;
     }
 }
