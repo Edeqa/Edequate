@@ -100,7 +100,9 @@ public class RestServletHandler extends AbstractServletHandler {
             }
         } catch(Exception e) {
             Misc.err("Rest", "failed:", e);
-            new Nothing().setThrowable(e).call(json, requestWrapper);
+            if (!json.has(STATUS)) {
+                new Nothing().setThrowable(e).call(json, requestWrapper);
+            }
         }
 
         if (!json.has(STATUS)) {

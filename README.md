@@ -1,13 +1,12 @@
 # Edequate
 
-
 Site building framework.
 
 Includes javascript DOM and interface routines.
 
 ## How to use
 
-### Including to the project
+### Include to the project
 
 First, make a clone of Edequate into your project:
 
@@ -63,10 +62,9 @@ Set the `index.html` file as a head of your project, change it as you'd like:
         </style>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <script async src="/js/Edequate.js"
-            data-variable="u"
-            data-callback="u.require('/js/Main.js', u).then(function(main){main.start({type:'main'})})"
-            data-export-constants="true">
-        </script>
+                data-variable="u"
+                data-callback="u.require('/js/Main.js', u).then(function(main){main.start({type:'main'})})"
+                data-export-constants="true"></script>
     </head>
     <body>
     <div id="loading-dialog" class="modal shadow progress-dialog" tabindex="-1">
@@ -92,6 +90,7 @@ Set the `index.html` file as a head of your project, change it as you'd like:
     </noscript>
     </body>
     </html>
+
 ```
 
 Here are the next important lines.
@@ -124,46 +123,50 @@ Edequate has the predefined `Main.js` which must not be modified. It takes some 
 
 Arguments passes into `Main.js` as an object. All keys are optional. Possible keys:
 
-* `type` - . Default: `main`.
-
 * `info` - 
 
 * `serviceWorker` - url to service worker script
+
+* `type` - the section's identifier. Default: `main`.
 
 Arguments object will be stored as the property `arguments`.
 
 #### Properties
  
-* `history` - 
+* `actionbar` - instance of [Actionbar](#actionbar)
+
+* `arguments` - instance of [Arguments](#arguments)
+
+* `buttonScrollTop` - node of button which happens temporaarily when the page is scrolling
+
+* `content` - node which contains the most modifiable content (not action bar, not drawer etc.)
+
+* `drawer` - instance of [Drawer](#drawer)
+
+* `edequate` - instance of Edequate
+
+* `eventBus` - instance of automatically defined [Event bus](#event-bus)
+
+* `history` - instance of object that keeps and controls the history of navigation within current session
+
+* `holder` - selected holder
+
+* `layout` - alias for `content`
 
 * `mainType` - the same as `Arguments.type`.
 
-* `layout` - 
-
-* `actionbar`
-
-* `selectLang`
-
-* `holder` - selected holder.
-
-* `drawer`
-
-* `content`
-
-* `eventBus`
-
-* `buttonScrollTop`
-
-* `edequate` - instance of Edequate
+* `selectLang` - node that contains the select menu that allows to change the current locale of site. Change fires the `loadResources` method
 
 * `structure` - pages structure of current section
  
  
 #### Methods
 
-* `loadResources`
+* `buildTree` - gets the pages structure definition from "/rest/data/pages-type.json" and normalizes it using selected locale and some other customizations
 
-* `turn`
+* `loadResources` - loads resources from "/rest/resources" and replaces all redefined values to the new ones
+
+* `turn` - turns the `resume` method of holder assigned with first argument and defined options. If holder is not assigned then calls `PagesHolder`. If page is not assigned then `PagesHolder` calls `PageNotFoundHolder`.
 
 
 ## Edequate.js
@@ -256,7 +259,7 @@ You may also use it with [RawGit](http://rawgit.com):
     https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/css/edequate.css
     https://cdn.rawgit.com/Edeqa/Edequate/VERSION/src/main/webapp/css/edequate-horizontal.css
 
-Set the desired `VERSION` and use it stable. Or set `master` for always getting the fresh version. Available tags are [here](https://github.com/Edeqa/Edequate/tags).
+Set the desired `VERSION` and use it stable. Or set `master` for always getting the last version. Available tags are [here](https://github.com/Edeqa/Edequate/tags).
 
 For example:
 

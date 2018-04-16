@@ -16,6 +16,7 @@ function SettingsHolder(main) {
 
     var div;
     var dialogEmailSettings;
+    var dialogTest;
 
     this.start = function() {
         div = main.content;
@@ -52,7 +53,7 @@ function SettingsHolder(main) {
                 {type: HTML.INPUT, label: "SMTP server"},
                 {type: HTML.INPUT, label: "SMTP port"},
                 {type: HTML.INPUT, label: "SMTP login"},
-                {type: HTML.INPUT, label: "SMTP password"},
+                {type: HTML.PASSWORD, label: "SMTP password"},
                 {type: HTML.INPUT, label: "Reply name"},
                 {type: HTML.INPUT, label: "Reply e-mail"}
             ],
@@ -67,7 +68,53 @@ function SettingsHolder(main) {
                 label: "Test",
                 dismiss: false,
                 onclick: function() {
-                    console.log("test")
+                    console.log("test");
+
+                    dialogTest = dialogTest || u.dialog({
+                        title: "Test to e-mail",
+                        items: [
+                            {type: HTML.INPUT, label: "Enter target e-mail"},
+                        ],
+                        positive: {
+                            label: u.lang.ok,
+                            onclick: function() {
+                                var options = {
+                                    action: "smtp_test",
+                                    smtp_server: serverNode.value,
+                                    smtp_port: portNode.value,
+                                    smtp_login: loginNode.value,
+                                    smtp_password: passwordNode.value,
+                                    reply_name: nameNode.value,
+                                    reply_email: emailNode.value,
+                                    target_email: dialogTest.items[0].value
+                                };
+                                u.progress.show("Sending test e-mail...");
+                                u.post("/admin/rest/settings", options).then(function(json) {
+                                    console.log(json);
+                                    u.progress.hide();
+                                    u.toast.show("E-mail sent, check your inbox");
+                                }).catch(function (code, xhr) {
+                                    console.error(code);
+                                    u.progress.hide();
+                                    try{
+                                        var json = JSON.parse(xhr.response);
+                                        u.toast.error("E-mail sent failed: " + json.message);
+                                    } catch(e) {
+                                        console.error(code);
+                                        u.toast.error("E-mail sent failed: error " + error);
+                                    }
+
+                                });
+                            }
+                        },
+                        negative: {
+                            label: u.lang.cancel,
+                            onclick: function() {
+                                console.log("cancel")
+                            }
+                        }
+                    });
+                    dialogTest.open();
                 }
             },
             negative: {
@@ -79,7 +126,7 @@ function SettingsHolder(main) {
         });
 
         u.create(HTML.DIV, {className: "settings-item"}, div)
-            .place(HTML.DIV, {className: "settings-item-label", innerHTML:"E-mail settings"})
+            .place(HTML.DIV, {className: "settings-item-label", innerHTML:"SMTP settings"})
             .place(HTML.DIV, {className: "settings-item-input", children: [
                     u.create(HTML.DIV, json.smtp_server ? json.smtp_server + (json.smtp_port ? ":" + json.smtp_port : "") + (json.smtp_login ? "/" + json.smtp_login : "") : "Not defined"),
                     u.create(HTML.BUTTON, {
