@@ -25,6 +25,12 @@ h2 {
     color: indianred;
     background-color: cornsilk;
 }
+.required::before {
+    content: "*";
+    color: red;
+    margin-right: 3px;
+    font-weight: bold;
+}
 .th.option {
     text-align: left;
     width: 250px;
@@ -216,6 +222,7 @@ div.question {
     display: flex;
     width: 100%;
     margin: 10px;
+    align-items: center;
 }
 .settings-item-label {
     flex: 0 0 150px;
@@ -223,6 +230,7 @@ div.question {
 .settings-item-input {
     flex: 1 1 auto;
     display: flex;
+    align-items: center;
 }
 .settings-item-button {
     margin-left: 5px;

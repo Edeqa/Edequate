@@ -27,7 +27,6 @@ function SettingsHolder(main) {
         var titleNode = u.create(HTML.H2, "Settings", div);
 
         u.get("/admin/rest/data/settings").then(function(result){
-            console.log(result);
             var json;
             if(result.responseText) {
                 json = JSON.parse(result.responseText);
@@ -46,22 +45,49 @@ function SettingsHolder(main) {
     }
 
     function populateMailSettings(json) {
-
         dialogEmailSettings = dialogEmailSettings || u.dialog({
             title: "SMTP settings",
             items: [
-                {type: HTML.INPUT, label: "SMTP server"},
-                {type: HTML.INPUT, label: "SMTP port"},
-                {type: HTML.INPUT, label: "SMTP login"},
-                {type: HTML.PASSWORD, label: "SMTP password"},
+                {type: HTML.INPUT, labelClassName: "required", label: "SMTP server"},
+                {type: HTML.INPUT, labelClassName: "required", label: "SMTP port"},
+                {type: HTML.INPUT, labelClassName: "required", label: "SMTP login"},
+                {type: HTML.PASSWORD, labelClassName: "required", label: "SMTP password"},
                 {type: HTML.INPUT, label: "Reply name"},
-                {type: HTML.INPUT, label: "Reply e-mail"}
+                {type: HTML.INPUT, labelClassName: "required", label: "Reply e-mail"}
             ],
             positive: {
                 label: u.lang.ok,
                 dismiss: false,
                 onclick: function() {
                     console.log("save");
+                    var options = {
+                        action: "smtp_save",
+                        smtp_server: serverNode.value,
+                        smtp_port: portNode.value,
+                        smtp_login: loginNode.value,
+                        smtp_password: passwordNode.value,
+                        reply_name: nameNode.value,
+                        reply_email: emailNode.value
+                    };
+                    u.progress.show("Saving SMTP settings...");
+                    u.post("/admin/rest/settings", options).then(function(json) {
+                        console.log(json);
+                        u.progress.hide();
+                        dialogEmailSettings.close();
+                        main.turn("settings");
+                        u.toast.show("Settings has been saved");
+                    }).catch(function (code, xhr) {
+                        console.error(code);
+                        u.progress.hide();
+                        try{
+                            var json = JSON.parse(xhr.response);
+                            u.toast.error("Saving failed: " + json.message);
+                        } catch(e) {
+                            console.error(code);
+                            u.toast.error("Saving failed: error " + error);
+                        }
+
+                    });
                 }
             },
             neutral: {
@@ -73,7 +99,7 @@ function SettingsHolder(main) {
                     dialogTest = dialogTest || u.dialog({
                         title: "Test to e-mail",
                         items: [
-                            {type: HTML.INPUT, label: "Enter target e-mail"},
+                            {type: HTML.INPUT, labelClassName: "required", label: "Enter target e-mail"},
                         ],
                         positive: {
                             label: u.lang.ok,
@@ -90,7 +116,6 @@ function SettingsHolder(main) {
                                 };
                                 u.progress.show("Sending test e-mail...");
                                 u.post("/admin/rest/settings", options).then(function(json) {
-                                    console.log(json);
                                     u.progress.hide();
                                     u.toast.show("E-mail sent, check your inbox");
                                 }).catch(function (code, xhr) {
@@ -126,11 +151,11 @@ function SettingsHolder(main) {
         });
 
         u.create(HTML.DIV, {className: "settings-item"}, div)
-            .place(HTML.DIV, {className: "settings-item-label", innerHTML:"SMTP settings"})
+            .place(HTML.DIV, {className: "settings-item-label" + (!json.smtp_server || !json.smtp_port || !json.smtp_login || !json.smtp_password || !json.reply_name || !json.reply_email ? " question" : ""), innerHTML:"SMTP settings"})
             .place(HTML.DIV, {className: "settings-item-input", children: [
                     u.create(HTML.DIV, json.smtp_server ? json.smtp_server + (json.smtp_port ? ":" + json.smtp_port : "") + (json.smtp_login ? "/" + json.smtp_login : "") : "Not defined"),
                     u.create(HTML.BUTTON, {
-                        className: "icon settings-item-button",
+                        className: "icon button-inline",
                         innerHTML: "edit",
                         onclick: function () {
                             dialogEmailSettings.open()
