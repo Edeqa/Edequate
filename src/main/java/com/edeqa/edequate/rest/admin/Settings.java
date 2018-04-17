@@ -20,15 +20,15 @@ public class Settings extends AbstractAction<RequestWrapper> {
     private static final String SMTP_SAVE = "smtp_save";
     private static final String SMTP_TEST = "smtp_test";
 
-    private static final String MAIL = "mail";
-    private static final String SMTP_SERVER = "smtp_server";
-    private static final String SMTP_PORT = "smtp_port";
-    private static final String SMTP_LOGIN = "smtp_login";
-    private static final String SMTP_PASSWORD = "smtp_password";
-    private static final String SMTP_OAUTH2 = "smtp_oauth2";
-    private static final String REPLY_NAME = "reply_name";
-    private static final String REPLY_EMAIL = "reply_email";
-    private static final String TARGET_EMAIL = "target_email";
+    public static final String MAIL = "mail";
+    public static final String SMTP_SERVER = "smtp_server";
+    public static final String SMTP_PORT = "smtp_port";
+    public static final String SMTP_LOGIN = "smtp_login";
+    public static final String SMTP_PASSWORD = "smtp_password";
+    public static final String SMTP_OAUTH2 = "smtp_oauth2";
+    public static final String REPLY_NAME = "reply_name";
+    public static final String REPLY_EMAIL = "reply_email";
+    public static final String TARGET_EMAIL = "target_email";
 
     private WebPath settingsWebPath;
 
@@ -104,8 +104,9 @@ public class Settings extends AbstractAction<RequestWrapper> {
                              .setFromEmail(options.getString(REPLY_EMAIL))
                              .setFromUsername(options.getString(REPLY_NAME))
                              .setToEmail(options.getString(TARGET_EMAIL))
-                             .setSubject("Subject test")
-                             .setBody("Test email").send();
+                             .setSubject("Just a test mail")
+                             .setBody("This is just a test mail, do not reply.").send();
+
         json.put(STATUS, STATUS_SUCCESS);
         json.put(CODE, CODE_STRING);
         json.put(MESSAGE, result);

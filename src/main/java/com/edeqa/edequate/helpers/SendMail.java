@@ -1,9 +1,15 @@
 package com.edeqa.edequate.helpers;
 
+import com.edeqa.edequate.abstracts.AbstractAction;
+import com.edeqa.edequate.rest.system.Arguments;
+import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 import com.sun.mail.smtp.SMTPTransport;
 import com.sun.mail.util.BASE64EncoderStream;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
 
@@ -11,6 +17,15 @@ import javax.mail.Message;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+
+import static com.edeqa.edequate.abstracts.AbstractAction.SYSTEMBUS;
+import static com.edeqa.edequate.rest.admin.Settings.MAIL;
+import static com.edeqa.edequate.rest.admin.Settings.REPLY_EMAIL;
+import static com.edeqa.edequate.rest.admin.Settings.REPLY_NAME;
+import static com.edeqa.edequate.rest.admin.Settings.SMTP_LOGIN;
+import static com.edeqa.edequate.rest.admin.Settings.SMTP_PASSWORD;
+import static com.edeqa.edequate.rest.admin.Settings.SMTP_PORT;
+import static com.edeqa.edequate.rest.admin.Settings.SMTP_SERVER;
 
 public class SendMail {
     private String serverHost;
@@ -31,10 +46,13 @@ public class SendMail {
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.port", getServerPort());
         props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.from", getFromEmail());
 
         Session session = Session.getDefaultInstance(props);
         session.setDebug(true);
         MimeMessage msg = new MimeMessage(session);
+
+        msg.setReplyTo(new javax.mail.Address[]{new javax.mail.internet.InternetAddress(getFromEmail())});
         msg.setFrom(new InternetAddress(getFromEmail(), getFromUsername()));
         msg.setRecipient(Message.RecipientType.TO, new InternetAddress(getToEmail()));
         msg.setSubject(getSubject());
@@ -53,6 +71,23 @@ public class SendMail {
         }
         transport.sendMessage(msg, msg.getAllRecipients());
         return transport.getLastReturnCode();
+    }
+
+    public SendMail useMailer() throws IOException {
+        Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
+
+        WebPath settingsWebPath = new WebPath(arguments.getWebRootDirectory(), "data/.settings.json");
+        JSONObject settingsJSON = new JSONObject(settingsWebPath.content());
+        JSONObject smtpJSON = settingsJSON.getJSONObject(MAIL);
+
+        setServerHost(smtpJSON.getString(SMTP_SERVER));
+        setServerPort(smtpJSON.getString(SMTP_PORT));
+        setLogin(smtpJSON.getString(SMTP_LOGIN));
+        setPassword(smtpJSON.getString(SMTP_PASSWORD));
+        setFromEmail(smtpJSON.getString(REPLY_EMAIL));
+        setFromUsername(smtpJSON.getString(REPLY_NAME));
+
+        return this;
     }
 
     public String getServerHost() {
