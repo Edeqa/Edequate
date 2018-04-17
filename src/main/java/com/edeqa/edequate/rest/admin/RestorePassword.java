@@ -3,6 +3,7 @@ package com.edeqa.edequate.rest.admin;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.DigestAuthenticator;
 import com.edeqa.edequate.helpers.RequestWrapper;
+import com.edeqa.edequate.helpers.SendMail;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.edequate.rest.system.OneTime;
@@ -17,7 +18,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import static com.edeqa.edequate.rest.admin.Admins.PASSWORD;
-import static com.edeqa.edequate.rest.system.OneTime.LINK;
 import static com.edeqa.edequate.rest.system.OneTime.NONCE;
 import static com.edeqa.edequate.rest.system.OneTime.TIMEOUT;
 import static com.edeqa.edequate.rest.system.OneTime.TIMESTAMP;
@@ -25,6 +25,8 @@ import static com.edeqa.edequate.rest.system.OneTime.TIMESTAMP;
 public class RestorePassword extends AbstractAction<RequestWrapper> {
 
     public static final String TYPE = "/admin/restore/password";
+
+    private static final String LOG = "RestorePassword";
 
     private static final String LOGIN = "login";
     private static final String REALM = "realm";
@@ -51,7 +53,7 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
         oneTimeAction.setRequestOptions(options);
         oneTimeAction.setOnFetchToken(DigestAuthenticator::createNonce);
         oneTimeAction.setOnError(error -> {
-            Misc.err("RestorePassword", "failed:", error.getMessage(), options);
+            Misc.err(LOG, "failed:", error.getMessage(), options);
             json.put(CODE, ERROR_REQUEST_TIMEOUT);
             json.put(MESSAGE, error.getMessage());
         });
@@ -86,13 +88,31 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
             }});
             oneTimeAction.setStrong(true);
             oneTimeAction.setOnStart(token -> {
-                json.put(STATUS, STATUS_SUCCESS);
-                json.put(CODE, CODE_JSON);
-                json.put(MESSAGE, new JSONObject() {{
-                    put(TIMESTAMP, System.currentTimeMillis());
-                    put(TIMEOUT, oneTimeAction.getExpirationTimeout());
-                    put(LINK, "https://" + request.getRequestedHost() + ":" + arguments.getHttpsAdminPort() + TYPE + "?once=" + token);
-                }});
+                String link = "https://" + request.getRequestedHost() + ":" + arguments.getHttpsAdminPort() + TYPE + "?once=" + token;
+                try {
+                    int result = new SendMail().useMailer()
+                                         .setToEmail(admin.getEmail())
+                                         .setSubject("Password reset")
+                                         .setBody(link).send();
+                    Misc.err(LOG, "RESULT:"+result);
+                    if(result == 250) {
+                        json.put(STATUS, STATUS_SUCCESS);
+                        json.put(CODE, CODE_JSON);
+                        json.put(MESSAGE, new JSONObject() {{
+                            put(TIMESTAMP, System.currentTimeMillis());
+                            put(TIMEOUT, oneTimeAction.getExpirationTimeout());
+                        }});
+                    } else {
+                        Misc.err(LOG, "could not send mail, code", result);
+                        json.put(CODE, ERROR_UNPROCESSABLE_ENTITY);
+                        json.put(MESSAGE, "Mail has not been sent: " + result);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Misc.err(LOG, "could not send mail", "[" + e.getMessage() + "]");
+                    json.put(CODE, ERROR_UNPROCESSABLE_ENTITY);
+                    json.put(MESSAGE, "Mail has not been sent");
+                }
             });
             oneTimeAction.start();
         } else {
@@ -110,7 +130,7 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
                 admins.read();
                 Admins.Admin admin = admins.get(login);
                 if (admin == null) {
-                    Misc.err("RestorePassword", "not found", "[" + login + "]");
+                    Misc.err(LOG, "not found", "[" + login + "]");
                     json.put(CODE, ERROR_UNPROCESSABLE_ENTITY);
                     json.put(MESSAGE, "Incorrect request");
                     return;
