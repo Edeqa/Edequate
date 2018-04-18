@@ -100,15 +100,15 @@ public class OneTime extends AbstractAction<Void> {
                 String token = getRequestOptions().getString(TOKEN);
                 JSONObject requested = getAction(token);
                 if (requested == null) {
-                    getOnError().call(new Throwable("Session not found"));
+                    getOnError().call(new Throwable("Token not found"));
                     return;
                 }
                 if(requested.has(FINISHED)) {
-                    getOnError().call(new Throwable("Session is already used"));
+                    getOnError().call(new Throwable("Token is already used"));
                     return;
                 }
                 if (System.currentTimeMillis() - requested.getLong(TIMESTAMP) > requested.getLong(TIMEOUT)) {
-                    getOnError().call(new Throwable("Session expired"));
+                    getOnError().call(new Throwable("Token expired"));
                     return;
                 }
                 if(requested.has(STRONG) && requested.getBoolean(STRONG)) {

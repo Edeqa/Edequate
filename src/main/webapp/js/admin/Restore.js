@@ -104,7 +104,7 @@ function Restore(u) {
                     u.getJSON("/admin/restore/password", {login:login}).then(function(json){
                         u.progress.hide();
                         try {
-                            var info = "Reset link has been sent to %s's email. It will be valid only %d minutes.<br><a href=\"%s\">%s</a>".sprintf(login, json.message.timeout / 1000 / 60, json.message.link, json.message.link);
+                            var info = "Reset link has been sent to %s's email. It will be valid only %d minutes.<br>".sprintf(login, json.message.timeout / 1000 / 60);
                             u.toast.show(info);
                             dialogRequest.close();
                             document.getElementsByClassName("admin-splash-info")[0].innerHTML = info;
