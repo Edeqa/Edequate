@@ -26,7 +26,7 @@ function LogoutHolder(main) {
             src: "/images/logo.svg"
         }).place(HTML.SPAN, {
             className: "admin-splash-title",
-            innerHTML: "${APP_NAME} 1." + window.data.version
+            innerHTML: "${APP_NAME}"
         }).place(HTML.SPAN, {
             className: "admin-splash-subtitle",
             innerHTML: "Admin"

@@ -99,7 +99,6 @@ public class MainServletHandler extends AbstractServletHandler {
                 types.add(file.getName().replaceAll("pages-(.*?)\\.json", "$1"));
             }
 
-            System.out.println(beginWeb + ":" + types + ":" + types.contains(beginWeb));
             if(types.contains(beginWeb)) {
                 webPath = new WebPath(getWebDirectory(), "index-" + beginWeb + ".html");
             }
