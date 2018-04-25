@@ -87,16 +87,15 @@ public class RestorePassword extends AbstractAction<RequestWrapper> {
                 put(LOGIN, login);
                 put(REALM, arguments.getRealm());
             }});
-            oneTimeAction.setStrong(true);
             oneTimeAction.setOnStart(token -> {
                 String link = "https://" + request.getRequestedHost() + ":" + arguments.getHttpsAdminPort() + TYPE + "?once=" + token;
                 Misc.log(LOG, "generated one-time link:", link);
                 try {
                     int result = new SendMail().useMailer()
-                                         .setToEmail(admin.getEmail())
-                                         .setSubject("Password reset")
-                                         .setBody("This is one-time link, it will expire at " + (new Date(System.currentTimeMillis() + oneTimeAction.getExpirationTimeout()).toString()) + "\n" + link)
-                                         .send();
+                         .setToEmail(admin.getEmail())
+                         .setSubject("Password reset")
+                         .setBody("This is one-time link, it will expire at " + (new Date(System.currentTimeMillis() + oneTimeAction.getExpirationTimeout()).toString()) + "\n" + link)
+                         .send();
                     if(result == 250) {
                         json.put(STATUS, STATUS_SUCCESS);
                         json.put(CODE, CODE_JSON);

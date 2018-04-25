@@ -3,23 +3,24 @@ package com.edeqa.edequate.rest.system;
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.eventbus.EventBus;
+import com.edeqa.helpers.Misc;
 import com.edeqa.helpers.interfaces.Runnable1;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 
+@SuppressWarnings("WeakerAccess")
 public class OneTime extends AbstractAction<Void> {
 
     public static final String TYPE = "/rest/onetime";
 
     private static final String FINISHED = "finished";
     public static final String LINK = "link";
-    private static final String MODE = "mode";
     public static final String NONCE = "nonce";
     private static final String ORIGIN = "origin";
     private static final String PAYLOAD = "payload";
@@ -27,10 +28,13 @@ public class OneTime extends AbstractAction<Void> {
     public static final String TIMEOUT = "timeout";
     public static final String TIMESTAMP = "timestamp";
     public static final String TOKEN = "token";
+    public static final String MAX_TRIES = "max_tries";
+    public static final String TRIED = "tried";
 
     private static final long EXPIRATION_TIMEOUT = 1000 * 60 * 15L;
+    private static final int MAX_TRIES_DEFAULT = 1;
 
-    private static WebPath tokensFile;
+//    private static WebPath tokensFile;
 
     @Override
     public String getType() {
@@ -53,6 +57,7 @@ public class OneTime extends AbstractAction<Void> {
      */
     @SuppressWarnings("WeakerAccess")
     public static class Action {
+        private final Arguments arguments;
         private Callable<String> onFetchToken;
         private Runnable onWelcome;
         private Runnable1<String> onStart;
@@ -63,36 +68,37 @@ public class OneTime extends AbstractAction<Void> {
         private JSONObject requestOptions;
         private Long expirationTimeout;
         private boolean strong;
+        private int maxTries;
 
         public Action() {
             //noinspection unchecked
-            Arguments arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
-            tokensFile = new WebPath(arguments.getWebRootDirectory() + "/data", ".once.json");
+            arguments = (Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE);
             setExpirationTimeout(EXPIRATION_TIMEOUT);
+            setMaxTries(MAX_TRIES_DEFAULT);
         }
 
         /**
          * Generates and stores the token using the payload was set with {@code setPayload}. After all calls {@code onStart} with token. Thus, {@code setPayload} and {@code setOnStart} must be called before {@code start}.
          */
         public void start() throws Exception {
-            removeExpiredActions();
 
             JSONObject json = new JSONObject();
             json.put(TIMESTAMP, System.currentTimeMillis());
-            json.put(MODE, TOKEN);
             json.put(PAYLOAD, getPayload());
             json.put(TIMEOUT, getExpirationTimeout());
+            json.put(MAX_TRIES, getMaxTries());
             if (isStrong()) json.put(STRONG, true);
 
             String nonce = onFetchToken.call();
             addAction(nonce, json);
             getOnStart().call(nonce);
+
+            new Thread(this::removeExpiredActions).start();
         }
 
-        protected void addAction(String nonce, JSONObject json) throws IOException {
-            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
-            tokens.put(nonce, json);
-            tokensFile.save(tokens.toString(2));
+        protected void addAction(String token, JSONObject json) throws IOException {
+            WebPath tokenFile = new WebPath(arguments.getWebRootDirectory(), "data/one-time/." + token + ".json");
+            tokenFile.save(json.toString(2));
         }
 
         public void process() throws Exception {
@@ -137,7 +143,7 @@ public class OneTime extends AbstractAction<Void> {
                     return;
                 }
                 if (requested.has(ORIGIN)) {
-                    finishAction(requested.getString(ORIGIN));
+                    increaseTries(requested.getString(ORIGIN));
                 }
                 finishAction(nonce);
                 if (System.currentTimeMillis() - requested.getLong(TIMESTAMP) > requested.getLong(TIMEOUT)) {
@@ -151,51 +157,58 @@ public class OneTime extends AbstractAction<Void> {
         }
 
         protected JSONObject getAction(String token) throws IOException {
-            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
-            if(tokens.has(token)) {
-                return tokens.getJSONObject(token);
+            WebPath tokenFile = new WebPath(arguments.getWebRootDirectory(), "data/one-time/." + token + ".json");
+            if(tokenFile.path().exists()) {
+                return new JSONObject(tokenFile.content());
             } else {
                 return null;
             }
         }
 
-        protected void removeAction(String token) throws IOException {
-            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
-            if(tokens.has(token)) {
-                tokens.remove(token);
-                tokensFile.save(tokens.toString(2));
+        protected void increaseTries(String token) throws IOException {
+            JSONObject action = getAction(token);
+            if(action != null) {
+                int currentTryNumber = 0;
+                int maxTries = MAX_TRIES_DEFAULT;
+                if(action.has(TRIED)) currentTryNumber = action.getInt(TRIED);
+                if(action.has(MAX_TRIES)) maxTries = action.getInt(MAX_TRIES);
+                currentTryNumber ++;
+                action.put(TRIED, currentTryNumber);
+                WebPath tokenFile = new WebPath(arguments.getWebRootDirectory(), "data/one-time/." + token + ".json");
+                tokenFile.save(action.toString(2));
+                if(currentTryNumber >= maxTries) finishAction(token);
             }
         }
 
         protected void finishAction(String token) throws IOException {
-            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
-            if(tokens.has(token)) {
-                JSONObject action = tokens.getJSONObject(token);
+            JSONObject action = getAction(token);
+            if(action != null) {
                 action.put(FINISHED, System.currentTimeMillis());
-                tokensFile.save(tokens.toString(2));
+                WebPath tokenFile = new WebPath(arguments.getWebRootDirectory(), "data/one-time/." + token + ".json");
+                tokenFile.save(action.toString(2));
             }
         }
 
-        protected void removeExpiredActions() throws IOException {
-            JSONObject tokens = new JSONObject(tokensFile.path().exists() ? tokensFile.content() : "{}");
-            Iterator<String> iter = tokens.keys();
-            boolean removed = false;
-            while (iter.hasNext()) {
-                String key = iter.next();
-                JSONObject entry = tokens.getJSONObject(key);
-                try {
-                    if (System.currentTimeMillis() - entry.getLong(TIMESTAMP) > entry.getLong(TIMEOUT)) {
-                        iter.remove();
-                        removed = true;
+        @SuppressWarnings("ResultOfMethodCallIgnored")
+        protected void removeExpiredActions() {
+            WebPath tokensDir = new WebPath(arguments.getWebRootDirectory(), "data/one-time");
+            File[] list = tokensDir.path().listFiles((dir, name) -> name.startsWith(".") && name.endsWith(".json"));
+            if (list != null) {
+                for(File file: list) {
+                    if(!file.isFile()) continue;
+                    WebPath webPath = new WebPath(file);
+                    try {
+                        JSONObject json = new JSONObject(webPath.content());
+                        if (System.currentTimeMillis() - json.getLong(TIMESTAMP) > json.getLong(TIMEOUT)) {
+                            Misc.log("OneTime", "has removed the token expired", "[" + file.getName() + "]");
+                            file.delete();
+                        }
+                    } catch(Exception e) {
+                        Misc.err("OneTime", "has renamed the token failed", "[" + file.getName() + "]", e.getMessage());
+                        File badFile = new File(file.getAbsolutePath() + ".bad");
+                        file.renameTo(badFile);
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    iter.remove();
-                    removed = true;
                 }
-            }
-            if(removed) {
-                tokensFile.save(tokens.toString(2));
             }
         }
 
@@ -271,8 +284,17 @@ public class OneTime extends AbstractAction<Void> {
             return strong;
         }
 
+        @SuppressWarnings("unused")
         public void setStrong(boolean strong) {
             this.strong = strong;
+        }
+
+        public int getMaxTries() {
+            return maxTries;
+        }
+
+        public void setMaxTries(int maxTries) {
+            this.maxTries = maxTries;
         }
     }
 }

@@ -97,8 +97,10 @@ public class WebPath {
     }
 
     public void save(String content) throws IOException {
-        File tempName = new File(path().getName() + ".$new");
+        File tempName = new File(path().getAbsolutePath() + ".$new");
         if(tempName.exists()) tempName.delete();
+        System.out.println("SAVE:"+tempName.getAbsolutePath()+":"+content);
+        tempName.getParentFile().mkdirs();
         try (FileWriter writer = new FileWriter(tempName)) {
             writer.write(content);
             writer.close();
