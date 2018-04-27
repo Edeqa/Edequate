@@ -53,7 +53,7 @@ function SettingsHolder(main) {
                 {type: HTML.INPUT, labelClassName: "required", label: "SMTP login"},
                 {type: HTML.PASSWORD, labelClassName: "required", label: "SMTP password"},
                 {type: HTML.INPUT, label: "Reply name"},
-                {type: HTML.INPUT, labelClassName: "required", label: "Reply e-mail"}
+                {type: HTML.INPUT, label: "Reply e-mail"}
             ],
             positive: {
                 label: u.lang.ok,
