@@ -7,6 +7,7 @@ import com.edeqa.edequate.helpers.Replacements;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Content;
+import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.HtmlGenerator;
 import com.edeqa.helpers.Mime;
@@ -61,6 +62,7 @@ public class MainServletHandler extends AbstractServletHandler {
     @Override
     public void perform(RequestWrapper requestWrapper) throws IOException {
 
+        Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
         URI uri = requestWrapper.getRequestURI();
 
         if ("/_ah/start".equals(uri.getPath())) {
@@ -163,7 +165,9 @@ public class MainServletHandler extends AbstractServletHandler {
                 webPath = new WebPath(getWebDirectory(),"404.html");
             }
         } else {
-            //Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[" + webPath.path().length() + " byte(s)]",(referer != null ? "referer: " + referer : ""));
+            if(arguments.isDebugMode()) {
+                Misc.log("Main", "[" + ipRemote + "]", uri.getPath(), "[" + webPath.path().length() + " byte(s)]",(referer != null ? "referer: " + referer : ""));
+            }
         }
         {
             // Object exists and it is a file: accept with response code 200.

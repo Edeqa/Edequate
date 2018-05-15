@@ -311,16 +311,11 @@ button:hover, button:active {
     padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
-    /*display: flex;
-    align-items: center;
-    flex-direction: column;
-    flex-grow: 1;*/
 }
 
 .dialog-item {
     display: flex;
     align-items: center;
-    width: 100%;
     text-align: center;
     justify-content: center;
     flex: 0 0;
@@ -392,9 +387,12 @@ button:hover, button:active {
 }
 .dialog-item-enclosed-body {
     text-align: left;
-    padding: 10px 2px 2px;
+    padding: 2px;
     outline: dashed 1px;
     white-space: normal;
+}
+.dialog-item-enclosed-body a {
+    color: inherit;
 }
 .dialog-footer {
     padding: 10px;
