@@ -2292,7 +2292,7 @@ function Edequate(options) {
             options.priority = options.priority || 0;
 
             var th = create(HTML.DIV, {
-                id: options.name,
+                id: options.name && options.name.dataset && options.name.dataset.lang || options.name,
                 className:"drawer-menu-item",
                 onclick: function (event) {
                     callback.call(this, event);

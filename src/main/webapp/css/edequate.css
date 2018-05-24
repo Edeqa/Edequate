@@ -1046,7 +1046,6 @@ button:hover, button:active {
 .progress-dialog-title {
     white-space: nowrap;
     padding: 0;
-    display: inline-block;
 }
 
 /* media specific classes */
