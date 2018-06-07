@@ -1033,7 +1033,7 @@ function Edequate(options) {
                         className: "dialog-item-enclosed" + optionalClassName(item.className)
                     });
                     var enclosedButton, enclosedIcon;
-                    enclosedButton = create(HTML.DIV, {className:"dialog-item-enclosed-button", onclick: function(){
+                    enclosedButton = create(HTML.DIV, {className:"dialog-item-enclosed-button blinking", onclick: function(){
                         if(x.body.classList.contains("hidden")) {
                             enclosedIcon.innerHTML = "expand_less";
                             x.body.show(HIDING.SCALE_Y_TOP);
@@ -1060,7 +1060,7 @@ function Edequate(options) {
             } else if(item.type === HTML.HIDDEN) {
                 div = x = create(HTML.INPUT, {type:HTML.HIDDEN, value:item.value || ""});
             } else if(item.type === HTML.SELECT) {
-                var className = "dialog-item dialog-item-input" + optionalClassName(item.className);
+                var className = "dialog-item blinking dialog-item-input" + optionalClassName(item.className);
                 delete item.className;
                 div = create(HTML.DIV, {className: className, onclick: function(){this.firstChild.nextSibling.click();}});
 
@@ -1109,6 +1109,7 @@ function Edequate(options) {
 
                 item.tabindex = item.tabindex || 0;
                 item.className = "dialog-item-input-"+item.type + optionalClassName(item.className);
+                if(item.type === HTML.CHECKBOX) item.className += " icon blinking";
                 var onkeyup = item.onkeyup;
                 item.onkeyup = function(e){
                     if(e.keyCode === 13 && this.type !== HTML.TEXTAREA) {
@@ -1386,7 +1387,7 @@ function Edequate(options) {
                     dialog.adjustPosition();
                 },
                 oncontextmenu: function(e){e.stopPropagation(); return false;}
-        }, dialog);
+            }, dialog);
             dialog.titleLayout = create(HTML.DIV, {className:"dialog-title-label", innerHTML: options.title.label }, titleLayout);
             dialog.setTitle = function(title) {
                 Lang.updateNode(dialog.titleLayout, title);
@@ -1394,7 +1395,7 @@ function Edequate(options) {
             };
 
             if(options.title.button) {
-                create(HTML.DIV, {className:"icon dialog-title-button notranslate" + optionalClassName(options.title.button.className), innerHTML:options.title.button.icon || "", onclick:options.title.button.onclick}, titleLayout);
+                create(HTML.DIV, {className:"icon dialog-title-button blinking button-flat notranslate" + optionalClassName(options.title.button.className), innerHTML:options.title.button.icon || "", onclick:options.title.button.onclick}, titleLayout);
             }
 
             if(options.title.filter) {
@@ -1404,13 +1405,13 @@ function Edequate(options) {
                 dialog.filterButton = create(HTML.DIV, {
                     className: "icon dialog-filter-button notranslate",
                     onclick: function() {
-                        dialog.filterButton.hide();
-                        dialog.filterInput.classList.remove("hidden");
+                        titleLayout.classList.add("dialog-title-active");
                         dialog.filterInput.focus();
                     }
                 }, dialog.filterLayout);
                 dialog.filterInput = create(HTML.INPUT, {
-                    className: "dialog-filter-input hidden",
+                    className: "dialog-filter-input",
+                    type: HTML.TEXT,
                     tabindex: -1,
                     onkeyup: function(evt) {
                         if(evt.keyCode === 27) {
@@ -1432,8 +1433,7 @@ function Edequate(options) {
                     },
                     onblur: function() {
                         if(!this.value) {
-                            dialog.filterInput.classList.add("hidden");
-                            dialog.filterButton.show();
+                            titleLayout.classList.remove("dialog-title-active");
                         }
                     },
                     onclick: function() {
@@ -1467,7 +1467,7 @@ function Edequate(options) {
                     }
                 }, dialog.filterLayout);
                 dialog.filterClear = create(HTML.DIV, {
-                    className: "icon dialog-filter-clear hidden",
+                    className: "icon dialog-filter-clear",
                     onclick: function() {
                         dialog.filterInput.value = "";
                         dialog.filterInput.focus();
@@ -1537,6 +1537,12 @@ function Edequate(options) {
             dialog.setFooter(options.footer);
         }
 
+        if(options.timeout) {
+            var progressBar = create(HTML.DIV, {className:"dialog-progress-bar"}, dialog);
+            dialog.progress = create(HTML.DIV, {className:"dialog-progress-value"}, progressBar);
+            dialog.progress.style.width = "0%";
+        }
+
         var buttons = create(HTML.DIV, {className:"dialog-buttons hidden" + optionalClassName(options.buttonsClassName)}, dialog);
         dialog.positive = create(HTML.BUTTON, {className: "hidden"}, buttons);
         dialog.neutral = create(HTML.BUTTON, {className: "hidden"}, buttons);
@@ -1553,7 +1559,7 @@ function Edequate(options) {
                 return dialog.positive;
             }
             item.tabindex = 0;
-            item.className = "dialog-button dialog-button-positive" + optionalClassName(item.className);
+            item.className = "dialog-button blinking dialog-button-positive" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
                 if(item._onclick) item._onclick.call(dialog,dialog.items,event);
@@ -1589,7 +1595,7 @@ function Edequate(options) {
                 return dialog.neutral;
             }
             item.tabindex = 0;
-            item.className = "dialog-button dialog-button-neutral" + optionalClassName(item.className);
+            item.className = "dialog-button blinking dialog-button-neutral" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
                 if(item._onclick) item._onclick.call(dialog,dialog.items,event);
@@ -1623,7 +1629,7 @@ function Edequate(options) {
                 return dialog.negative;
             }
             item.tabindex = 0;
-            item.className = "dialog-button dialog-button-negative" + optionalClassName(item.className);
+            item.className = "dialog-button blinking dialog-button-negative" + optionalClassName(item.className);
             item._onclick = item.onclick;
             item.onclick = function(event){
                 if(item._onclick) item._onclick.call(dialog,dialog.items,event);
@@ -1648,7 +1654,7 @@ function Edequate(options) {
 
         /** @namespace options.help */
         if(options.help) {
-            create(HTML.BUTTON, {className:"dialog-help-button icon", onclick:options.help}, dialog);
+            create(HTML.BUTTON, {className:"dialog-button dialog-help-button blinking icon notranslate", onclick:options.help}, dialog);
         }
         /** @namespace options.resizeable */
         if(options.resizeable) {
@@ -1683,12 +1689,6 @@ function Edequate(options) {
                 }
             }, dialog);
         }
-
-        if(options.timeout) {
-            var progressBar = create(HTML.DIV, {className:"dialog-progress-bar"}, dialog);
-            dialog.progress = create(HTML.DIV, {className:"dialog-progress-value"}, progressBar);
-            dialog.progress.style.width = "0%";
-        }
         return dialog;
     }
 
@@ -1698,7 +1698,9 @@ function Edequate(options) {
         var type = HTML.INPUT;
         options.type = options.type.toLowerCase();
         if(options.type === HTML.BUTTON) {
-            type = options.type;
+            type = HTML.BUTTON;
+        } else if(options.type === HTML.INPUT) {
+            options.type = HTML.TEXT;
         }
 
         if(options.onclick && options.type !== HTML.BUTTON) {
@@ -2251,7 +2253,7 @@ function Edequate(options) {
         options.sections = options.sections || {};
         for(var i=0;i<10;i++){
             layout.sections[i] = create({order:i, className:"hidden" + (i===9 ? "" : " drawer-menu-divider")}, layout.menu)
-                .place({className: "drawer-menu-section-title media-hidden"})
+                .place({className: "drawer-menu-section-title blinking media-hidden"})
                 .place({});
             var category = options.sections[i] || {};
             if(category instanceof HTMLElement || category.constructor === String) {
@@ -2278,8 +2280,8 @@ function Edequate(options) {
                         save("drawer:section:collapsed:"+this.parentNode.order, true);
                     }
                 }, {passive: true});
-                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-expand" + (sectionCollapsed ? "" : " hidden")});
-                layout.sections[i].firstChild.place({ className: "icon drawer-menu-item drawer-menu-item-collapse" + (sectionCollapsed ? " hidden" : "")});
+                layout.sections[i].firstChild.place({ className: "icon notranslate drawer-menu-item-expand" + (sectionCollapsed ? "" : " hidden")});
+                layout.sections[i].firstChild.place({ className: "icon notranslate drawer-menu-item-collapse" + (sectionCollapsed ? " hidden" : "")});
             }
         }
 
@@ -2293,7 +2295,7 @@ function Edequate(options) {
 
             var th = create(HTML.DIV, {
                 id: options.name && options.name.dataset && options.name.dataset.lang || options.name,
-                className:"drawer-menu-item",
+                className:"drawer-menu-item blinking",
                 onclick: function (event) {
                     callback.call(this, event);
                     layout.blur();
@@ -2391,7 +2393,7 @@ function Edequate(options) {
 
         layout.footer = create(HTML.DIV, { className:"drawer-footer"}, layout);
 
-        layout.toggleButton = create(HTML.DIV, {className: "icon drawer-menu-item-icon drawer-footer-button notranslate", innerHTML: collapsed ? "last_page" : "first_page", onclick: function(){
+        layout.toggleButton = create(HTML.DIV, {className: "icon blinking button-flat notranslate", innerHTML: collapsed ? "last_page" : "first_page", onclick: function(){
             layout.toggleSize();
         }}, layout.footer);
         if(options.footer) {
@@ -2482,7 +2484,7 @@ function Edequate(options) {
                 }
             }
         });
-        create(HTML.SPAN, {className:"actionbar-button icon", onclick: options.onbuttonclick, onfocus:function(){}}, actionbar);
+        create(HTML.SPAN, {className:"actionbar-button icon notranslate", onclick: options.onbuttonclick, onfocus:function(){}}, actionbar);
         var label = create(HTML.DIV, {className:"actionbar-label changeable"}, actionbar);
         actionbar.titleNode = create(HTML.DIV, {className:"actionbar-label-title changeable", innerHTML: options.title || ""}, label);
         actionbar.subtitle = create(HTML.DIV, {className:"actionbar-label-subtitle changeable", innerHTML: options.subtitle || ""}, label);
@@ -2724,14 +2726,14 @@ function Edequate(options) {
                     }
                 }
                 var cell = create(HTML.DIV, item, table.head);
-                cell.sortIcon = create(HTML.DIV,{className:"icon table-sort hidden"}, cell);
+                cell.sortIcon = create(HTML.DIV,{className:"icon table-sort notranslate hidden"}, cell);
                 cell.label = create(HTML.SPAN, {innerHTML: item.innerHTML || item.label}, cell);
                 //cell.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;}
 
                 if(item.selectable) {
                     selectable = true;
                     cell.selectButton = create(HTML.DIV, {
-                        className:"icon table-select",
+                        className:"icon notranslate table-select",
                         onclick: function(e){
                             var cell = this.parentNode;
                             progressHolder.show();
@@ -2807,7 +2809,7 @@ function Edequate(options) {
 
             if((options.filter === undefined || options.filter) || (options.sort === undefined || options.sort) || selectable) {
                 table.resetButton = create(HTML.DIV, {
-                    className: "icon table-reset-button",
+                    className: "icon notranslate table-reset-button",
                     title: "Reset customizations",
                     onclick: function() {
                         table._sorts = [];
@@ -2838,7 +2840,7 @@ function Edequate(options) {
                 }, table);
 
                 table.filterButton = create(HTML.DIV, {
-                    className: "icon table-filter-button",
+                    className: "icon notranslate table-filter-button",
                     title: "Filter",
                     onclick: function() {
                         table.filterButton.hide();
@@ -2891,7 +2893,7 @@ function Edequate(options) {
                     }
                 }, table.filterLayout);
                 table.filterClear = create(HTML.DIV, {
-                    className: "icon table-filter-clear hidden",
+                    className: "icon notranslate table-filter-clear hidden",
                     onclick: function() {
                         table.filterInput.value = "";
                         table.filterInput.focus();
@@ -3174,21 +3176,21 @@ function Edequate(options) {
         options.tabindex = -1;
         options.autoclose = true;
 
-        //options._onopen = options.onopen;
-        //options.onopen = function(evt) {
-        //    console.log("MENU OPEN");
-        //    if(options._onopen) options._onopen(evt);
-        //};
-
-        //options._onclose = options.onclose;
-        //options.onclose = function(evt) {
-        //    console.log("MENU CLOSE");
-        //    if(options._onclose) options._onclose(evt);
-        //};
-
         var items = options.items || [];
         options.items = [];
         var menu = new Dialog(options, document.body);
+        menu.classList.remove("modal");
+
+        if(options.delayToClose) {
+            menu.addEventListener("mouseover", function() {
+                clearTimeout(menu._delayDismiss);
+            });
+            menu.addEventListener("mouseout", function() {
+                menu._delayDismiss = setTimeout(function() {
+                    menu.hide(HIDING.OPACITY)
+                }, options.delayToClose);
+            });
+        }
 
         menu._add = menu.add;
         menu.add = function(item) {
@@ -3201,21 +3203,56 @@ function Edequate(options) {
                 return menu;
             }
 
-            item._onclick = item.onclick;
-            item.onclick = function(evt) {
-                if(this._onclick) this._onclick(evt);
-                menu.close(HIDING.OPACITY)
+            var options = {
+                type: HTML.DIV,
+                className: "blinking" + optionalClassName(item.className),
+                children: [],
+                callback: item.callback,
+                onclick: function(evt) {
+                    if(this.callback) this.callback(evt);
+                    menu.close(HIDING.OPACITY)
+                },
+                oncontextmenu: function(e){e.stopPropagation(); e.preventDefault(); return false;}
             };
-            item.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;};
-            menu._add(item);
+            options.onlongclick = function() {
+                if(item.onlongclick) item.onlongclick.call(this);
+            };
+
+            if(item.icon) {
+                if(item.icon.constructor === String) {
+                    options.children.push(create(HTML.DIV, { className:"icon notranslate", innerHTML: item.icon }));
+                } else {
+                    options.children.push(item.icon);
+                }
+            }
+            options.children.push(create(HTML.DIV, { className:"menu-item-title", innerHTML: item.innerHTML || item.title || item.name }));
+
+            return menu._add(options);
         };
         menu.add(items);
 
         menu._open = menu.open;
         menu.open = function(aroundNode) {
             menu._open(HIDING.SCALE_Y_BOTTOM);
-            menu.style.top = (aroundNode.getBoundingClientRect().bottom + 5) + "px";
-            menu.style.left = (aroundNode.getBoundingClientRect().right - menu.offsetWidth) + "px";
+
+            var top = aroundNode.getBoundingClientRect().bottom + 5;
+            var left = aroundNode.getBoundingClientRect().right - menu.offsetWidth;
+
+            if(left + menu.offsetWidth > window.innerWidth) left = window.innerWidth - menu.offsetWidth + 5;
+            if(top + menu.offsetHeight > window.innerHeight) top = window.innerHeight - menu.offsetHeight + 5;
+
+            if(left < 5) left = 5;
+            if(top < 5) top = 5;
+
+            menu.style.top = top + "px";
+            menu.style.left = left + "px";
+
+            clearTimeout(menu._delayDismiss);
+            if(options.delayToClose) {
+                menu._delayDismiss = setTimeout(function () {
+                    menu.hide(HIDING.OPACITY)
+                }, options.delayToClose);
+            }
         };
 
         return menu;

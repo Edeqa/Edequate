@@ -45,6 +45,9 @@
         right: 10px;
         background-color: #9bc781;
         outline: none;
+        width: auto;
+        padding-right: 20px;
+        padding-left: 6px;
     }
     .actionbar.collapsed .actionbar-select-lang {
         right: -150px;
@@ -121,6 +124,7 @@
         transition: 0.5s ease-in-out font-size;
         cursor: pointer;
         min-width: 60px;
+        height: inherit;
     }
     .drawer-menu-item-expand {
         display: none;
@@ -130,6 +134,7 @@
     }
     .drawer-menu-item {
         padding-right: 10px;
+        height: 1.75rem;
     }
     .drawer-menu-item-icon {
         display: none;
@@ -147,6 +152,9 @@
         width: 100%;
         background-color: lightgray;
         padding: 5px;
+    }
+    .drawer-footer .button-flat {
+        display: none;
     }
     .drawer-footer-link {
         display: inline-block;
@@ -202,6 +210,8 @@
     }
     .actionbar-select-lang {
         font-size: 16px;
+        width: auto;
+        padding-right: 20px;
     }
     .button-scroll-top {
         bottom: 16px;

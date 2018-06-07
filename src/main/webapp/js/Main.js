@@ -121,8 +121,6 @@ function Main(u) {
         this.loadResources(self.mainType + ".json", function() {
             var dialogAbout = u.dialog({
                 className: "about-dialog",
-                itemsClassName: "about-dialog-items",
-                buttonsClassName: "about-dialog-buttons",
                 items: [
                     { innerHTML: "Edequate" },
                     { innerHTML: "&nbsp;" },
@@ -240,7 +238,7 @@ function Main(u) {
 
         });
         self.buttonScrollTop = u.create(HTML.BUTTON, {
-            className: "icon button-scroll-top changeable hidden notranslate",
+            className: "icon button-scroll-top button-flat changeable hidden notranslate blinking",
             onclick: function() {
                 document.documentElement.scrollTop = 0;
                 self.layout.scrollTop = 0;

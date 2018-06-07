@@ -81,7 +81,7 @@ public class SendMail {
         JSONObject smtpJSON = settingsJSON.getJSONObject(MAIL);
 
         setServerHost(smtpJSON.getString(SMTP_SERVER));
-        setServerPort(smtpJSON.getString(SMTP_PORT));
+        setServerPort(String.valueOf(smtpJSON.getInt(SMTP_PORT)));
         setLogin(smtpJSON.getString(SMTP_LOGIN));
         setPassword(smtpJSON.getString(SMTP_PASSWORD));
         setFromEmail(smtpJSON.getString(REPLY_EMAIL));
