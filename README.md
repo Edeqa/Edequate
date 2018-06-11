@@ -99,7 +99,7 @@ Connect main styles:
 
     @import url("/css/edequate.css");
     
-If you want to use material design the connect instead:
+If you want to use material design then connect instead:
 
     @import url("/css/edequate-material.css");
     
