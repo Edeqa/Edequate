@@ -3184,11 +3184,13 @@ function Edequate(options) {
         if(options.delayToClose) {
             menu.addEventListener("mouseover", function() {
                 clearTimeout(menu._delayDismiss);
-            });
-            menu.addEventListener("mouseout", function() {
-                menu._delayDismiss = setTimeout(function() {
-                    menu.hide(HIDING.OPACITY)
-                }, options.delayToClose);
+                var mouseover = function(e) {
+                    if(!menu.contains(e.target)) {
+                        window.removeEventListener("mouseover", mouseover);
+                        menu.hide(HIDING.OPACITY);
+                    }
+                };
+                window.addEventListener("mouseover", mouseover);
             });
         }
 
@@ -3232,12 +3234,34 @@ function Edequate(options) {
         menu.add(items);
 
         menu._open = menu.open;
-        menu.open = function(aroundNode) {
+        menu.open = function(aroundNode, position) {
+            clearTimeout(menu._delayDismiss);
+
+            position = position || "bottom";
+
             menu._open(HIDING.SCALE_Y_BOTTOM);
 
-            var top = aroundNode.getBoundingClientRect().bottom + 5;
-            var left = aroundNode.getBoundingClientRect().right - menu.offsetWidth;
+            var top,left;
 
+            switch(position) {
+                case "left":
+                    top = aroundNode.getBoundingClientRect().top;
+                    left = aroundNode.getBoundingClientRect().left - menu.offsetWidth - 5;
+                    break;
+                case "top":
+                    top = aroundNode.getBoundingClientRect().top - menu.offsetHeight -5;
+                    left = aroundNode.getBoundingClientRect().left;
+                    break;
+                case "right":
+                    top = aroundNode.getBoundingClientRect().top;
+                    left = aroundNode.getBoundingClientRect().right + 5;
+                    break;
+                case "bottom":
+                default:
+                    top = aroundNode.getBoundingClientRect().bottom + 5;
+                    left = aroundNode.getBoundingClientRect().right - menu.offsetWidth;
+                    break;
+            }
             if(left + menu.offsetWidth > window.innerWidth) left = window.innerWidth - menu.offsetWidth + 5;
             if(top + menu.offsetHeight > window.innerHeight) top = window.innerHeight - menu.offsetHeight + 5;
 
@@ -3247,7 +3271,6 @@ function Edequate(options) {
             menu.style.top = top + "px";
             menu.style.left = left + "px";
 
-            clearTimeout(menu._delayDismiss);
             if(options.delayToClose) {
                 menu._delayDismiss = setTimeout(function () {
                     menu.hide(HIDING.OPACITY)

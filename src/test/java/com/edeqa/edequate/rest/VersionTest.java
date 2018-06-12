@@ -37,8 +37,8 @@ public class VersionTest {
         JSONObject json = new JSONObject();
         new Version().call(json, new RequestWrapper());
         assertEquals(STATUS_SUCCESS, json.get(STATUS));
-        assertEquals(6, json.get(CODE));
-        assertEquals("2.0", json.get(MESSAGE));
-        assertEquals("2.0.6", json.get(EXTRA));
+        assertEquals(7, json.get(CODE));
+        assertEquals("2.1", json.get(MESSAGE));
+        assertEquals("2.1.7", json.get(EXTRA));
     }
 }

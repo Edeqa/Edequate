@@ -828,6 +828,9 @@ button:hover, button:active {
 .menu .dialog-item:hover {
     background-color: gainsboro;
 }
+.menu .dialog-item .menu-item-title {
+    white-space: nowrap;
+}
 
 /* Table */
 .table {

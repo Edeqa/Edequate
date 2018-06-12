@@ -10,16 +10,16 @@ public class VersionTest {
 
     @Test
     public void getVersionCode() {
-        assertEquals(6, Version.getVersionCode());
+        assertEquals(7, Version.getVersionCode());
     }
 
     @Test
     public void getVersionName() {
-        assertEquals("2.0", Version.getVersionName());
+        assertEquals("2.1", Version.getVersionName());
     }
 
     @Test
     public void getVersion() {
-        assertEquals("2.0.6", Version.getVersion());
+        assertEquals("2.1.7", Version.getVersion());
     }
 }

@@ -1039,6 +1039,7 @@ input[type=checkbox]:checked:before {
 .menu .dialog-item .menu-item-title {
     padding-left: 10px;
     padding-right: 10px;
+    white-space: nowrap;
 }
 
 /* Table */
