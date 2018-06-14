@@ -5,6 +5,7 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
+ * 8 - Menu positioning; blinking onclick
  * 7 - create(options#content) - if content is defined then just uses it as current HTMLElement; new component - tree; node#setContent(node)
  * 6 - drawer.headerSubtitle; require with caching
  * 5 - onload initialization; DRAWER constants
@@ -22,7 +23,7 @@
 function Edequate(options) {
     var self = this;
 
-    this.version = 6;
+    this.version = 8;
 
     var HTML = {
         DATE:"date",
@@ -456,8 +457,149 @@ function Edequate(options) {
         };
     }
 
+    function Promise(callback) {
+        this._pending = [];
+        this.PENDING = "pending";
+        this.RESOLVED = "resolved";
+        this.REJECTED = "rejected";
+        this.PromiseState = this.PENDING;
+        this._catch = function (error) {
+            console.error(error);
+        };
+        this._complete = function (callback) {
+            callback.call(this, this.resolve.bind(this), this.reject.bind(this));
+        };
+        setTimeout(function () {
+            try {
+                this._complete(callback);
+                //callback.call(this, this.resolve.bind(this), this.reject.bind(this));
+            } catch (error) {
+                this.reject(error);
+            }
+        }.bind(this), 0)
+    };
+    Promise.prototype.resolve = function (result) {
+        if (this.PromiseState !== this.PENDING) return;
+        while (this._pending.length > 0) {
+            var callbacks = this._pending.shift();
+            try {
+                result = callbacks.resolve.call(this, result);
+                if (result instanceof Promise) {
+                    result._pending = this._pending;
+                    result._catch = this._catch;
+                    return result;
+                }
+            } catch (error) {
+                (callbacks.reject || this._catch).call(this, error);
+                return;
+            }
+        }
+        this.PromiseState = this.RESOLVED;
+        return result;
+    };
+    Promise.prototype.reject = function (error) {
+        if (this.PromiseState !== this.PENDING) return;
+        this.PromiseState = this.REJECTED;
+        var callbacks = this._pending.shift();
+        try {
+            (callbacks && callbacks.reject || this._catch).call(this, error);
+        } catch (e) {
+            console.error(error, e);
+        }
+        return;
+    };
+    Promise.prototype.then = function (onFulfilled, onRejected) {
+        onFulfilled = onFulfilled || function (result) {
+            return result;
+        };
+        this._catch = onRejected || this._catch;
+        this._pending.push({resolve: onFulfilled, reject: onRejected});
+        return this;
+    };
+    Promise.prototype.catch = function (onRejected) {
+        var onFulfilled = function (result) {
+            return result;
+        };
+        this._catch = onRejected || this._catch;
+        this._pending.push({resolve: onFulfilled, reject: onRejected});
+        return this;
+    };
+    Promise.all = function (array) {
+        return new Promise(function () {
+            var self = this;
+            var counter = 0;
+            var finishResult = [];
+            for (var i in array) {
+                array[i].then(function (result) {
+                    counter++;
+                    finishResult[this] = result;
+                    if (counter >= array.length) {
+                        self.resolve(finishResult);
+                    }
+                }.bind(i), function (error) {
+                    for (var j in array) {
+                        array[j].PromiseState = Promise.REJECTED;
+                    }
+                    self._catch(error);
+                }.bind(i))
+            }
+        });
+    };
+    Promise.race = function (array) {
+        return new Promise(function () {
+            var self = this;
+            var counter = 0;
+            var finishResult = [];
+            for (var i in array) {
+                array[i].then(function (result) {
+                    for (var j in array) {
+                        array[j].PromiseState = Promise.REJECTED;
+                    }
+                    self.resolve(result);
+                }, function (error) {
+                    for (var j in array) {
+                        array[j].PromiseState = Promise.REJECTED;
+                    }
+                    self.reject(error);
+                })
+            }
+        });
+    };
+    Promise.resolve = function (value) {
+        return new Promise(function (resolve, reject) {
+            try {
+                resolve(value);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+    Promise.reject = function (error) {
+        return new Promise(function (resolve, reject) {
+            reject(error);
+        });
+    };
+
     function byId(id) {
         return document.getElementById(id);
+    }
+
+    function on(node, eventName, callback, options) {
+        var _node = node;
+        var _eventNames = eventName.split(/,/);
+        var _callback = callback;
+        for(var i in _eventNames) {
+            node.addEventListener(_eventNames[i], _callback, options);
+        }
+        return {
+            remove: function() {
+                for(var i in _eventNames) {
+                    console.log("remove", _node,_eventNames[i], _callback);
+                    _node.removeEventListener(_eventNames[i], _callback);
+                    if (_node.detachEvent) _node.detachEvent("on"+_eventNames[i], _callback);
+                }
+            }
+        }
     }
 
     function normalizeName(name) {
@@ -715,6 +857,79 @@ function Edequate(options) {
         }
         return keys;
     }
+
+    function prequire(names, context) {
+        var promises = [];
+        if(names.constructor !== Array) {
+            names = [names];
+        }
+        for(var i in names) {
+            var name = namse[i];
+            var options = {};
+            if(name.constructor === String) {
+                var tokens = name.split("/");
+                var filename = tokens[tokens.length-1];
+                // var onlyname = filename.split(".")[0];
+                var filenameParts = filename.split(".");
+                var extension = filenameParts.pop();
+                if(filenameParts.length === 0) {
+                    filenameParts.push(extension);
+                    extension = null;
+                }
+                var onlyname = filenameParts.join(".");
+                instanceNames.push(onlyname);
+                var isText = extension === "text" || extension === "txt";
+                var isJSON = extension === "json";
+                var isScript = !isText && !isJSON;
+
+                options = {
+                    src: name,
+                    origin: name,
+                    instance: onlyname,
+                    async: true,
+                    // defer: true,
+                    isScript: isScript,
+                    isJSON: isJSON,
+                    isText: isText
+                };
+            } else if(name instanceof Object) {
+                isScript = !!name.isScript;
+                isJSON = !!name.isJSON;
+                isText = !!name.isText;
+                name = name.src;
+
+                tokens = name.split("/");
+                filename = tokens[tokens.length-1];
+                filenameParts = filename.split(".");
+                extension = filenameParts.pop();
+                if(filenameParts.length === 0) {
+                    filenameParts.push(extension);
+                    extension = null;
+                }
+                onlyname = filenameParts.join(".");
+                instanceNames.push(onlyname);
+
+                options = {
+                    src: name,
+                    origin: name,
+                    instance: onlyname,
+                    async: true,
+                    // defer: true,
+                    isScript: isScript,
+                    isJSON: isJSON,
+                    isText: isText,
+                    body: name.body
+                };
+
+            }
+
+
+            console.log(name)
+            promises.push(getJSON(name));
+        }
+        return Promise.all(promises);
+    }
+
 
     function require(names, context) {
         if(names.constructor !== Array) {
@@ -1349,9 +1564,13 @@ function Edequate(options) {
                     var position = { left: dialog.offsetLeft, top: dialog.offsetTop, width: dialog.offsetWidth, height: dialog.offsetHeight };
                     var offset = [ e.clientX, e.clientY ];
                     var moved = false;
+
+                    var _mouseup = on(document.body, HTML.MOUSEUP, mouseup);
+                    var _mousemove = on(document.body, HTML.MOUSEMOVE, mousemove, {passive: true});
+
                     function mouseup(){
-                        window.removeEventListener(HTML.MOUSEUP, mouseup, false);
-                        window.removeEventListener(HTML.MOUSEMOVE, mousemove, false);
+                        _mouseup.remove();
+                        _mousemove.remove();
                         var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
                         if(id && moved) {
                             if(dialog.style.left) save("dialog:"+id+":left", dialog.style.left);
@@ -1361,6 +1580,7 @@ function Edequate(options) {
                     function mousemove(e){
                         var deltaX = e.clientX - offset[0];
                         var deltaY = e.clientY - offset[1];
+                        console.log(deltaX,deltaY);
                         if(deltaX || deltaY) {
                             moved = true;
                             dialog.style.left = (position.left + deltaX) + "px";
@@ -1369,8 +1589,6 @@ function Edequate(options) {
                             dialog.style.bottom = "auto";
                         }
                     }
-                    window.addEventListener(HTML.MOUSEUP, mouseup, {passive: true});
-                    window.addEventListener(HTML.MOUSEMOVE, mousemove, {passive: true});
                 },
                 ondblclick: function() {
                     var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
@@ -1999,7 +2217,41 @@ function Edequate(options) {
      */
 
     function rest(method, url, body) {
+        return new Promise(function(resolve, reject) {
+            var xhr = new XMLHttpRequest();
+
+            xhr.open(method, url, true);
+            if(this.isJSON) {
+                xhr.setRequestHeader("Content-type", "application/json");
+            }
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState !== 4) return;
+                if (xhr.status !== 200) {
+                    console.error(xhr);
+                    reject(xhr.status);
+                } else {
+                    resolve(xhr);
+                }
+            };
+            try {
+                if(body) {
+                    if(body.constructor === Object) {
+                        body = JSON.stringify(body);
+                    }
+                    xhr.send(body);
+                } else {
+                    xhr.send();
+                }
+            } catch(e) {
+                console.error(xhr);
+                reject(ERRORS.ERROR_SENDING_REQUEST);
+            }
+        });
+    }
+
+    function Erest(method, url, body) {
         var returned = new EPromise();
+
         var xhr = new XMLHttpRequest();
 
         xhr.open(method, url, true);
@@ -2048,6 +2300,64 @@ function Edequate(options) {
      .catch(callback(code,xhr));
      */
     function getJSON(url, body) {
+        return new Promise(function(resolve, reject) {
+            var onresolve = function(xhr) {
+                try {
+                    var text = xhr.responseText;
+                    text = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/[\r\n]+/gm, " ");
+                    var json = JSON.parse(text);
+                    try {
+                        resolve(json);
+                    } catch(e) {
+                        console.error(ERRORS.CALLBACK_FAILED, e, json);
+                        reject(ERRORS.CALLBACK_FAILED);
+                    }
+                } catch(e) {
+                    console.error(ERRORS.INCORRECT_JSON, e, xhr);
+                    reject(ERRORS.INCORRECT_JSON);
+                }
+            };
+
+            if(body) {
+                post.bind({isJSON:true})(url, body)
+                    .then(onresolve,reject);
+            } else {
+                get.bind({isJSON:true})(url)
+                    .then(onresolve,reject);
+            }
+        });
+
+        var callbacks = {
+            then: function(json,xhr) { console.warn("Define .then(callback(json,xhr){...}) for", json, xhr)},
+            "catch": function(code, xhr) { console.error(code, xhr); }
+        };
+        var catchFunction = function(callback) {
+            callbacks.catch = callback;
+        };
+        var thenFunction = function(callback) {
+            callbacks.then = function(xhr) {
+                try {
+                    var text = xhr.responseText;
+                    text = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/[\r\n]+/gm, " ");
+                    var json = JSON.parse(text);
+                    try {
+                        callback(json, xhr);
+                    } catch(e) {
+                        callbacks.catch(ERRORS.CALLBACK_FAILED, e, json);
+                    }
+                } catch(e) {
+                    callbacks.catch(ERRORS.INCORRECT_JSON, xhr, e);
+                }
+            };
+            return { "catch": catchFunction };
+        };
+        setTimeout(function(){
+            if(body) post.bind({isJSON:true})(url, body).then(callbacks.then).catch(callbacks.catch);
+            else get.bind({isJSON:true})(url).then(callbacks.then).catch(callbacks.catch);
+        },0);
+        return { then: thenFunction, "catch": catchFunction };
+    }
+    function EgetJSON(url, body) {
         var callbacks = {
             then: function(json,xhr) { console.warn("Define .then(callback(json,xhr){...}) for", json, xhr)},
             "catch": function(code, xhr) { console.error(code, xhr); }
@@ -3493,6 +3803,7 @@ function Edequate(options) {
     this.menu = Menu;
     this.normalizeName = normalizeName;
     this.notification = notification;
+    this.on = on;
     this.post = post;
     this.progress = new Progress();
     this.put = put;
@@ -3502,6 +3813,7 @@ function Edequate(options) {
     this.table = Table;
     this.toast = new Toast();
     this.tree = Tree;
+    this.prequire = prequire;
 
 }
 (function() {

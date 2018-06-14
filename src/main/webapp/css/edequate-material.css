@@ -302,7 +302,7 @@ button:hover, button:active {
     font-weight: 500;
     letter-spacing: .0125em;
     -ms-flex: 1 1;
-    flex: 1 1;
+    flex: 1 1 auto;
     margin: 0;
     order: 1;
 }
@@ -370,7 +370,7 @@ button:hover, button:active {
     display: flex;
     cursor: default;
     padding: 24px 24px 0;
-    flex: 1 1;
+    flex: 1 1 auto;
 }
 .dialog-items {
     overflow-y: auto;
@@ -381,7 +381,7 @@ button:hover, button:active {
     letter-spacing: .005em;
     margin-top: 20px;
     padding: 0 24px 24px;
-    flex: 1 1;
+    flex: 1 1 auto;
 }
 
 .dialog-item {
@@ -596,7 +596,7 @@ input[type=checkbox]:checked:before {
     -ms-flex-pack: end;
     justify-content: flex-end;
     padding: 8px;
-    flex: 0 0;
+    flex: 0 0 auto;
 }
 /* material-style button */
 .dialog-button {
@@ -1434,7 +1434,7 @@ input[type=checkbox]:checked:before {
     .dialog-filter {
         display: flex;
         order: 3;
-        flex: 0 0;
+        flex: 0 0 auto;
     }
     .dialog-filter-button {
         padding: 13px;
@@ -1442,7 +1442,7 @@ input[type=checkbox]:checked:before {
         right: 0;
     }
     .dialog-filter-input {
-        flex: 1 1;
+        flex: 1 1 auto;
         padding: 0;
         outline: none;
         font-size: 16px;
@@ -1479,7 +1479,7 @@ input[type=checkbox]:checked:before {
         order: 2;
     }
     .dialog-title-active .dialog-filter {
-        flex: 1 1;
+        flex: 1 1 auto;
     }
     .dialog-title-active .dialog-filter-input {
         display: flex;
@@ -1493,7 +1493,7 @@ input[type=checkbox]:checked:before {
         padding: 13px;
         order: 1;
         margin: 0;
-        flex: 0 0;
+        flex: 0 0 auto;
     }
     .dialog-title-button::before {
         content: "arrow_back";
