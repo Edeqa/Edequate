@@ -10,7 +10,10 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -33,6 +36,17 @@ public class SecureContext extends AbstractAction<Arguments> {
     @Override
     public void call(JSONObject json, Arguments arguments) throws Exception {
 
+//        buildCrt(arguments);
+//        Misc.log(Misc.toStringDeep(getSslContext()));
+//        Misc.log("========");
+
+        buildJks(arguments);
+//        Misc.log(Misc.toStringDeep(getSslContext()));
+
+//        json.put(STATUS, STATUS_SUCCESS);
+    }
+
+    private void buildJks(Arguments arguments) throws Exception {
         String storePassword = arguments.getSSLCertificatePassword();
 
         KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -71,8 +85,6 @@ public class SecureContext extends AbstractAction<Arguments> {
             sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 */
 
-
-//        json.put(STATUS, STATUS_SUCCESS);
     }
 
     public HttpsConfigurator getHttpsConfigurator() {
@@ -103,5 +115,49 @@ public class SecureContext extends AbstractAction<Arguments> {
 
     public SSLContext getSslContext() {
         return sslContext;
+    }
+
+
+    private void buildCrt(Arguments arguments) throws Exception {
+
+            // Add support for self-signed (local) SSL certificates
+            // Based on http://developer.android.com/training/articles/security-ssl.html#UnknownCa
+
+                // Load CAs from an InputStream
+                // (could be from a resource or ByteArrayInputStream or ...)
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                // From https://www.washington.edu/itconnect/security/ca/load-der.crt
+//        File kf = new File(arguments.getKeystoreFilename());
+        File kf = new File("../../../server.crt");
+        InputStream is = new FileInputStream(kf);
+
+        X509Certificate caCert = (X509Certificate) cf.generateCertificate(is);
+
+        if (arguments.isDebugMode()) {
+            Misc.log(LOG, "Keystore file: " + kf.getCanonicalPath());
+        }
+
+//        InputStream caInput = new BufferedInputStream(is);
+//        Certificate ca;
+//        try {
+//            ca = cf.generateCertificate(caInput);
+//            // System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
+//        } finally {
+//            caInput.close();
+//        }
+
+        // Create a KeyStore containing our trusted CAs
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null);//, null);
+        keyStore.setCertificateEntry("caCert", caCert);
+
+                // Create a TrustManager that trusts the CAs in our KeyStore
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(keyStore);
+
+                // Create an SSLContext that uses our TrustManager
+        setSslContext(SSLContext.getInstance("TLS"));
+        getSslContext().init(null, tmf.getTrustManagers(), null);
+
     }
 }
