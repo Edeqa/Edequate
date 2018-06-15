@@ -5,7 +5,7 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
- * 8 - Menu positioning; blinking onclick
+ * 8 - Promise implementation; Menu positioning; blinking onclick
  * 7 - create(options#content) - if content is defined then just uses it as current HTMLElement; new component - tree; node#setContent(node)
  * 6 - drawer.headerSubtitle; require with caching
  * 5 - onload initialization; DRAWER constants
@@ -457,128 +457,150 @@ function Edequate(options) {
         };
     }
 
-    function Promise(callback) {
-        this._pending = [];
-        this.PENDING = "pending";
-        this.RESOLVED = "resolved";
-        this.REJECTED = "rejected";
-        this.PromiseState = this.PENDING;
-        this._catch = function (error) {
-            console.error(error);
-        };
-        this._complete = function (callback) {
-            callback.call(this, this.resolve.bind(this), this.reject.bind(this));
-        };
-        setTimeout(function () {
-            try {
-                this._complete(callback);
-                //callback.call(this, this.resolve.bind(this), this.reject.bind(this));
-            } catch (error) {
-                this.reject(error);
-            }
-        }.bind(this), 0)
-    };
-    Promise.prototype.resolve = function (result) {
-        if (this.PromiseState !== this.PENDING) return;
-        while (this._pending.length > 0) {
-            var callbacks = this._pending.shift();
-            try {
-                result = callbacks.resolve.call(this, result);
-                if (result instanceof Promise) {
-                    result._pending = this._pending;
-                    result._catch = this._catch;
-                    return result;
+    var Promise = window.Promise;
+    if(true){//!Promise) {
+        Promise = function (callback) {
+            this._pending = [];
+            this._callback = callback;
+            this.PENDING = "pending";
+            this.RESOLVED = "resolved";
+            this.REJECTED = "rejected";
+            this.PromiseState = this.PENDING;
+            this._catch = function (error) {
+                console.error(error);
+            };
+            setTimeout(function () {
+                try {
+                    callback.call(this, this.resolve.bind(this), this.reject.bind(this));
+                } catch (error) {
+                    this.reject(error);
                 }
-            } catch (error) {
-                (callbacks.reject || this._catch).call(this, error);
-                return;
+            }.bind(this), 0)
+        };
+        Promise.prototype.resolve = function (object) {
+            if (this.PromiseState !== this.PENDING) return;
+            while (this._pending.length > 0) {
+                var callbacks = this._pending.shift();
+                try {
+                    var resolve = callbacks.resolve;
+                    if (resolve instanceof Promise) {
+                        resolve._pending = resolve._pending.concat(this._pending);
+                        resolve._catch = this._catch;
+                        resolve.resolve(object);
+                        return resolve;
+                    }
+                    object = resolve.call(this, object);
+                    if (object instanceof Promise) {
+                        object._pending = object._pending.concat(this._pending);
+                        object._catch = this._catch;
+                        return object;
+                    }
+                } catch (error) {
+                    (callbacks.reject || this._catch).call(this, error);
+                    return;
+                }
             }
-        }
-        this.PromiseState = this.RESOLVED;
-        return result;
-    };
-    Promise.prototype.reject = function (error) {
-        if (this.PromiseState !== this.PENDING) return;
-        this.PromiseState = this.REJECTED;
-        var callbacks = this._pending.shift();
-        try {
-            (callbacks && callbacks.reject || this._catch).call(this, error);
-        } catch (e) {
-            console.error(error, e);
-        }
-        return;
-    };
-    Promise.prototype.then = function (onFulfilled, onRejected) {
-        onFulfilled = onFulfilled || function (result) {
-            return result;
+            this.PromiseState = this.RESOLVED;
+            return object;
         };
-        this._catch = onRejected || this._catch;
-        this._pending.push({resolve: onFulfilled, reject: onRejected});
-        return this;
-    };
-    Promise.prototype.catch = function (onRejected) {
-        var onFulfilled = function (result) {
-            return result;
+        Promise.prototype.reject = function (error) {
+            if (this.PromiseState !== this.PENDING) return;
+            this.PromiseState = this.REJECTED;
+            try {
+                this._catch(error);
+            } catch (e) {
+                console.error(error, e);
+            }
         };
-        this._catch = onRejected || this._catch;
-        this._pending.push({resolve: onFulfilled, reject: onRejected});
-        return this;
-    };
-    Promise.all = function (array) {
-        return new Promise(function () {
-            var self = this;
-            var counter = 0;
-            var finishResult = [];
-            for (var i in array) {
-                array[i].then(function (result) {
+        Promise.prototype.then = function (onFulfilled, onRejected) {
+            onFulfilled = onFulfilled || function (result) {
+                return result;
+            };
+            this._catch = onRejected || this._catch;
+            this._pending.push({resolve: onFulfilled, reject: onRejected});
+            return this;
+        };
+        Promise.prototype.catch = function (onRejected) {
+            var onFulfilled = function (result) {
+                return result;
+            };
+            this._catch = onRejected || this._catch;
+            this._pending.push({resolve: onFulfilled, reject: onRejected});
+            return this;
+        };
+        Promise.all = function (array) {
+            return new Promise(function () {
+                var self = this;
+                var counter = 0;
+                var finishResult = [];
+
+                function success(item, index) {
                     counter++;
-                    finishResult[this] = result;
+                    finishResult[index] = item;
                     if (counter >= array.length) {
                         self.resolve(finishResult);
                     }
-                }.bind(i), function (error) {
-                    for (var j in array) {
-                        array[j].PromiseState = Promise.REJECTED;
+                }
+                for(var i in array) {
+                    var item = array[i];
+                    if (item instanceof Promise) {
+                        item.then(function (result) {
+                            success(result,this);
+                        }.bind(i), function (error) {
+                            array.map(function (item) {
+                                item.PromiseState = Promise.REJECTED
+                            });
+                            self._catch(error);
+                        })
+                    } else {
+                        success(item, i);
                     }
-                    self._catch(error);
-                }.bind(i))
-            }
-        });
-    };
-    Promise.race = function (array) {
-        return new Promise(function () {
-            var self = this;
-            var counter = 0;
-            var finishResult = [];
-            for (var i in array) {
-                array[i].then(function (result) {
-                    for (var j in array) {
-                        array[j].PromiseState = Promise.REJECTED;
+                }
+            });
+        };
+        Promise.race = function (array) {
+            return new Promise(function () {
+                var self = this;
+                var counter = 0;
+                var finishResult = [];
+                array.map(function (item) {
+                    if (item instanceof Promise) {
+                        item.then(function (result) {
+                            array.map(function (item) {
+                                item.PromiseState = Promise.REJECTED
+                            });
+                            self.resolve(result);
+                        }, function (error) {
+                            array.map(function (item) {
+                                item.PromiseState = Promise.REJECTED
+                            });
+                            self._catch(error);
+                        })
+                    } else {
+                        array.map(function (item) {
+                            item.PromiseState = Promise.REJECTED
+                        });
+                        self.resolve(item);
                     }
-                    self.resolve(result);
-                }, function (error) {
-                    for (var j in array) {
-                        array[j].PromiseState = Promise.REJECTED;
-                    }
-                    self.reject(error);
                 })
-            }
-        });
-    };
-    Promise.resolve = function (value) {
-        return new Promise(function (resolve, reject) {
-            try {
-                resolve(value);
-            } catch (error) {
+            });
+        };
+        Promise.resolve = function (value) {
+            return new Promise(function (resolve, reject) {
+                try {
+                    resolve(value);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        };
+        Promise.reject = function (error) {
+            return new Promise(function (resolve, reject) {
                 reject(error);
-            }
-        });
-    };
-    Promise.reject = function (error) {
-        return new Promise(function (resolve, reject) {
-            reject(error);
-        });
-    };
+            });
+        }
+
+    }
 
     function byId(id) {
         return document.getElementById(id);
@@ -860,11 +882,30 @@ function Edequate(options) {
 
     function prequire(names, context) {
         var promises = [];
+        var instanceNames = [];
+        var instances = [];
         if(names.constructor !== Array) {
             names = [names];
         }
-        for(var i in names) {
-            var name = namse[i];
+
+        function instantiate(options) {
+            if(options.isScript && options.instance && window[options.instance] && window[options.instance].constructor === Function) {
+                instances[options.instance] = new window[options.instance];
+                instances[options.instance].moduleName = options.instance;
+                instances[options.instance].origin = options.origin;
+            } else if(this && options.isJSON) {
+                instances[options.instance] = this;
+            } else if(this && options.isText) {
+                instances[options.instance] = this.toString();
+            } else if(this && this instanceof String) {
+                instances[options.instance] = this.toString();
+            } else {
+                return this;
+            }
+            return instances[options.instance];
+        }
+
+        names.map(function(name) {
             var options = {};
             if(name.constructor === String) {
                 var tokens = name.split("/");
@@ -922,12 +963,50 @@ function Edequate(options) {
                 };
 
             }
-
-
-            console.log(name)
-            promises.push(getJSON(name));
-        }
-        return Promise.all(promises);
+            if(options.isScript) {
+                promises.push(new Promise(function(resolve) {
+                    if(window[this.onlyname]) {
+                        resolve(instantiate.bind(this, window[this.onlyname]));
+                    } else {
+                        options.onload = function() {
+                            resolve(instantiate.call(window[this.onlyname], this));
+                        }.bind(this);
+                        options.onerror = function(e) {
+                            resolve();
+                        };
+                        create(HTML.SCRIPT, this, document.head);
+                    }
+                }.bind(options)));
+            } else if(options.isJSON) {
+                promises.push(getJSON(name).then(function(json) {
+                    return instantiate.call(json, this);
+                }.bind(options)).catch(function(error){
+                    console.error(ERRORS.INVALID_MODULE, this.instance, error);
+                    //throw new Error(ERRORS.INVALID_MODULE);
+                }));
+            } else if(options.body) {
+                promises.push(post(name, body).then(function(result){
+                    return instantiate.call(result.response, this);
+                }.bind(options)).catch(function(e,result){
+                    console.error(e,result);
+                    //returned.onRejected(ERRORS.ERROR_LOADING, e, result);
+                }));
+            } else {
+                promises.push(get(name).then(function(result){
+                    return instantiate.call(result.response, this);
+                }.bind(options)).catch(function(e,result){
+                    console.error(e,result);
+                    //returned.onRejected(ERRORS.ERROR_LOADING, e, result, this);
+                }.bind(options)))
+            }
+        });
+        return Promise.all(promises).then(function(result) {
+            console.log("RESULT", result);
+            var callbacks = this._pending.shift();
+            callbacks.resolve.apply(this, result);
+        }).catch(function(error) {
+            console.error(error);
+        });
     }
 
 
@@ -3806,6 +3885,7 @@ function Edequate(options) {
     this.on = on;
     this.post = post;
     this.progress = new Progress();
+    this.promise = Promise;
     this.put = put;
     this.require = require;
     this.save = save;
