@@ -86,7 +86,7 @@ function StructureHolder(main) {
                 u.require([
                     {src:"/rest/data", body: {resource: "pages-" + id + ".json"}, isJSON:true},
                     {src:"/rest/" + id, isJSON:true}
-                ]).then(function(json, json1){
+                ], function(json, json1){
                     try {
                         var id = this.id;
                         var structure = main.buildTree(json);
@@ -240,7 +240,7 @@ function StructureHolder(main) {
                             }
                         }
                         for (var i in json1.message) {
-                            u.require(json1.extra + "/" + json1.message[i], main).then(function (holder) {
+                            u.require(json1.extra + "/" + json1.message[i], main, function (holder) {
                                 var category = holder && holder.category;
                                 category = this.items["" + category];
                                 if (category && "menu" in holder) {

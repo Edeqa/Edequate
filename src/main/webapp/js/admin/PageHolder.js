@@ -54,7 +54,7 @@ function PageHolder(main) {
             {src:"/rest/locales", isJSON:true},
             {src:"/rest/resources", body: {resource:"icons.json"}, isJSON: true},
             {src:"/rest/data", isJSON: true, body: {resource: "pages-" + ids[0] + ".json"}}
-        ]).then(function(jsonLocales, jsonIcons, jsonStructure){
+        ], function(jsonLocales, jsonIcons, jsonStructure){
 
             locales = jsonLocales.message;
             icons = jsonIcons || {};

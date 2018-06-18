@@ -29,7 +29,7 @@ function Restore(u) {
                 self.holder.resume();
             }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
-        u.require({src:"/rest/locales",isJSON:true}).then(function(json){
+        u.require({src:"/rest/locales",isJSON:true}, function(json){
             u.clear(self.selectLang);
             var count = 1;
             self.selectLang.place(HTML.OPTION, { innerHTML: "Default", value: "en" });

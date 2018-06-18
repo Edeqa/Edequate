@@ -5,7 +5,7 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
- * 8 - Promise implementation; Menu positioning; blinking onclick
+ * 8 - Promise implementation (resolve/reject/then/catch/all/race); Menu positioning; blinking for onclick events
  * 7 - create(options#content) - if content is defined then just uses it as current HTMLElement; new component - tree; node#setContent(node)
  * 6 - drawer.headerSubtitle; require with caching
  * 5 - onload initialization; DRAWER constants
@@ -461,7 +461,6 @@ function Edequate(options) {
     if(true){//!Promise) {
         Promise = function (callback) {
             this._pending = [];
-            this._callback = callback;
             this.PENDING = "pending";
             this.RESOLVED = "resolved";
             this.REJECTED = "rejected";
@@ -521,11 +520,11 @@ function Edequate(options) {
             return this;
         };
         Promise.prototype.catch = function (onRejected) {
-            var onFulfilled = function (result) {
-                return result;
-            };
+            // var onFulfilled = function (result) {
+            //     return result;
+            // };
             this._catch = onRejected || this._catch;
-            this._pending.push({resolve: onFulfilled, reject: onRejected});
+            // this._pending.push({resolve: onFulfilled, reject: onRejected});
             return this;
         };
         Promise.all = function (array) {
@@ -599,7 +598,6 @@ function Edequate(options) {
                 reject(error);
             });
         }
-
     }
 
     function byId(id) {
@@ -616,7 +614,7 @@ function Edequate(options) {
         return {
             remove: function() {
                 for(var i in _eventNames) {
-                    console.log("remove", _node,_eventNames[i], _callback);
+                    // console.log("remove", _node,_eventNames[i], _callback);
                     _node.removeEventListener(_eventNames[i], _callback);
                     if (_node.detachEvent) _node.detachEvent("on"+_eventNames[i], _callback);
                 }
@@ -880,35 +878,38 @@ function Edequate(options) {
         return keys;
     }
 
-    function prequire(names, context) {
+    function require(names, context, callback) {
         var promises = [];
         var instanceNames = [];
         var instances = [];
+        if(!callback) {
+            callback = context;
+            context = null;
+        }
         if(names.constructor !== Array) {
             names = [names];
         }
 
-        function instantiate(options) {
+        function instantiate(object, options) {
             if(options.isScript && options.instance && window[options.instance] && window[options.instance].constructor === Function) {
-                instances[options.instance] = new window[options.instance];
+                object = new window[options.instance](context);
+                instances[options.instance] = object;
                 instances[options.instance].moduleName = options.instance;
                 instances[options.instance].origin = options.origin;
             } else if(this && options.isJSON) {
-                instances[options.instance] = this;
+                instances[options.instance] = object;
             } else if(this && options.isText) {
-                instances[options.instance] = this.toString();
+                instances[options.instance] = object.toString();
             } else if(this && this instanceof String) {
-                instances[options.instance] = this.toString();
-            } else {
-                return this;
+                instances[options.instance] = object.toString();
             }
-            return instances[options.instance];
+            return object;
         }
 
-        names.map(function(name) {
+        names.map(function(item) {
             var options = {};
-            if(name.constructor === String) {
-                var tokens = name.split("/");
+            if(item.constructor === String) {
+                var tokens = item.split("/");
                 var filename = tokens[tokens.length-1];
                 // var onlyname = filename.split(".")[0];
                 var filenameParts = filename.split(".");
@@ -924,8 +925,8 @@ function Edequate(options) {
                 var isScript = !isText && !isJSON;
 
                 options = {
-                    src: name,
-                    origin: name,
+                    src: item,
+                    origin: item,
                     instance: onlyname,
                     async: true,
                     // defer: true,
@@ -933,13 +934,12 @@ function Edequate(options) {
                     isJSON: isJSON,
                     isText: isText
                 };
-            } else if(name instanceof Object) {
-                isScript = !!name.isScript;
-                isJSON = !!name.isJSON;
-                isText = !!name.isText;
-                name = name.src;
+            } else if(item instanceof Object) {
+                isScript = !!item.isScript;
+                isJSON = !!item.isJSON;
+                isText = !!item.isText;
 
-                tokens = name.split("/");
+                tokens = item.src.split("/");
                 filename = tokens[tokens.length-1];
                 filenameParts = filename.split(".");
                 extension = filenameParts.pop();
@@ -951,25 +951,25 @@ function Edequate(options) {
                 instanceNames.push(onlyname);
 
                 options = {
-                    src: name,
-                    origin: name,
+                    src: item.src,
+                    origin: item.src,
                     instance: onlyname,
                     async: true,
                     // defer: true,
                     isScript: isScript,
                     isJSON: isJSON,
                     isText: isText,
-                    body: name.body
+                    body: item.body
                 };
 
             }
             if(options.isScript) {
                 promises.push(new Promise(function(resolve) {
                     if(window[this.onlyname]) {
-                        resolve(instantiate.bind(this, window[this.onlyname]));
+                        resolve(instantiate(this, window[this.onlyname]));
                     } else {
                         options.onload = function() {
-                            resolve(instantiate.call(window[this.onlyname], this));
+                            resolve(instantiate(window[this.onlyname], this));
                         }.bind(this);
                         options.onerror = function(e) {
                             resolve();
@@ -978,22 +978,22 @@ function Edequate(options) {
                     }
                 }.bind(options)));
             } else if(options.isJSON) {
-                promises.push(getJSON(name).then(function(json) {
-                    return instantiate.call(json, this);
+                promises.push(getJSON(options.src, options.body).then(function(json) {
+                    return instantiate(json, this);
                 }.bind(options)).catch(function(error){
                     console.error(ERRORS.INVALID_MODULE, this.instance, error);
                     //throw new Error(ERRORS.INVALID_MODULE);
                 }));
             } else if(options.body) {
-                promises.push(post(name, body).then(function(result){
-                    return instantiate.call(result.response, this);
+                promises.push(post(options.src, options.body).then(function(result){
+                    return instantiate(result.response, this);
                 }.bind(options)).catch(function(e,result){
                     console.error(e,result);
                     //returned.onRejected(ERRORS.ERROR_LOADING, e, result);
                 }));
             } else {
-                promises.push(get(name).then(function(result){
-                    return instantiate.call(result.response, this);
+                promises.push(get(options.src).then(function(result){
+                    return instantiate(result.response, this);
                 }.bind(options)).catch(function(e,result){
                     console.error(e,result);
                     //returned.onRejected(ERRORS.ERROR_LOADING, e, result, this);
@@ -1001,16 +1001,12 @@ function Edequate(options) {
             }
         });
         return Promise.all(promises).then(function(result) {
-            console.log("RESULT", result);
-            var callbacks = this._pending.shift();
-            callbacks.resolve.apply(this, result);
-        }).catch(function(error) {
-            console.error(error);
-        });
+            callback.apply(this, result);
+        }.bind(this));
     }
 
 
-    function require(names, context) {
+    function prequire(names, context) {
         if(names.constructor !== Array) {
             names = [names];
         }
@@ -2123,7 +2119,7 @@ function Edequate(options) {
             };
             textarea.changed = false;
             create(HTML.LINK, {href:"https://cdn.quilljs.com/1.3.6/quill.snow.css", rel:"stylesheet"}, document.head);
-            require("https://cdn.quilljs.com/1.3.6/quill.js").then(function() {
+            require("https://cdn.quilljs.com/1.3.6/quill.js", function() {
                 textarea.editor = new Quill(textarea.editNode, {
                     theme: "snow",
                     modules: {
@@ -2231,7 +2227,6 @@ function Edequate(options) {
         }
         return (Lang.$origin[string] && Lang[string]) || (string ? string.substr(0, 1).toUpperCase() + string.substr(1) : "");
     }
-
     Lang.$nodes = Lang.$nodes || {};
     Lang.$origin = Lang.$origin || {};
     Lang.$arguments = Lang.$arguments || {};
@@ -2298,7 +2293,6 @@ function Edequate(options) {
     function rest(method, url, body) {
         return new Promise(function(resolve, reject) {
             var xhr = new XMLHttpRequest();
-
             xhr.open(method, url, true);
             if(this.isJSON) {
                 xhr.setRequestHeader("Content-type", "application/json");
@@ -2326,39 +2320,6 @@ function Edequate(options) {
                 reject(ERRORS.ERROR_SENDING_REQUEST);
             }
         });
-    }
-
-    function Erest(method, url, body) {
-        var returned = new EPromise();
-
-        var xhr = new XMLHttpRequest();
-
-        xhr.open(method, url, true);
-        if(this.isJSON) {
-            xhr.setRequestHeader("Content-type", "application/json");
-        }
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState !== 4) return;
-            if (xhr.status !== 200) {
-                returned.onRejected(xhr.status, xhr);
-            } else {
-                returned.onResolved(xhr);
-            }
-        };
-        try {
-            if(body) {
-                if(body.constructor === Object) {
-                    body = JSON.stringify(body);
-                }
-                xhr.send(body);
-            } else {
-                xhr.send();
-            }
-        } catch(e) {
-            returned.onRejected(ERRORS.ERROR_SENDING_REQUEST, xhr);
-            return;
-        }
-        return returned;
     }
 
     function get(url) {
@@ -2396,76 +2357,12 @@ function Edequate(options) {
                     reject(ERRORS.INCORRECT_JSON);
                 }
             };
-
             if(body) {
-                post.bind({isJSON:true})(url, body)
-                    .then(onresolve,reject);
+                post.bind({isJSON:true})(url, body).then(onresolve,reject);
             } else {
-                get.bind({isJSON:true})(url)
-                    .then(onresolve,reject);
+                get.bind({isJSON:true})(url).then(onresolve,reject);
             }
         });
-
-        var callbacks = {
-            then: function(json,xhr) { console.warn("Define .then(callback(json,xhr){...}) for", json, xhr)},
-            "catch": function(code, xhr) { console.error(code, xhr); }
-        };
-        var catchFunction = function(callback) {
-            callbacks.catch = callback;
-        };
-        var thenFunction = function(callback) {
-            callbacks.then = function(xhr) {
-                try {
-                    var text = xhr.responseText;
-                    text = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/[\r\n]+/gm, " ");
-                    var json = JSON.parse(text);
-                    try {
-                        callback(json, xhr);
-                    } catch(e) {
-                        callbacks.catch(ERRORS.CALLBACK_FAILED, e, json);
-                    }
-                } catch(e) {
-                    callbacks.catch(ERRORS.INCORRECT_JSON, xhr, e);
-                }
-            };
-            return { "catch": catchFunction };
-        };
-        setTimeout(function(){
-            if(body) post.bind({isJSON:true})(url, body).then(callbacks.then).catch(callbacks.catch);
-            else get.bind({isJSON:true})(url).then(callbacks.then).catch(callbacks.catch);
-        },0);
-        return { then: thenFunction, "catch": catchFunction };
-    }
-    function EgetJSON(url, body) {
-        var callbacks = {
-            then: function(json,xhr) { console.warn("Define .then(callback(json,xhr){...}) for", json, xhr)},
-            "catch": function(code, xhr) { console.error(code, xhr); }
-        };
-        var catchFunction = function(callback) {
-            callbacks.catch = callback;
-        };
-        var thenFunction = function(callback) {
-            callbacks.then = function(xhr) {
-                try {
-                    var text = xhr.responseText;
-                    text = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/[\r\n]+/gm, " ");
-                    var json = JSON.parse(text);
-                    try {
-                        callback(json, xhr);
-                    } catch(e) {
-                        callbacks.catch(ERRORS.CALLBACK_FAILED, e, json);
-                    }
-                } catch(e) {
-                    callbacks.catch(ERRORS.INCORRECT_JSON, xhr, e);
-                }
-            };
-            return { "catch": catchFunction };
-        };
-        setTimeout(function(){
-            if(body) post.bind({isJSON:true})(url, body).then(callbacks.then).catch(callbacks.catch);
-            else get.bind({isJSON:true})(url).then(callbacks.then).catch(callbacks.catch);
-        },0);
-        return { then: thenFunction, "catch": catchFunction };
     }
 
     function Drawer(options, appendTo) {
@@ -3013,9 +2910,11 @@ function Edequate(options) {
                         try{
                             // noinspection JSUnfilteredForInLoop
                             var index = table._sorts[i].index;
-                            // noinspection JSUnfilteredForInLoop
-                            table.head.cells[index].sort = table._sorts[i].mode;
-                            table.sort(index);
+                            if(index < table.head.cells.length) {
+                                // noinspection JSUnfilteredForInLoop
+                                table.head.cells[index].sort = table._sorts[i].mode;
+                                table.sort(index);
+                            }
                         } catch(e) {
                             console.error(e);
                         }
@@ -3476,7 +3375,7 @@ function Edequate(options) {
                 }
             } else {
                 self.eventBus.origins.push(module);
-                require(module, options.context).then(function(e) {
+                require(module, options.context, function(e) {
                     loaded++;
                     if(e && e.moduleName && e.type) {
 //                        self.eventBus.holders[e.type.toLowerCase()] = e;
@@ -3893,7 +3792,7 @@ function Edequate(options) {
     this.table = Table;
     this.toast = new Toast();
     this.tree = Tree;
-    this.prequire = prequire;
+    // this.prequire = prequire;
 
 }
 (function() {

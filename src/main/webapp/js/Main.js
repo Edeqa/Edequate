@@ -63,7 +63,7 @@ function Main(u) {
                 self.holder.resume();
             }}, self.actionbar).place(HTML.OPTION, { name: u.lang.loading, value:"" });
 
-        u.require({src:"/rest/locales",isJSON:true}).then(function(json){
+        u.require({src:"/rest/locales",isJSON:true}, function(json){
             console.log("locales", json.message);
             u.clear(self.selectLang);
             var count = 1;
@@ -133,7 +133,7 @@ function Main(u) {
                     {
                         enclosed: true,
                         label: u.lang.legal_information || "Legal information",
-                        body: u.lang.loading.outerHTML,
+                        body: u.lang.loading && u.lang.loading.outerHTML || "Loading...",
                         className: "dialog-about-terms",
                         onopen: function(e) {
                             var lang = (u.load("lang") || navigator.language).toLowerCase().slice(0,2);
@@ -151,7 +151,7 @@ function Main(u) {
                 }
             });
 
-            u.require([{src:"/rest/" + self.mainType, isJSON:true}, {src:"/rest/data", isJSON: true, body: {resource: "pages-" + self.mainType + ".json"}}]).then(function(json, jsonStructure){
+            u.require([{src:"/rest/" + self.mainType, isJSON:true}, {src:"/rest/data", isJSON: true, body: {resource: "pages-" + self.mainType + ".json"}}], function(json, jsonStructure){
 
                 self.structure = self.buildTree(jsonStructure);
                 if(self.structure.title) {
