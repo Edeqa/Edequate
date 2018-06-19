@@ -374,21 +374,6 @@ function Edequate(options) {
         return this;
     };
 
-    if(!Object.assign) {
-        Object.defineProperty(Object.prototype, "assign", {
-            enumerable: false,
-            value: function(target, first, second) {
-                for(var x in first) {
-                    if(first.hasOwnProperty(x)) target[x] = first[x];
-                }
-                for(x in second) {
-                    if(second.hasOwnProperty(x)) target[x] = second[x];
-                }
-                return target;
-            }
-        });
-    }
-
     if(!String.prototype.toUpperCaseFirst) {
         Object.defineProperty(String.prototype, "toUpperCaseFirst", {
             enumerable: false,
@@ -586,16 +571,15 @@ function Edequate(options) {
         var _node = node;
         var _eventNames = eventName.split(/,/);
         var _callback = callback;
-        for(var i in _eventNames) {
-            node.addEventListener(_eventNames[i], _callback, options);
-        }
+        _eventNames.map(function(item) {
+            node.addEventListener(item, _callback, options);
+        });
         return {
             remove: function() {
-                for(var i in _eventNames) {
-                    // console.log("remove", _node,_eventNames[i], _callback);
-                    _node.removeEventListener(_eventNames[i], _callback);
-                    if (_node.detachEvent) _node.detachEvent("on"+_eventNames[i], _callback);
-                }
+                _eventNames.map(function(item) {
+                    _node.removeEventListener(item, _callback);
+                    if (_node.detachEvent) _node.detachEvent("on" + item, _callback);
+                });
             }
         }
     }
@@ -1615,7 +1599,6 @@ function Edequate(options) {
                     }
                 }, dialog.filterLayout);
             }
-
         }
 
         dialog.header = create(HTML.DIV, {className:"hidden"}, dialog);
@@ -2024,7 +2007,6 @@ function Edequate(options) {
             };
             textarea.setValue(value);
         }
-
         if(appendTo) appendTo.appendChild(textarea);
         return textarea;
     }
