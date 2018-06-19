@@ -16,11 +16,18 @@
       "explicit": true,
       "pages": [
         {
-          "icon": "help",
+          "icon": "vpn_lock",
           "menu": "privacy",
           "resource": "privacy-policy.html",
           "title": "privacy_policy",
           "type": "privacy"
+        },
+        {
+          "icon": "receipt",
+          "menu": "terms",
+          "resource": "terms-of-service.html",
+          "title": "terms_of_service",
+          "type": "terms"
         },
         {
           "icon": "info_outline",

@@ -435,28 +435,6 @@ function Edequate(options) {
         });
     }
 
-    function EPromise() {
-        return {
-            then: function(callback) {
-                this.onResolved = callback || function(){};
-                return this;
-            },
-            catch: function(callback) {
-                this.onRejected = callback || function(){};
-            },
-            onResolved: function(value) {
-                console.warn("Define '.then(onResolved(value){...})'; got response: ", value && value.response);
-            },
-            onRejected: function(code, value, error, options) {
-                console.warn("Define '.catch(onRejected(code, value[, error[, options]]){...})'");
-                console.error(code, value, error, options);
-            },
-            promise: function(newPromise) {
-                return newPromise;
-            }
-        };
-    }
-
     var Promise = window.Promise;
     if(true){//!Promise) {
         Promise = function (callback) {
@@ -795,6 +773,7 @@ function Edequate(options) {
                         }
                     } else {
                         var propertyName = normalizeName(x), value = properties[x];
+                        // noinspection EqualityComparisonWithCoercionJS
                         if(value != undefined) {
                             if(value.constructor === Object) {
                                 var v = "";
@@ -965,13 +944,14 @@ function Edequate(options) {
             }
             if(options.isScript) {
                 promises.push(new Promise(function(resolve) {
+                    /** @namespace this.onlyname */
                     if(window[this.onlyname]) {
                         resolve(instantiate(this, window[this.onlyname]));
                     } else {
                         options.onload = function() {
                             resolve(instantiate(window[this.onlyname], this));
                         }.bind(this);
-                        options.onerror = function(e) {
+                        options.onerror = function() {
                             resolve();
                         };
                         create(HTML.SCRIPT, this, document.head);
@@ -1003,139 +983,6 @@ function Edequate(options) {
         return Promise.all(promises).then(function(result) {
             callback.apply(this, result);
         }.bind(this));
-    }
-
-
-    function prequire(names, context) {
-        if(names.constructor !== Array) {
-            names = [names];
-        }
-        var instanceNames = [];
-        var instances = {};
-        var returned = new EPromise();
-        var count = 0;
-        var max = names.length;
-
-        function instantiate(options) {
-            count++;
-            if(this.isScript && this.instance && window[this.instance] && window[this.instance].constructor === Function) {
-                try {
-                    instances[this.instance] = new window[this.instance](context);
-                    instances[this.instance].moduleName = this.instance;
-                    instances[this.instance].origin = this.origin;
-                } catch(e) {
-                    returned.onRejected(ERRORS.INVALID_MODULE, this.instance, e);
-                }
-            } else if(options && options.isJSON) {
-                instances[options.instance] = this;
-            } else if(options && options.isText) {
-                instances[options.instance] = this.toString();
-            }
-            if(count === max) {
-                if(Object.keys(instances).length === 1) {
-                    returned.onResolved(instances[instanceNames[0]]);
-                } else {
-                    var values = [];
-                    for(var i in instanceNames) {
-                        if(instances[instanceNames[i]]) {
-                            values.push(instances[instanceNames[i]]);
-                        } else {
-                            break;
-                        }
-                    }
-                    returned.onResolved.apply(returned, values);
-                }
-            }
-            return true;
-        }
-
-        while(names.length) {
-            var name = names.shift();
-
-            var origin;
-            var onlyname;
-            var isJSON = false;
-            var isScript = false;
-            var isText = false;
-            var body;
-            if(name.constructor === String) {
-                origin = name;
-                var parts = name.split("/");
-                var filename = parts[parts.length-1];
-                // var onlyname = filename.split(".")[0];
-                var filenameParts = filename.split(".");
-                var extension = filenameParts.pop();
-                if(filenameParts.length === 0) {
-                    filenameParts.push(extension);
-                    extension = null;
-                }
-                onlyname = filenameParts.join(".");
-                instanceNames.push(onlyname);
-                isText = extension === "text" || extension === "txt";
-                isJSON = extension === "json";
-                isScript = !isText && !isJSON;
-            } else if(name instanceof Object) {
-                isScript = !!name.isScript;
-                isJSON = !!name.isJSON;
-                isText = !!name.isText;
-                body = name.body;
-                name = name.src;
-                origin = name;
-
-                parts = name.split("/");
-                filename = parts[parts.length-1];
-                filenameParts = filename.split(".");
-                extension = filenameParts.pop();
-                if(filenameParts.length === 0) {
-                    filenameParts.push(extension);
-                    extension = null;
-                }
-                onlyname = filenameParts.join(".");
-                instanceNames.push(onlyname);
-            }
-            var options = {
-                src: name,
-                origin: origin,
-                instance: onlyname,
-                async: true,
-                // defer: true,
-                isScript: isScript,
-                isJSON: isJSON,
-                isText: isText,
-                onload: function() {
-                    instantiate.call(this);
-                },
-                onerror: function(e) {
-                    returned.onRejected(ERRORS.NOT_EXISTS, this.instance, e);
-                }
-            };
-            if(isScript) {
-                if(window[onlyname]) {
-                    setTimeout(instantiate.bind(options), 0);
-                } else {
-                    create(HTML.SCRIPT, options, document.head);
-                }
-            } else if(isJSON) {
-                getJSON(name, body).then(function(json){
-                    instantiate.call(json, this);
-                }.bind(options)).catch(function(e,json){
-                    returned.onRejected(ERRORS.ERROR_LOADING, e, json);
-                });
-            } else if(body) {
-                post(name, body).then(function(result){
-                    instantiate.call(result.response, this);
-                }.bind(options)).catch(function(e,result){
-                    returned.onRejected(ERRORS.ERROR_LOADING, e, result);
-                });
-            } else {
-                get(name).then(function(result){
-                    instantiate.call(result.response, this);
-                }.bind(options)).catch(function(e,result){
-                    returned.onRejected(ERRORS.ERROR_LOADING, e, result, this);
-                }.bind(options));
-            }
-        }
-        return returned;
     }
 
     function _stringify(key, value) {
@@ -1474,7 +1321,7 @@ function Edequate(options) {
             }
             dialog.focus();
             var focused = false;
-            for(var i in dialog.items) {
+            for(var i = 0; i < dialog.items.length; i++) {
                 if(dialog.items[i].constructor === HTMLInputElement && (dialog.items[i].type === HTML.TEXT || dialog.items[i].type === HTML.NUMBER)) {
                     focused = true;
                     dialog.items[i].focus();
@@ -1836,6 +1683,7 @@ function Edequate(options) {
             dialog.progress.style.width = "0%";
         }
 
+        /** @namespace options.buttonsClassName */
         var buttons = create(HTML.DIV, {className:"dialog-buttons hidden" + optionalClassName(options.buttonsClassName)}, dialog);
         dialog.positive = create(HTML.BUTTON, {className: "hidden"}, buttons);
         dialog.neutral = create(HTML.BUTTON, {className: "hidden"}, buttons);
@@ -3792,7 +3640,6 @@ function Edequate(options) {
     this.table = Table;
     this.toast = new Toast();
     this.tree = Tree;
-    // this.prequire = prequire;
 
 }
 (function() {
