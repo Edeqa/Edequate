@@ -690,14 +690,6 @@ input[type=checkbox]:checked:before {
 .dialog-help-button:before {
     content: "help_outline";
 }
-.dialog-resize {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
-    cursor: se-resize;
-}
 .dialog-dim {
     position: fixed;
     z-index: 10000;
@@ -1298,6 +1290,69 @@ input[type=checkbox]:checked:before {
     padding: 0;
     justify-content: center;
 }
+.resize {
+    background-color: transparent;
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 1;
+}
+.resize-left {
+    cursor: ew-resize;
+    right: auto;
+    width: 5px;
+}
+.resize-left-top {
+    bottom: auto;
+    cursor: nw-resize;
+    height: 5px;
+    right: auto;
+    width: 5px;
+}
+.resize-top {
+    bottom: auto;
+    height: 5px;
+    cursor: ns-resize;
+}
+.resize-right-top {
+    bottom: auto;
+    cursor: ne-resize;
+    height: 5px;
+    left: auto;
+    width: 5px;
+}
+.resize-right {
+    left: auto;
+    width: 5px;
+    cursor: ew-resize;
+}
+.resize-right-bottom {
+    cursor: se-resize;
+    height: 5px;
+    left: auto;
+    top: auto;
+    width: 5px;
+}
+.resize-bottom {
+    top: auto;
+    height: 5px;
+    cursor: ns-resize;
+}
+.resize-left-bottom {
+    cursor: sw-resize;
+    height: 5px;
+    right: auto;
+    top: auto;
+    width: 5px;
+}
+.moving {
+    opacity: 0.7;
+}
+.resizing {
+    border: 1px dashed blue;
+}
 
 /* media specific classes */
 
@@ -1529,9 +1584,6 @@ input[type=checkbox]:checked:before {
     .dialog-item-input-checkbox {
         width: 50%;
     }
-    .dialog-resize {
-        display: none;
-    }
     /* Drawer */
     .drawer, .drawer.collapsed {
         left: 0;
@@ -1639,7 +1691,9 @@ input[type=checkbox]:checked:before {
     .button-scroll-top {
         bottom: 16px;
     }
-
+    .resize {
+        display: none;
+    }
     /* Table */
     .table {
         font-size: inherit;

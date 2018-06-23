@@ -759,7 +759,8 @@ function Edequate(options) {
                         if(call && call.constructor === String) {
                             el.setAttribute(x, properties[x]);
                         } else if(call) {
-                            el.addEventListener(action, call, {passive: true});
+                            on(el, action, call);
+                            // el.addEventListener(action, call, {passive: true});
                         }
                     } else if(x === "async" || x === "defer") {
                         if(!!properties[x]) {
@@ -1444,14 +1445,14 @@ function Edequate(options) {
                 }
             }
         };
-        dialog.addEventListener("keyup", function(e) {
+        on(dialog, "keyup", function(e) {
             if(e.keyCode === 27) {
                 if(options.negative && options.negative.onclick) {
                     dialog.close();
                     options.negative.onclick.call(dialog,dialog.items);
                 }
             }
-        }, {passive: true});
+        });
 
         options = options || {};
 
@@ -1479,38 +1480,6 @@ function Edequate(options) {
 
             var titleLayout = create(HTML.DIV, {
                 className:"dialog-title" + optionalClassName(options.title.className),
-                onmousedown: function(e) {
-                    if(e.button !== 0) return;
-//                    var position = dialog.getBoundingClientRect();
-                    var position = { left: dialog.offsetLeft, top: dialog.offsetTop, width: dialog.offsetWidth, height: dialog.offsetHeight };
-                    var offset = [ e.clientX, e.clientY ];
-                    var moved = false;
-
-                    var _mouseup = on(document.body, HTML.MOUSEUP, mouseup);
-                    var _mousemove = on(document.body, HTML.MOUSEMOVE, mousemove, {passive: true});
-
-                    function mouseup(){
-                        _mouseup.remove();
-                        _mousemove.remove();
-                        var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
-                        if(id && moved) {
-                            if(dialog.style.left) save("dialog:"+id+":left", dialog.style.left);
-                            if(dialog.style.top) save("dialog:"+id+":top", dialog.style.top);
-                        }
-                    }
-                    function mousemove(e){
-                        var deltaX = e.clientX - offset[0];
-                        var deltaY = e.clientY - offset[1];
-                        console.log(deltaX,deltaY);
-                        if(deltaX || deltaY) {
-                            moved = true;
-                            dialog.style.left = (position.left + deltaX) + "px";
-                            dialog.style.top = (position.top + deltaY ) + "px";
-                            dialog.style.right = "auto";
-                            dialog.style.bottom = "auto";
-                        }
-                    }
-                },
                 ondblclick: function() {
                     var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
                     save("dialog:"+id+":left");
@@ -1523,6 +1492,7 @@ function Edequate(options) {
                     dialog.style.height = "";
                     dialog.style.right = "";
                     dialog.style.bottom = "";
+                    dialog.style.position = "";
                     dialog.adjustPosition();
                 },
                 oncontextmenu: function(e){e.stopPropagation(); return false;}
@@ -1795,39 +1765,28 @@ function Edequate(options) {
         if(options.help) {
             create(HTML.BUTTON, {className:"dialog-button dialog-help-button blinking icon notranslate", onclick:options.help}, dialog);
         }
-        /** @namespace options.resizeable */
-        if(options.resizeable) {
-            create(HTML.DIV, {
-                className:"dialog-resize",
-                onmousedown: function(e) {
-                    if(e.button !== 0) return;
-                    var position = { left: dialog.offsetLeft, top: dialog.offsetTop, width: dialog.offsetWidth, height: dialog.offsetHeight };
-                    var offset = [ e.clientX, e.clientY ];
-                    var moved = false;
-                    function mouseup(){
-                        window.removeEventListener(HTML.MOUSEUP, mouseup, false);
-                        window.removeEventListener(HTML.MOUSEMOVE, mousemove, false);
-                        if((options.id || options.title.label) && moved) {
-                            var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
-                            if(dialog.style.width) save("dialog:"+id+":width", dialog.style.width);
-                            if(dialog.style.height) save("dialog:"+id+":height", dialog.style.height);
-                        }
-                    }
-                    function mousemove(e){
-                        var deltaX = e.clientX - offset[0];
-                        var deltaY = e.clientY - offset[1];
-                        if(deltaX || deltaY) {
-                            moved = true;
-                            dialog.style.width = (position.width + deltaX)+"px";
-                            dialog.style.height = (position.height + deltaY)+"px";
-                        }
-                    }
-                    window.addEventListener(HTML.MOUSEUP, mouseup, {passive: true});
-                    window.addEventListener(HTML.MOUSEMOVE, mousemove, {passive: true});
-                    e.stopPropagation();
+        moveResizeController.for(dialog, {
+            moveNode: dialog.titleLayout,
+            move: !!dialog.titleLayout,
+            scrollable: true,
+            resize: !!options.resizeable,
+            sides: {
+                left: options.resizeable === "horizontal" || options.resizeable === true,
+                top: options.resizeable === "vertical" || options.resizeable === true,
+                right: options.resizeable === "horizontal" || options.resizeable === true,
+                bottom: options.resizeable === "vertical" || options.resizeable === true
+            },
+            onresize: options.onresize,
+            onfinish: function() {
+                if((options.id || options.title.label)) {
+                    var id = options.id || (options.title.label && ((options.title.label.dataset && options.title.label.dataset.lang) ? options.title.label.dataset.lang : options.title.label));
+                    if (dialog.style.width) save("dialog:" + id + ":width", dialog.style.width);
+                    if (dialog.style.height) save("dialog:" + id + ":height", dialog.style.height);
+                    if (dialog.style.left) save("dialog:" + id + ":left", dialog.style.left);
+                    if (dialog.style.top) save("dialog:" + id + ":top", dialog.style.top);
                 }
-            }, dialog);
-        }
+            }
+        });
         return dialog;
     }
 
@@ -2317,7 +2276,6 @@ function Edequate(options) {
                 if(options.ontogglesize) options.ontogglesize(collapsed);
             },
             ontouchstart: swipeHolder
-//            onmousedown: swipeHolder
         });
         if(options.flexible) {
             if(options.flexible && !collapsed) {
@@ -2329,27 +2287,18 @@ function Edequate(options) {
                     layout.style.maxWidth = w;
                 }
             }
-            var resizeHolder = create(HTML.DIV, {
-                className: "drawer-resizer",
-                onmousedown: function(e) {
-                    var startX = e.clientX;
-                    var width = layout.offsetWidth;
-                    var onmove = on(window, "mousemove", function(e) {
-                        var w = width - startX + e.clientX;
-                        if(w < 100) w = 100;
-                        if(w > 400) w = 400;
-                        w += "px";
-                        layout.style.width = w;
-                        layout.style.minWidth = w;
-                        layout.style.maxWidth = w;
-                    });
-                    var onup = on(window, "mouseup", function(e) {
-                        onmove.remove();
-                        onup.remove();
-                        save("drawer:width", width - startX + e.clientX);
-                    });
+            moveResizeController.for(layout, {
+                move: false,
+                resize: true,
+                sides: {right:true},
+                scrollable: "keep",
+                minWidth: 100,
+                maxWidth: 400,
+                onfinish: function() {
+                    save("drawer:width", this.offsetWidth);
+                    this.style.position = "";
                 }
-            }, layout);
+            });
         }
 
         layout.items = {};
@@ -3586,39 +3535,184 @@ function Edequate(options) {
             leaf.items = {};
             return leaf;
         }
-
-
-
-        /*var tree = create(HTML.DIV, {
-            add: function(leaf) {
-                leaf = leaf || {};
-                leaf.add = function(innerLeaf) {
-                    innerLeaf = innerLeaf || {};
-                    innerLeaf.id = leaf.id + ":" + innerLeaf.id;
-                    return tree.add(innerLeaf);
-                };
-
-                var div = create(HTML.DIV, leaf);
-                if(tree.raw[leaf.id]) {
-                    console.warn("Tree leaf with id '" + leaf.id + "' already exists.");
-                }
-                tree.raw[leaf.id] = div;
-
-                if(leaf.parent) {
-                    tree.raw[leaf.parent].appendChild(div);
-                } else {
-                    tree.appendChild(div);
-                }
-                return div;
-            }
-        });*/
         if(appendTo) appendTo.appendChild(root);
-
         for(var i in items) {
             root.add(items[i])
         }
         return root;
     }
+
+    function MoveResizeController() {
+        var self = this;
+        this.for = function(node, options) {
+            options = options || {};
+
+            node._move_resize_controller_options = options;
+            if(options.move) {
+                var moveNode = options.moveNode || node;
+                on(moveNode, HTML.MOUSEDOWN, this.startMove.bind(node));
+            }
+            if(options.resize) {
+                var sides = options.sides || {left:true,top:true,right:true,bottom:true};
+                if(sides.left) create(HTML.DIV, {className: "resize resize-left",onmousedown:this.startResize.bind({node:node,side:"left"})}, node);
+                if(sides.top) create(HTML.DIV, {className: "resize resize-top",onmousedown:this.startResize.bind({node:node,side:"top"})}, node);
+                if(sides.right) create(HTML.DIV, {className: "resize resize-right",onmousedown:this.startResize.bind({node:node,side:"right"})}, node);
+                if(sides.bottom) create(HTML.DIV, {className: "resize resize-bottom",onmousedown:this.startResize.bind({node:node,side:"bottom"})}, node);
+                if(sides.left && sides.top) create(HTML.DIV, {className: "resize resize-left-top",onmousedown:this.startResize.bind({node:node,side:"left-top"})}, node);
+                if(sides.right && sides.top) create(HTML.DIV, {className: "resize resize-right-top",onmousedown:this.startResize.bind({node:node,side:"right-top"})}, node);
+                if(sides.right && sides.bottom) create(HTML.DIV, {className: "resize resize-right-bottom",onmousedown:this.startResize.bind({node:node,side:"right-bottom"})}, node);
+                if(sides.left && sides.bottom) create(HTML.DIV, {className: "resize resize-left-bottom",onmousedown:this.startResize.bind({node:node,side:"left-bottom"})}, node);
+            }
+        };
+        this.startMove = function(e) {
+            var node = this;
+            if(node._moving) return;
+            node._moving = true;
+            var options = node._move_resize_controller_options;
+            /** @namespace options.scrollable */
+            var rect = options.scrollable ? {left:node.offsetLeft,top:node.offsetTop,width:node.offsetWidth,height:node.offsetHeight} : node.getBoundingClientRect();
+            var startX = e.clientX;
+            var startY = e.clientY;
+
+            if(options.scrollable !== "keep") node.style.position = options.scrollable ? "absolute" : "fixed";
+            node.style.left = rect.left + "px";
+            node.style.top = rect.top + "px";
+            node._moved = false;
+
+            node._onmousemove = on(window, HTML.MOUSEMOVE, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if(e.movementX || e.movementY) {
+                    node.classList.add("moving");
+                }
+                node._moved = true;
+
+                var deltaX = e.clientX - startX;
+                var deltaY = e.clientY - startY;
+                node.style.left = (rect.left + deltaX) + "px";
+                node.style.top = (rect.top + deltaY) + "px";
+                /** @namespace options.onmove */
+                options.onmove && options.onmove.call(node);
+            });
+            node._onmouseup = on(window, HTML.MOUSEUP, function(e) {
+                node._onmousemove.remove();
+                node._onmouseup.remove();
+                node._moving = false;
+                node.classList.remove("moving");
+                node._moved && options.onfinish && options.onfinish.call(node);
+            });
+        };
+        this.startResize = function(e) {
+            var node = this.node;
+            var side = this.side;
+            if(node._resizing) return;
+            node._resizing = true;
+            var options = node._move_resize_controller_options;
+            /** @namespace options.scrollable */
+            var rect = options.scrollable ? {left:node.offsetLeft,top:node.offsetTop,width:node.offsetWidth,height:node.offsetHeight} : node.getBoundingClientRect();
+            var startX = e.clientX;
+            var startY = e.clientY;
+
+            if(options.scrollable !== "keep") node.style.position = options.scrollable ? "absolute" : "fixed";
+            node.style.left = rect.left + "px";
+            node.style.top = rect.top + "px";
+            node.style.transition = "none";
+            node._resized = false;
+
+            function fixW(width) {
+                if(options.minWidth && width < options.minWidth) width = options.minWidth;
+                if(options.maxWidth && width > options.maxWidth) width = options.maxWidth;
+                return width;
+            }
+            function fixH(height) {
+                if(options.minHeight && height < options.minHeight) height = options.minHeight;
+                if(options.maxHeight && height > options.maxHeight) height = options.maxHeight;
+                return height;
+            }
+
+            node._onmousemove = on(window, HTML.MOUSEMOVE, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if(e.movementX || e.movementY) {
+                    node.classList.add("resizing");
+                }
+                var deltaX = e.clientX - startX;
+                var deltaY = e.clientY - startY;
+                node._resized = true;
+
+                switch(side) {
+                    case "left":
+                        node.style.left = (rect.left + deltaX) + "px";
+                        node.style.width = fixW(rect.width - deltaX) + "px";
+                        if(options.maxWidth) node.style.maxWidth = node.style.width;
+                        if(options.minWidth) node.style.minWidth = node.style.width;
+                        break;
+                    case "left-top":
+                        node.style.left = (rect.left + deltaX) + "px";
+                        node.style.height = fixH(rect.height - deltaY) + "px";
+                        node.style.top = (rect.top + deltaY) + "px";
+                        node.style.width = fixW(rect.width - deltaX) + "px";
+                        if(options.maxHeight) node.style.maxHeight = node.style.height;
+                        if(options.minHeight) node.style.minHeight = node.style.height;
+                        if(options.maxWidth) node.style.maxWidth = node.style.width;
+                        if(options.minWidth) node.style.minWidth = node.style.width;
+                        break;
+                    case "top":
+                        node.style.height = fixH(rect.height - deltaY) + "px";
+                        node.style.top = (rect.top + deltaY) + "px";
+                        if(options.maxHeight) node.style.maxHeight = node.style.height;
+                        if(options.minHeight) node.style.minHeight = node.style.height;
+                        break;
+                    case "right-top":
+                        node.style.height = fixH(rect.height - deltaY) + "px";
+                        node.style.top = (rect.top + deltaY) + "px";
+                        node.style.width = fixW(rect.width + deltaX) + "px";
+                        if(options.maxHeight) node.style.maxHeight = node.style.height;
+                        if(options.minHeight) node.style.minHeight = node.style.height;
+                        if(options.maxWidth) node.style.maxWidth = node.style.width;
+                        if(options.minWidth) node.style.minWidth = node.style.width;
+                        break;
+                    case "right":
+                        node.style.width = fixW(rect.width + deltaX) + "px";
+                        if(options.maxWidth) node.style.maxWidth = node.style.width;
+                        if(options.minWidth) node.style.minWidth = node.style.width;
+                        break;
+                    case "right-bottom":
+                        node.style.height = fixH(rect.height + deltaY) + "px";
+                        node.style.width = fixW(rect.width + deltaX) + "px";
+                        if(options.maxHeight) node.style.maxHeight = node.style.height;
+                        if(options.minHeight) node.style.minHeight = node.style.height;
+                        if(options.maxWidth) node.style.maxWidth = node.style.width;
+                        if(options.minWidth) node.style.minWidth = node.style.width;
+                        break;
+                    case "bottom":
+                        node.style.height = fixH(rect.height + deltaY) + "px";
+                        if(options.maxHeight) node.style.maxHeight = node.style.height;
+                        if(options.minHeight) node.style.minHeight = node.style.height;
+                        break;
+                    case "left-bottom":
+                        node.style.height = fixH(rect.height + deltaY) + "px";
+                        node.style.left = (rect.left + deltaX) + "px";
+                        node.style.width = fixW(rect.width - deltaX) + "px";
+                        if(options.maxHeight) node.style.maxHeight = node.style.height;
+                        if(options.minHeight) node.style.minHeight = node.style.height;
+                        if(options.maxWidth) node.style.maxWidth = node.style.width;
+                        if(options.minWidth) node.style.minWidth = node.style.width;
+                        break;
+                }
+                options.onresize && options.onresize.call(node);
+            });
+            node._onmouseup = on(window, HTML.MOUSEUP, function(e) {
+                node._resizing = false;
+                node._onmousemove.remove();
+                node._onmouseup.remove();
+                node.classList.remove("resizing");
+                node.style.transition = "";
+                node._resized && options.onfinish && options.onfinish.call(node);
+            });
+        };
+    }
+    var moveResizeController = new MoveResizeController();
 
     function DataSource() {
         this.json = [];
@@ -3672,6 +3766,7 @@ function Edequate(options) {
     this.loading = loading;
     this.loadForContext = loadForContext;
     this.menu = Menu;
+    this.moveResizeController = moveResizeController;
     this.normalizeName = normalizeName;
     this.notification = notification;
     this.on = on;
