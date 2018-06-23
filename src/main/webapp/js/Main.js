@@ -160,6 +160,7 @@ function Main(u) {
                 self.drawer = new u.drawer({
                     title: u.lang[self.structure.title] || self.structure.title || u.lang.title || "Edequate",
                     // collapsed: u.load("drawer:collapsed"),
+                    flexible: true,
                     logo: {
                         src: "/images/logo.svg"
                     },

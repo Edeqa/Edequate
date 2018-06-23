@@ -743,6 +743,19 @@ input[type=checkbox]:checked:before {
 .drawer-open {
     display: block;
 }
+.drawer-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: ew-resize;
+    z-index: 1;
+    background-color: transparent;
+}
+.drawer.collapsed .drawer-resizer {
+    display: none;
+}
 .drawer:focus {
     outline: none;
 }
@@ -946,7 +959,7 @@ input[type=checkbox]:checked:before {
 .drawer-footer {
     position: absolute;
     bottom: 0;
-    width: 240px;
+    width: 100%;
     text-align: center;
     font-size: 10px;
     display: flex;

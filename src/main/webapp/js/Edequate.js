@@ -107,7 +107,8 @@ function Edequate(options) {
         ERROR_LOADING: "ERROR_LOADING",
         ERROR_SENDING_REQUEST: "ERROR_SENDING_REQUEST",
         INVALID_MODULE: "INVALID_MODULE",
-        CALLBACK_FAILED: "CALLBACK_FAILED"
+        CALLBACK_FAILED: "CALLBACK_FAILED",
+        GENERAL_ERROR: "GENERAL_ARROR"
     };
 
     var DRAWER = {
@@ -133,6 +134,20 @@ function Edequate(options) {
         SCALE_Y_TOP: "scale-y-top",
         SCALE_Y_BOTTOM: "scale-y-bottom"
     };
+
+    function EqError(code, message) {
+        this.name = "Error";
+        if(!message) {
+            this.code = ERRORS.GENERAL_ERROR;
+            this.message = code || ERRORS.GENERAL_ERROR;
+        } else {
+            this.code = code || ERRORS.GENERAL_ERROR;
+            this.message = message || "Error found";
+        }
+        this.stack = (new Error()).stack;
+    }
+    EqError.prototype = Object.create(Error.prototype);
+    EqError.prototype.constructor = EqError;
 
     URL = function(link) {
         this.href = link.href || link;
@@ -2131,7 +2146,7 @@ function Edequate(options) {
                 if (xhr.readyState !== 4) return;
                 if (xhr.status !== 200) {
                     console.error(xhr);
-                    reject(xhr.status);
+                    reject(new EqError(xhr.status, xhr.response));
                 } else {
                     resolve(xhr);
                 }
@@ -2147,7 +2162,7 @@ function Edequate(options) {
                 }
             } catch(e) {
                 console.error(xhr);
-                reject(ERRORS.ERROR_SENDING_REQUEST);
+                reject(new EqError(ERRORS.ERROR_SENDING_REQUEST, e.message));
             }
         });
     }
@@ -2180,11 +2195,11 @@ function Edequate(options) {
                         resolve(json);
                     } catch(e) {
                         console.error(ERRORS.CALLBACK_FAILED, e, json);
-                        reject(ERRORS.CALLBACK_FAILED);
+                        reject(new EqError(ERRORS.CALLBACK_FAILED, e.message));
                     }
                 } catch(e) {
-                    console.error(ERRORS.INCORRECT_JSON, e, xhr);
-                    reject(ERRORS.INCORRECT_JSON);
+                    console.error(ERRORS.INCORRECT_JSON, e, xhr.response);
+                    reject(new EqError(ERRORS.INCORRECT_JSON, e.message || xhr.statusText));
                 }
             };
             if(body) {
@@ -2283,12 +2298,60 @@ function Edequate(options) {
                 layout.toggleButton.innerHTML = collapsed ? "last_page" : "first_page";
                 layout.classList[collapsed ? "add" : "remove"]("collapsed");
                 layoutHeaderHolder.classList[collapsed ? "add" : "remove"]("collapsed");
+                if(options.flexible) {
+                    if(collapsed) {
+                        layout.style.width = "";
+                        layout.style.minWidth = "";
+                        layout.style.maxWidth = "";
+                    } else {
+                        var w = load("drawer:width");
+                        if(w) {
+                            w += "px";
+                            layout.style.width = w;
+                            layout.style.minWidth = w;
+                            layout.style.maxWidth = w;
+                        }
+                    }
+                }
                 /** @namespace options.ontogglesize */
                 if(options.ontogglesize) options.ontogglesize(collapsed);
             },
             ontouchstart: swipeHolder
 //            onmousedown: swipeHolder
         });
+        if(options.flexible) {
+            if(options.flexible && !collapsed) {
+                var w = load("drawer:width");
+                if(w) {
+                    w += "px";
+                    layout.style.width = w;
+                    layout.style.minWidth = w;
+                    layout.style.maxWidth = w;
+                }
+            }
+            var resizeHolder = create(HTML.DIV, {
+                className: "drawer-resizer",
+                onmousedown: function(e) {
+                    var startX = e.clientX;
+                    var width = layout.offsetWidth;
+                    var onmove = on(window, "mousemove", function(e) {
+                        var w = width - startX + e.clientX;
+                        if(w < 100) w = 100;
+                        if(w > 400) w = 400;
+                        w += "px";
+                        layout.style.width = w;
+                        layout.style.minWidth = w;
+                        layout.style.maxWidth = w;
+                    });
+                    var onup = on(window, "mouseup", function(e) {
+                        onmove.remove();
+                        onup.remove();
+                        save("drawer:width", width - startX + e.clientX);
+                    });
+                }
+            }, layout);
+        }
+
         layout.items = {};
         if(typeof appendTo === "string") {
             appendTo = byId(appendTo);
