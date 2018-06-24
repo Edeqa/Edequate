@@ -258,7 +258,7 @@ button:hover, button:active {
     background-color: lightcyan;
     color: darkslategray;
 }
-.disabled {
+.disabled, .disabled:hover, .disabled:active {
     color: gray;
 }
 .blinking {
@@ -350,14 +350,15 @@ button:hover, button:active {
     order: 2;
 }
 .dialog-title-button {
-    padding: 5px;
     background: none;
     border: none;
-    cursor: pointer;
-    outline: none;
     color: inherit;
+    cursor: pointer;
     margin: 0;
     order: 1;
+    outline: none;
+    padding: 5px;
+    position: absolute;
 }
 .dialog-title-button::before {
     content: "clear";
@@ -372,7 +373,8 @@ button:hover, button:active {
     outline: none;
     color: inherit;
     order: 3;
-    position: relative;
+    position: absolute;
+    right: 0;
     padding: 0;
     display: flex;
 }
@@ -415,6 +417,7 @@ button:hover, button:active {
     display: flex;
     padding: 10px;
     text-align: center;
+    justify-content: center;
 }
 .dialog-items {
     padding: 10px;
@@ -429,6 +432,10 @@ button:hover, button:active {
     justify-content: center;
     flex: 0 0;
     margin: auto;
+}
+.dialog-item.dialog-button {
+    width: 100%;
+    margin: 1px !important;
 }
 .dialog-item-icon {
     padding-right: 5px;

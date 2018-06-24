@@ -759,8 +759,8 @@ function Edequate(options) {
                         if(call && call.constructor === String) {
                             el.setAttribute(x, properties[x]);
                         } else if(call) {
-                            on(el, action, call);
-                            // el.addEventListener(action, call, {passive: true});
+                            // on(el, action, call);
+                            el.addEventListener(action, call, {passive: true});
                         }
                     } else if(x === "async" || x === "defer") {
                         if(!!properties[x]) {
@@ -944,12 +944,11 @@ function Edequate(options) {
             }
             if(options.isScript) {
                 promises.push(new Promise(function(resolve) {
-                    /** @namespace this.onlyname */
-                    if(window[this.onlyname]) {
-                        resolve(instantiate(this, window[this.onlyname]));
+                    if(window[this.instance]) {
+                        resolve(instantiate(window[this.instance], this));
                     } else {
                         options.onload = function() {
-                            resolve(instantiate(window[this.onlyname], this));
+                            resolve(instantiate(window[this.instance], this));
                         }.bind(this);
                         options.onerror = function() {
                             resolve();

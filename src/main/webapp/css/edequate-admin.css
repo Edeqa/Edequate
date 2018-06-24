@@ -9,9 +9,6 @@ h2 {
     font-style: italic;
     font-size: smaller;
 }
-.disabled {
-    color: darkgray;
-}
 .selected {
     background-color: lightcyan;
 }

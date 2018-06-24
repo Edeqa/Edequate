@@ -183,7 +183,7 @@ button:hover, button:active {
     background-color: lightcyan;
     color: darkslategray;
 }
-.disabled {
+.disabled, .disabled:hover, .disabled:active {
     color: gray;
 }
 .blinking {
@@ -220,7 +220,7 @@ button:hover, button:active {
     background: none;
     border: none;
     color: rgba(0,0,0,.54);
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 400;
     cursor: default;
     margin: 6px;
@@ -371,6 +371,7 @@ button:hover, button:active {
     cursor: default;
     padding: 24px 24px 0;
     flex: 1 1 auto;
+    justify-content: center;
 }
 .dialog-items {
     overflow-y: auto;
@@ -390,6 +391,10 @@ button:hover, button:active {
     justify-content: flex-start;
     flex: 0 0 auto;
     margin: auto;
+}
+.dialog-item.dialog-button {
+    width: 100%;
+    margin: 1px !important;
 }
 .dialog-item-input {
     min-height: 30px;
@@ -1533,7 +1538,7 @@ input[type=checkbox]:checked:before {
     }
     .dialog-item {
     }
-    .dialog-item-button {
+    .dialog-item.dialog-button {
         padding: 13px;
     }
     .dialog-buttons {
