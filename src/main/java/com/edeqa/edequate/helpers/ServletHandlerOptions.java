@@ -1,7 +1,7 @@
 package com.edeqa.edequate.helpers;
 
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
-import com.edeqa.helpers.interfaces.Runnable1;
+import com.edeqa.helpers.interfaces.Consumer;
 import com.sun.net.httpserver.HttpServer;
 
 import java.util.HashMap;
@@ -73,9 +73,9 @@ public class ServletHandlerOptions {
             }
         }
 
-        public void forEach(Runnable1<ServletHandlerOptions> callback) {
+        public void forEach(Consumer<ServletHandlerOptions> callback) {
             for(ServletHandlerOptions x: items.values()) {
-                callback.call(x);
+                callback.accept(x);
             }
         }
     }

@@ -69,7 +69,7 @@ function EPromise() {
   };
 }
 function a() {
-   this.call = function(e) {
+   this.accept = function(e) {
         console.log("A",e);
       this.setResult(e);
       return this;
@@ -78,7 +78,7 @@ function a() {
 a.prototype = new EPromise();
 var b = new a();
 
-b.call("test").then(function(e) {
+b.accept("test").then(function(e) {
 	console.log("B",e + ":" + e);
 	return e + ":" + e;
 }).then(function(e) {

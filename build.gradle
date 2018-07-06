@@ -8,10 +8,10 @@ repositories {
 }
 
 dependencies {
-//    compile project(':Helpers')
-//    compile project(':EventBus')
-    compile "com.github.edeqa:eventbus:+"
-    compile "com.github.edeqa:helpers:+"
+    compile project(':Helpers')
+    compile project(':EventBus')
+//    compile "com.github.edeqa:eventbus:+"
+//    compile "com.github.edeqa:helpers:+"
 //    compile fileTree(dir: 'libs', include: ['*.jar'])
     providedCompile 'javax.servlet:javax.servlet-api:+'
     compile 'com.google.guava:guava:+'

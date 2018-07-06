@@ -4,7 +4,7 @@ import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
-import com.edeqa.helpers.interfaces.Runnable1;
+import com.edeqa.helpers.interfaces.Consumer;
 
 import org.json.JSONObject;
 
@@ -50,7 +50,7 @@ public class OneTime extends AbstractAction<Void> {
     }
 
     /**
-     * One-time guaranteed browser interacted call.<p>
+     * One-time guaranteed browser interacted accept.<p>
      * Sequence, shortly:<p>
      * - {@code start} generates public token and stores payload<p>
      * - {@code process} checks public token, generates and then verifies private token<p>
@@ -60,10 +60,10 @@ public class OneTime extends AbstractAction<Void> {
         private final Arguments arguments;
         private Callable<String> onFetchToken;
         private Runnable onWelcome;
-        private Runnable1<String> onStart;
-        private Runnable1<String> onCheck;
-        private Runnable1<JSONObject> onSuccess;
-        private Runnable1<Throwable> onError;
+        private Consumer<String> onStart;
+        private Consumer<String> onCheck;
+        private Consumer<JSONObject> onSuccess;
+        private Consumer<Throwable> onError;
         private HashMap<String, Serializable> payload;
         private JSONObject requestOptions;
         private Long expirationTimeout;
@@ -91,7 +91,7 @@ public class OneTime extends AbstractAction<Void> {
 
             String nonce = onFetchToken.call();
             addAction(nonce, json);
-            getOnStart().call(nonce);
+            getOnStart().accept(nonce);
 
             new Thread(this::removeExpiredActions).start();
         }
@@ -106,15 +106,15 @@ public class OneTime extends AbstractAction<Void> {
                 String token = getRequestOptions().getString(TOKEN);
                 JSONObject requested = getAction(token);
                 if (requested == null) {
-                    getOnError().call(new Throwable("Token not found"));
+                    getOnError().accept(new Throwable("Token not found"));
                     return;
                 }
                 if(requested.has(FINISHED)) {
-                    getOnError().call(new Throwable("Token is already used"));
+                    getOnError().accept(new Throwable("Token is already used"));
                     return;
                 }
                 if (System.currentTimeMillis() - requested.getLong(TIMESTAMP) > requested.getLong(TIMEOUT)) {
-                    getOnError().call(new Throwable("Token expired"));
+                    getOnError().accept(new Throwable("Token expired"));
                     return;
                 }
                 if(requested.has(STRONG) && requested.getBoolean(STRONG)) {
@@ -124,22 +124,22 @@ public class OneTime extends AbstractAction<Void> {
                     requested.put(ORIGIN, token);
                 }
                 if(getOnCheck() == null) {
-                    getOnSuccess().call(requested.getJSONObject(PAYLOAD));
+                    getOnSuccess().accept(requested.getJSONObject(PAYLOAD));
                 } else {
                     requested.put(TIMESTAMP, System.currentTimeMillis());
                     token = onFetchToken.call();
                     addAction(token, requested);
-                    getOnCheck().call(token);
+                    getOnCheck().accept(token);
                 }
             } else if (getRequestOptions().has(NONCE)) {
                 String nonce = getRequestOptions().getString(NONCE);
                 JSONObject requested = getAction(nonce);
                 if (requested == null) {
-                    getOnError().call(new Throwable("Intent not registered"));
+                    getOnError().accept(new Throwable("Intent not registered"));
                     return;
                 }
                 if(requested.has(FINISHED)) {
-                    getOnError().call(new Throwable("Intent is already used"));
+                    getOnError().accept(new Throwable("Intent is already used"));
                     return;
                 }
                 if (requested.has(ORIGIN)) {
@@ -147,10 +147,10 @@ public class OneTime extends AbstractAction<Void> {
                 }
                 finishAction(nonce);
                 if (System.currentTimeMillis() - requested.getLong(TIMESTAMP) > requested.getLong(TIMEOUT)) {
-                    getOnError().call(new Throwable("Intent expired"));
+                    getOnError().accept(new Throwable("Intent expired"));
                     return;
                 }
-                getOnSuccess().call(requested.getJSONObject(PAYLOAD));
+                getOnSuccess().accept(requested.getJSONObject(PAYLOAD));
             } else {
                 getOnWelcome().run();
             }
@@ -224,19 +224,19 @@ public class OneTime extends AbstractAction<Void> {
             return requestOptions;
         }
 
-        public Runnable1<JSONObject> getOnSuccess() {
+        public Consumer<JSONObject> getOnSuccess() {
             return onSuccess;
         }
 
-        public void setOnSuccess(Runnable1<JSONObject> onSuccess) {
+        public void setOnSuccess(Consumer<JSONObject> onSuccess) {
             this.onSuccess = onSuccess;
         }
 
-        public Runnable1<Throwable> getOnError() {
+        public Consumer<Throwable> getOnError() {
             return onError;
         }
 
-        public void setOnError(Runnable1<Throwable> onError) {
+        public void setOnError(Consumer<Throwable> onError) {
             this.onError = onError;
         }
 
@@ -248,11 +248,11 @@ public class OneTime extends AbstractAction<Void> {
             return payload;
         }
 
-        public void setOnCheck(Runnable1<String> onCheck) {
+        public void setOnCheck(Consumer<String> onCheck) {
             this.onCheck = onCheck;
         }
 
-        private Runnable1<String> getOnCheck() {
+        private Consumer<String> getOnCheck() {
             return onCheck;
         }
 
@@ -264,11 +264,11 @@ public class OneTime extends AbstractAction<Void> {
             return onWelcome;
         }
 
-        public void setOnStart(Runnable1<String> onStart) {
+        public void setOnStart(Consumer<String> onStart) {
             this.onStart = onStart;
         }
 
-        private Runnable1<String> getOnStart() {
+        private Consumer<String> getOnStart() {
             return onStart;
         }
 

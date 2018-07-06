@@ -2,7 +2,7 @@ package com.edeqa.edequate.helpers;
 
 import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.Misc;
-import com.edeqa.helpers.interfaces.Runnable1;
+import com.edeqa.helpers.interfaces.Consumer;
 import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -464,7 +464,7 @@ public class RequestWrapper {
         return null;
     }
 
-    public void processBody(Runnable1<StringBuilder> callback, Runnable1<Exception> fallback) {
+    public void processBody(Consumer<StringBuilder> callback, Consumer<Exception> fallback) {
         try {
             StringBuilder buf = new StringBuilder();
             try (InputStream is = this.getRequestBody()) {
@@ -472,20 +472,20 @@ public class RequestWrapper {
                 long count = 0;
                 while ((b = is.read()) != -1) {
                     if (count++ > MAX_BODY_LENGTH) {
-                        fallback.call(new IllegalArgumentException("Body size is bigger than " + MAX_BODY_LENGTH + " byte(s)."));
+                        fallback.accept(new IllegalArgumentException("Body size is bigger than " + MAX_BODY_LENGTH + " byte(s)."));
                         return;
                     }
                     buf.append((char) b);
                 }
             }
             if(buf.length() > 0) {
-                callback.call(buf);
+                callback.accept(buf);
             } else {
-                fallback.call(new IllegalArgumentException("Empty body"));
+                fallback.accept(new IllegalArgumentException("Empty body"));
             }
         } catch(Exception e) {
             e.printStackTrace();
-            if(fallback != null) fallback.call(e);
+            if(fallback != null) fallback.accept(e);
         }
     }
 

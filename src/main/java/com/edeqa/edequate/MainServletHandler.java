@@ -129,7 +129,7 @@ public class MainServletHandler extends AbstractServletHandler {
 //                                .setMimeType(mimeType)
 //                                .setWebPath(subWebPath)
 //                                .setResultCode(resultCode)
-//                                .call(null, requestWrapper);
+//                                .accept(null, requestWrapper);
 //                        return;
 //                    }
 //                }
