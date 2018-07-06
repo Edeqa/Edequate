@@ -92,6 +92,13 @@ function Edequate(options) {
         MOUSEMOVE:"mousemove",
         MOUSEENTER:"mouseenter",
         MOUSELEAVE:"mouseleave",
+        POINTERDOWN:"pointerdown",
+        POINTERMOVE:"pointermove",
+        POINTERUP:"pointerup",
+        TOUCH:"touch",
+        TOUCHSTART:"touchstart",
+        TOUCHMOVE:"touchmove",
+        TOUCHEND:"touchend",
         VIEWBOX:"viewBox",
         INNERHTML:"innerHTML",
         INNERTEXT:"innerText",
@@ -725,24 +732,25 @@ function Edequate(options) {
                         mousedown = function(evt){
                             clearTimeout(el.longTask);
                             // noinspection JSReferencingMutableVariableFromClosure
-                            el.addEventListener("mouseup", mouseup, {passive: true});
+                            el.addEventListener(HTML.MOUSEUP, mouseup, {passive: true});
                             // noinspection JSReferencingMutableVariableFromClosure
-                            el.addEventListener("touchend", mouseup, {passive: true});
+                            el.addEventListener(HTML.TOUCHEND, mouseup, {passive: true});
                             el.longTask = setTimeout(function(){
                                 // noinspection JSReferencingMutableVariableFromClosure
-                                el.removeEventListener("mouseup", mouseup, {passive: true});
+                                el.removeEventListener(HTML.MOUSEUP, mouseup, {passive: true});
                                 // noinspection JSReferencingMutableVariableFromClosure
-                                el.removeEventListener("touchend", mouseup, {passive: true});
+                                el.removeEventListener(HTML.TOUCHEND, mouseup, {passive: true});
                                 el.longTask = -1;
                                 el.longclickFunction(evt);
                             }, 500);
                         };
-                        el.addEventListener("mousedown", mousedown, {passive: true});
-                        el.addEventListener("touchstart", mousedown, {passive: true});
-                        el.addEventListener("contextmenu", function(evt){
+                        el.eventListeners = el.eventListeners || [];
+                        el.eventListeners.push(on(el, HTML.MOUSEDOWN, mousedown));
+                        el.eventListeners.push(on(el, HTML.TOUCHSTART, mousedown));
+                        el.eventListeners.push(on(el, "contextmenu", function(evt){
                             evt.preventDefault();
                             evt.stopPropagation();
-                        }, {passive: false});
+                        }));
                     } else if(x.toLowerCase() === "onclick") {
                         el.clickFunction = properties[x];
                         if(el.clickFunction) {
@@ -750,17 +758,18 @@ function Edequate(options) {
                                 if(el.longTask && el.longTask < 0) return;
                                 el.clickFunction(evt);
                             };
-                            el.addEventListener("click", call, {passive: true});
-                            el.addEventListener("touch", call, {passive: true});
+                            el.eventListeners = el.eventListeners || [];
+                            el.eventListeners.push(on(el, HTML.CLICK, call));
+                            el.eventListeners.push(on(el, HTML.TOUCH, call));
                         }
                     } else if(x.indexOf("on") === 0) {
-                        var action = x.substr(2).toLowerCase();
                         call = properties[x];
                         if(call && call.constructor === String) {
                             el.setAttribute(x, properties[x]);
                         } else if(call) {
-                            // on(el, action, call);
-                            el.addEventListener(action, call, {passive: true});
+                            var action = x.substr(2).toLowerCase();
+                            el.eventListeners = el.eventListeners || [];
+                            el.eventListeners.push(on(el, action, call));
                         }
                     } else if(x === "async" || x === "defer") {
                         if(!!properties[x]) {
@@ -809,6 +818,13 @@ function Edequate(options) {
                 }
             } else {
                 appendTo.appendChild(el);
+            }
+        }
+        if(el.eventListeners && !el.eventListeners.remove) {
+            el.eventListeners.remove = function() {
+                for(var i = this.length - 1; i >= 0; i--) {
+                    this[i].remove();
+                }
             }
         }
         return el;
@@ -2190,8 +2206,8 @@ function Edequate(options) {
             var lastDelta = 0;
 
             var endHolder = function(e){
-                window.removeEventListener("touchend",endHolder);
-                window.removeEventListener("touchmove",moveHolder);
+                window.removeEventListener(HTML.TOUCHEND,endHolder);
+                window.removeEventListener(HTML.TOUCHMOVE,moveHolder);
                 layout.style.transition = "";
 
                 if(e.changedTouches) touch = e.changedTouches[0];
@@ -2215,8 +2231,8 @@ function Edequate(options) {
                     e.stopPropagation();
                 }
             };
-            window.addEventListener("touchend", endHolder, {passive: true});
-            window.addEventListener("touchmove", moveHolder, {passive: true});
+            window.addEventListener(HTML.TOUCHEND, endHolder, {passive: true});
+            window.addEventListener(HTML.TOUCHMOVE, moveHolder, {passive: true});
 
             layout.style.transition = "none";
         };
@@ -2329,8 +2345,8 @@ function Edequate(options) {
             layout.style.left = (-layout.offsetWidth + startX)+"px";
 
             var endHolder = function(e){
-                window.removeEventListener("touchend", endHolder);
-                window.removeEventListener("touchmove", moveHolder);
+                window.removeEventListener(HTML.TOUCHEND, endHolder);
+                window.removeEventListener(HTML.TOUCHMOVE, moveHolder);
                 layout.style.transition = "";
 
                 if(e.changedTouches) touch = e.changedTouches[0];
@@ -2350,8 +2366,8 @@ function Edequate(options) {
                     layout.style.left = delta + "px";
                     e.stopPropagation();
             };
-            window.addEventListener("touchend", endHolder, {passive: true});
-            window.addEventListener("touchmove", moveHolder, {passive: true});
+            window.addEventListener(HTML.TOUCHEND, endHolder, {passive: true});
+            window.addEventListener(HTML.TOUCHMOVE, moveHolder, {passive: true});
         };
 
         var layoutHeaderHolder = create(HTML.DIV, {
@@ -2825,13 +2841,18 @@ function Edequate(options) {
 
 //            var div = create(HTML.DIV, {className:"tr"}, table.head);
             var selectable = false;
+            var widths = load("table:" + options.id + ":caption") || {};
             for(var i in options.caption.items) {
                 // noinspection JSUnfilteredForInLoop
                 var item = options.caption.items[i];
                 item.className = "th" + optionalClassName(item.className);
+                if(widths[i]) {
+                    item.style = item.style || {};
+                    item.style.width = widths[i];
+                }
                 delete item.innerHTML;
+                item.index = i;
                 if(options.sort === undefined || options.sort) {
-                    item.index = i;
                     item.sort = 0;
                     item.onclick = function() {
                         this.sort ++;
@@ -2858,6 +2879,24 @@ function Edequate(options) {
                 cell.sortIcon = create(HTML.DIV,{className:"icon table-sort notranslate hidden"}, cell);
                 cell.label = create(HTML.SPAN, {innerHTML: item.innerHTML || item.label}, cell);
                 //cell.oncontextmenu = function(e){e.stopPropagation(); e.preventDefault(); return false;}
+
+                moveResizeController.for(cell, {
+                    move: false,
+                    scrollable: "width",
+                    resize: true,
+                    sides: {
+                        left: false,
+                        top: false,
+                        right: true,
+                        bottom: false
+                    },
+                    onfinish: function() {
+                        var widths = load("table:" + options.id + ":caption") || {};
+                        if(this.style.width) widths[this.index] = this.style.width;
+                        else delete widths[this.index];
+                        save("table:" + options.id + ":caption", widths);
+                    }
+                });
 
                 if(item.selectable) {
                     selectable = true;
@@ -3551,22 +3590,65 @@ function Edequate(options) {
                 var moveNode = options.moveNode || node;
                 on(moveNode, HTML.MOUSEDOWN, this.startMove.bind(node));
             }
+
+            function resetSide() {
+                this.node.style[this.side] = "";
+                if(this.side === "right" || this.side === "left") this.node.style.width = "";
+                if(this.side === "top" || this.side === "bottom") this.node.style.height = "";
+                options.onresize && options.onresize.call(node);
+                options.onfinish && options.onfinish.call(node);
+            }
+
             if(options.resize) {
                 var sides = options.sides || {left:true,top:true,right:true,bottom:true};
-                if(sides.left) create(HTML.DIV, {className: "resize resize-left",onmousedown:this.startResize.bind({node:node,side:"left"})}, node);
-                if(sides.top) create(HTML.DIV, {className: "resize resize-top",onmousedown:this.startResize.bind({node:node,side:"top"})}, node);
-                if(sides.right) create(HTML.DIV, {className: "resize resize-right",onmousedown:this.startResize.bind({node:node,side:"right"})}, node);
-                if(sides.bottom) create(HTML.DIV, {className: "resize resize-bottom",onmousedown:this.startResize.bind({node:node,side:"bottom"})}, node);
-                if(sides.left && sides.top) create(HTML.DIV, {className: "resize resize-left-top",onmousedown:this.startResize.bind({node:node,side:"left-top"})}, node);
-                if(sides.right && sides.top) create(HTML.DIV, {className: "resize resize-right-top",onmousedown:this.startResize.bind({node:node,side:"right-top"})}, node);
-                if(sides.right && sides.bottom) create(HTML.DIV, {className: "resize resize-right-bottom",onmousedown:this.startResize.bind({node:node,side:"right-bottom"})}, node);
-                if(sides.left && sides.bottom) create(HTML.DIV, {className: "resize resize-left-bottom",onmousedown:this.startResize.bind({node:node,side:"left-bottom"})}, node);
+                if(sides.left) create(HTML.DIV, {
+                    className: "resize resize-left",
+                    ondblclick: resetSide.bind({node:node,side:"left"}),
+                    onmousedown: this.startResize.bind({node:node,side:"left"})
+                }, node);
+                if(sides.top) create(HTML.DIV, {
+                    className: "resize resize-top",
+                    ondblclick: resetSide.bind({node:node,side:"top"}),
+                    onmousedown: this.startResize.bind({node:node,side:"top"})
+                }, node);
+                if(sides.right) create(HTML.DIV, {
+                    className: "resize resize-right",
+                    ondblclick: resetSide.bind({node:node,side:"right"}),
+                    onmousedown: this.startResize.bind({node:node,side:"right"})
+                }, node);
+                if(sides.bottom) create(HTML.DIV, {
+                    className: "resize resize-bottom",
+                    ondblclick: resetSide.bind({node:node,side:"bottom"}),
+                    onmousedown: this.startResize.bind({node:node,side:"bottom"})
+                }, node);
+                if(sides.left && sides.top) create(HTML.DIV, {
+                    className: "resize resize-left-top",
+                    ondblclick: resetSide.bind({node:node,side:"left-top"}),
+                    onmousedown: this.startResize.bind({node:node,side:"left-top"})
+                }, node);
+                if(sides.right && sides.top) create(HTML.DIV, {
+                    className: "resize resize-right-top",
+                    ondblclick: resetSide.bind({node:node,side:"right-top"}),
+                    onmousedown: this.startResize.bind({node:node,side:"right-top"})
+                }, node);
+                if(sides.right && sides.bottom) create(HTML.DIV, {
+                    className: "resize resize-right-bottom",
+                    ondblclick: resetSide.bind({node:node,side:"right-bottom"}),
+                    onmousedown: this.startResize.bind({node:node,side:"right-bottom"})
+                }, node);
+                if(sides.left && sides.bottom) create(HTML.DIV, {
+                    className: "resize resize-left-bottom",
+                    ondblclick: resetSide.bind({node:node,side:"left-bottom"}),
+                    onmousedown: this.startResize.bind({node:node,side:"left-bottom"})
+                }, node);
             }
         };
         this.startMove = function(e) {
             var node = this;
             if(node._moving) return;
             node._moving = true;
+            e.stopPropagation();
+
             var options = node._move_resize_controller_options;
             /** @namespace options.scrollable */
             var rect = options.scrollable ? {left:node.offsetLeft,top:node.offsetTop,width:node.offsetWidth,height:node.offsetHeight} : node.getBoundingClientRect();
@@ -3579,7 +3661,6 @@ function Edequate(options) {
             node._moved = false;
 
             node._onmousemove = on(window, HTML.MOUSEMOVE, function(e) {
-                e.preventDefault();
                 e.stopPropagation();
                 if(e.movementX || e.movementY) {
                     node.classList.add("moving");
@@ -3594,6 +3675,7 @@ function Edequate(options) {
                 options.onmove && options.onmove.call(node);
             });
             node._onmouseup = on(window, HTML.MOUSEUP, function(e) {
+                e.stopPropagation();
                 node._onmousemove.remove();
                 node._onmouseup.remove();
                 node._moving = false;
@@ -3602,20 +3684,37 @@ function Edequate(options) {
             });
         };
         this.startResize = function(e) {
+            e.stopPropagation();
             var node = this.node;
             var side = this.side;
             if(node._resizing) return;
             node._resizing = true;
+
             var options = node._move_resize_controller_options;
             /** @namespace options.scrollable */
             var rect = options.scrollable ? {left:node.offsetLeft,top:node.offsetTop,width:node.offsetWidth,height:node.offsetHeight} : node.getBoundingClientRect();
+            var styles = getComputedStyle(node);
+            rect.width = rect.width - parseInt(styles.paddingLeft) - parseInt(styles.paddingRight);
+
             var startX = e.clientX;
             var startY = e.clientY;
 
-            if(options.scrollable !== "keep") node.style.position = options.scrollable ? "absolute" : "fixed";
-            node.style.left = rect.left + "px";
-            node.style.top = rect.top + "px";
-            node.style.transition = "none";
+            if(options.scrollable === "width") {
+                node.style.position = "";
+                node.style.left = "";
+                node.style.top = "";
+                node.style.transition = "";
+            } else if(options.scrollable !== "keep") {
+                node.style.position = options.scrollable ? "absolute" : "fixed";
+                node.style.left = rect.left + "px";
+                node.style.top = rect.top + "px";
+                node.style.transition = "none";
+            } else {
+                node.style.left = rect.left + "px";
+                node.style.top = rect.top + "px";
+                node.style.transition = "none";
+            }
+
             node._resized = false;
 
             function fixW(width) {
@@ -3629,9 +3728,10 @@ function Edequate(options) {
                 return height;
             }
 
-            node._onmousemove = on(window, HTML.MOUSEMOVE, function(e) {
-                e.preventDefault();
+            var onmousemove = function(e) {
                 e.stopPropagation();
+                if(this._moving) return;
+                this._moving = true;
                 if(e.movementX || e.movementY) {
                     node.classList.add("resizing");
                 }
@@ -3641,10 +3741,12 @@ function Edequate(options) {
 
                 switch(side) {
                     case "left":
-                        node.style.left = (rect.left + deltaX) + "px";
                         node.style.width = fixW(rect.width - deltaX) + "px";
-                        if(options.maxWidth) node.style.maxWidth = node.style.width;
-                        if(options.minWidth) node.style.minWidth = node.style.width;
+                        if (options.maxWidth) node.style.maxWidth = node.style.width;
+                        if (options.minWidth) node.style.minWidth = node.style.width;
+                        if(options.scrollable !== "width") {
+                            node.style.left = (rect.left + deltaX) + "px";
+                        }
                         break;
                     case "left-top":
                         node.style.left = (rect.left + deltaX) + "px";
@@ -3700,15 +3802,22 @@ function Edequate(options) {
                         break;
                 }
                 options.onresize && options.onresize.call(node);
-            });
-            node._onmouseup = on(window, HTML.MOUSEUP, function(e) {
+                this._moving = false;
+            };
+            node._onmousemove = on(window, HTML.MOUSEMOVE, onmousemove);
+            var onmouseup = function(e) {
+                e.stopPropagation();
+                if(!node._resizing) return;
                 node._resizing = false;
                 node._onmousemove.remove();
                 node._onmouseup.remove();
                 node.classList.remove("resizing");
                 node.style.transition = "";
                 node._resized && options.onfinish && options.onfinish.call(node);
-            });
+            };
+            node._onmouseup = on(window, HTML.MOUSEUP, onmouseup);
+            // node._onpointerup = on(window, HTML.POINTERUP, onmouseup);
+            // node._ontouchend = on(window, HTML.TOUCHEND, onmouseup);
         };
     }
     var moveResizeController = new MoveResizeController();
