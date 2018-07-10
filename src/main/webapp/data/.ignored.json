@@ -1,0 +1,7 @@
+{
+  "abcd": {
+    "code": 404,
+    "message": "File not found"
+  },
+  "efgh": {}
+}

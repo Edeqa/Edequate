@@ -201,7 +201,7 @@ public class MainServletHandler extends AbstractServletHandler {
 
         HtmlGenerator.Tag header = noscript.add(DIV).with(CLASS, "header");
         header.add(IMG).with(SRC, "/images/edeqa-logo.svg").with(WIDTH, 24).with(HEIGHT, 24);
-        header.with("Edequate Example");
+        header.with("Edequate");
 
         noscript.add(DIV).with(CLASS, "text").with("This site requires to allow Javascript. Please enable Javascript in your browser and try again or use other browser that supports Javascript.");
 

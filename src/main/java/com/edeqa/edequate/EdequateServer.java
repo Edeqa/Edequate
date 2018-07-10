@@ -4,6 +4,7 @@ import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.DigestAuthenticator;
 import com.edeqa.edequate.helpers.ServletHandlerOptions;
 import com.edeqa.edequate.helpers.Version;
+import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.SecureContext;
 import com.edeqa.edequate.rest.system.Arguments;
 import com.edeqa.eventbus.EventBus;
@@ -12,10 +13,13 @@ import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsServer;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -105,6 +109,19 @@ public class EdequateServer {
         ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/admin/logout").setServletHandler(adminServletHandler));
         ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/admin/restore").setServletHandler(adminServletHandler));
         ServletHandlerOptions.getOrCreate(getAdminServer()).putIfAbsent(new ServletHandlerOptions().setContext("/rest/").setServletHandler(restServletHandler));
+
+        try {
+            WebPath ignoredPaths = new WebPath(getArguments().getWebRootDirectory(), "data/.ignored.json");
+            if(ignoredPaths.path().exists()) {
+                JSONObject paths = new JSONObject(ignoredPaths.content());
+                Iterator<String> iter = paths.keys();
+                while (iter.hasNext()) {
+                    ServletHandlerOptions.getOrCreate(getSslServer()).putIfAbsent(new ServletHandlerOptions().setContext("/" + iter.next()).setServletHandler(restServletHandler));
+                }
+            }
+        } catch (Exception e) {
+            Misc.err(LOG, "failed, error:", e);
+        }
 
     }
 
