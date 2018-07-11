@@ -12,21 +12,19 @@ import org.json.JSONObject;
 import java.util.Iterator;
 
 @SuppressWarnings("unused")
-public class IgnoredPath extends AbstractAction<RequestWrapper> {
+public class Ignored extends AbstractAction<RequestWrapper> {
 
-    private static final String CODE = "code";
-    private static final String MESSAGE = "message";
-    private static final String REDIRECT = "redirect";
+    public static final String REDIRECT = "redirect";
 
     private String type = "/rest/ignored";
     private static boolean initialized;
     private JSONObject reaction;
 
-    public IgnoredPath() {
+    public Ignored() {
         setReaction(new JSONObject());
     }
 
-    public IgnoredPath(String path) {
+    public Ignored(String path) {
         this();
         setType(path);
     }
@@ -54,17 +52,17 @@ public class IgnoredPath extends AbstractAction<RequestWrapper> {
                 while (iter.hasNext()) {
                     String key = iter.next();
                     try {
-                        IgnoredPath ignoredPath = new IgnoredPath("/" + key);
-                        ignoredPath.setReaction(map.getJSONObject(key));
-                        restBus.registerIfAbsent(ignoredPath);
-                        Misc.log("IgnoredPath", "will catch [/" + key + "]");
+                        Ignored ignored = new Ignored("/" + key);
+                        ignored.setReaction(map.getJSONObject(key));
+                        restBus.registerIfAbsent(ignored);
+                        Misc.log("Ignored", "will catch [/" + key + "]");
                     } catch (Exception e) {
-                        Misc.err("IgnoredPath", "failed with [/" + key + "]", e);
+                        Misc.err("Ignored", "failed with [/" + key + "]", e);
                     }
                 }
             }
         } catch (Exception e) {
-            Misc.err("IgnoredPath", "failed, error:", e);
+            Misc.err("Ignored", "failed, error:", e);
         }
     }
 
@@ -81,21 +79,21 @@ public class IgnoredPath extends AbstractAction<RequestWrapper> {
                 request.sendRedirect(path);
                 return;
             } catch(Exception e) {
-                Misc.err("IgnoredPath", "failed, error:", e);
+                Misc.err("Ignored", "failed, error:", e);
             }
         }
         if(getReaction().has(CODE)) {
             try {
                 code = Integer.parseInt(String.valueOf(getReaction().get(CODE)));
             } catch(Exception e) {
-                Misc.err("IgnoredPath", "failed, error:", e);
+                Misc.err("Ignored", "failed, error:", e);
             }
         }
         if(getReaction().has(MESSAGE)) {
             try {
                 message = String.valueOf(getReaction().get(MESSAGE));
             } catch(Exception e) {
-                Misc.err("IgnoredPath", "failed, error:", e);
+                Misc.err("Ignored", "failed, error:", e);
             }
         }
         request.sendError(code, message);
@@ -111,7 +109,7 @@ public class IgnoredPath extends AbstractAction<RequestWrapper> {
     }
 
     public static void setInitialized(boolean initialized) {
-        IgnoredPath.initialized = initialized;
+        Ignored.initialized = initialized;
     }
 
     public JSONObject getReaction() {
