@@ -5,7 +5,6 @@ import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.abstracts.AbstractServletHandler;
 import com.edeqa.edequate.helpers.RequestWrapper;
 import com.edeqa.edequate.rest.Files;
-import com.edeqa.edequate.rest.Ignored;
 import com.edeqa.edequate.rest.Locales;
 import com.edeqa.edequate.rest.Nothing;
 import com.edeqa.edequate.rest.Resource;
@@ -60,7 +59,6 @@ public class RestServletHandler extends AbstractServletHandler {
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("data").setActionName("/rest/data"));
         registerAction(new Resource().setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("resources").setActionName("/rest/resources"));
         registerAction(new Version());
-        registerAction(new Ignored());
 
 //        registerAction(new Nothing());
     }

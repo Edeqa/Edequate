@@ -313,6 +313,21 @@ public class RequestWrapper {
         return host;
     }
 
+    public int getRequestedPort() {
+        int host = 0;
+        try {
+            if (mode == MODE_SERVLET) {
+                System.out.println("REQUESTEDPORT:" + httpServletRequest.getLocalAddr() + ":" + httpServletRequest.getRemoteHost());
+                host = httpServletRequest.getLocalPort();
+            } else if (mode == MODE_EXCHANGE) {
+                host = httpExchange.getLocalAddress().getPort();
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return host;
+    }
+
     public String getReferer() {
         String referer = null;
         try {

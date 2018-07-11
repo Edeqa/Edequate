@@ -13,7 +13,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 
-public class Ignored extends FileRestAction {
+public class Redirections extends FileRestAction {
 
     public static final String TYPE = "/admin/rest/ignored";
 
@@ -43,9 +43,8 @@ public class Ignored extends FileRestAction {
     @Override
     public void call(JSONObject json, RequestWrapper request) throws IOException {
         JSONObject options = request.fetchOptions();
-        System.out.println(":::"+options);
         if(Misc.isEmpty(options)) {
-            Misc.err("Ignored", "not performed, arguments not defined");
+            Misc.err("Redirections", "not performed, arguments not defined");
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
             json.put(MESSAGE, "Arguments not defined.");
@@ -62,7 +61,7 @@ public class Ignored extends FileRestAction {
     }
 
     private void updateIgnored(JSONObject json, JSONObject options) throws IOException {
-        WebPath ignoredPaths = new WebPath(directory, "data/.ignored.json");
+        WebPath ignoredPaths = new WebPath(directory, "data/.redirections.json");
         JSONObject map = read(ignoredPaths);
 
         options = options.getJSONObject(UPDATE);
@@ -90,12 +89,12 @@ public class Ignored extends FileRestAction {
         ignoredPaths.save(map.toString(2));
 
         json.put(STATUS, STATUS_SUCCESS);
-        Misc.log("Ignored", "has added path:", path, "[" + ignored.toString() + "]");
+        Misc.log("Redirections", "has added path:", path, "[" + ignored.toString() + "]");
 
     }
 
     private void removeIgnored(JSONObject json, JSONObject options) throws IOException {
-        WebPath ignoredPaths = new WebPath(directory, "data/.ignored.json");
+        WebPath ignoredPaths = new WebPath(directory, "data/.redirections.json");
         JSONObject map = read(ignoredPaths);
 
         options = options.getJSONObject(REMOVE);
@@ -108,12 +107,12 @@ public class Ignored extends FileRestAction {
         if(path != null && map.has(path)) {
             map.remove(path);
             json.put(STATUS, STATUS_SUCCESS);
-            Misc.log("Ignored", "has removed path:", path);
+            Misc.log("Redirections", "has removed path:", path);
         } else {
             json.put(STATUS, STATUS_ERROR);
             json.put(CODE, ERROR_NOT_EXTENDED);
             json.put(MESSAGE, "Error removing path.");
-            Misc.err("Ignored", "failed removing path:", path);
+            Misc.err("Redirections", "failed removing path:", path);
         }
         ignoredPaths.save(map.toString(2));
     }
@@ -125,7 +124,7 @@ public class Ignored extends FileRestAction {
                 map = new JSONObject(ignoredPaths.content());
             } catch (Exception e) {
                 map = new JSONObject();
-                Misc.err("Ignored", "failed reading .ignored.json, error:", e);
+                Misc.err("Redirections", "failed reading .redirections.json, error:", e);
             }
         } else {
             map = new JSONObject();

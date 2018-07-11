@@ -5,10 +5,10 @@ import com.edeqa.edequate.helpers.WebPath;
 import com.edeqa.edequate.rest.Content;
 import com.edeqa.edequate.rest.Files;
 import com.edeqa.edequate.rest.admin.Admins;
-import com.edeqa.edequate.rest.admin.Ignored;
 import com.edeqa.edequate.rest.admin.LogsClear;
 import com.edeqa.edequate.rest.admin.LogsLog;
 import com.edeqa.edequate.rest.admin.Pages;
+import com.edeqa.edequate.rest.admin.Redirections;
 import com.edeqa.edequate.rest.admin.RestorePassword;
 import com.edeqa.edequate.rest.admin.Settings;
 import com.edeqa.edequate.rest.admin.Splash;
@@ -50,7 +50,7 @@ public class AdminServletHandler extends RestServletHandler {
 
         registerAction(new Admins().read());
         registerAction(new Content().setWebPath(new WebPath(arguments.getWebRootDirectory(), "data/.settings.json")).setPersistent(true).setActionName("/admin/rest/data/settings"));
-        registerAction(new Content().setWebPath(new WebPath(arguments.getWebRootDirectory(), "data/.ignored.json")).setPersistent(true).setActionName("/admin/rest/data/ignored"));
+        registerAction(new Content().setWebPath(new WebPath(arguments.getWebRootDirectory(), "data/.redirections.json")).setPersistent(true).setActionName("/admin/rest/data/ignored"));
         registerAction(new Files().setFilenameFilter((dir, name) -> {
             if(appEngineVersion != null && appEngineVersion.length() > 0) {
                 return name.contains("AppEngineHolder");
@@ -58,7 +58,7 @@ public class AdminServletHandler extends RestServletHandler {
                 return name.contains("Holder") && !name.contains("AppEngineHolder");
             }
         }).setWebDirectory(arguments.getWebRootDirectory()).setChildDirectory("js/admin").setActionName("/rest/admin"));
-        registerAction(new Ignored());
+        registerAction(new Redirections());
         registerAction(new LogsClear());
         registerAction(new LogsLog());
         registerAction(new Pages());

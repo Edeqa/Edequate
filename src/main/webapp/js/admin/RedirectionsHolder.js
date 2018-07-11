@@ -3,14 +3,14 @@
  *
  * Created 7/10/18.
  */
-function IgnoredHolder(main) {
+function RedirectionsHolder(main) {
     var self = this;
     var u = main.edequate;
 
     this.category = DRAWER.SECTION_RESOURCES;
-    this.type = "ignored";
-    this.title = "Ignored paths";
-    this.menu = "Ignored paths";
+    this.type = "redirections";
+    this.title = "Redirections";
+    this.menu = "Redirections";
     this.icon = "error_outline";
     this.priority = -10;
     this.scrollTop = 0;
@@ -26,8 +26,8 @@ function IgnoredHolder(main) {
         u.clear(div);
         var titleNode = u.create(HTML.H2, self.title, div);
 
-        u.create(HTML.BUTTON, { className:"icon notranslate button-inline", innerHTML: "add", title:"Add path", onclick: function(){
-                editElement("", {}, "Add ignored path");
+        u.create(HTML.BUTTON, { className:"icon notranslate button-inline", innerHTML: "add", title:"Add redirection", onclick: function(){
+                editElement("", {}, "Add redirection");
             }}, titleNode);
 
         var tablePaths = u.table({
@@ -44,7 +44,7 @@ function IgnoredHolder(main) {
             placeholder: "No data, try to refresh page."
         }, div);
 
-        u.getJSON("/admin/rest/data/ignored").then(function(json){
+        u.getJSON("/admin/rest/data/redirection").then(function(json){
             console.log(json);
             var paths = u.keys(json).sort();
 
@@ -75,13 +75,13 @@ function IgnoredHolder(main) {
     function editElement(id, options, title) {
         try {
             dialog = dialog || u.dialog({
-                title: "Ignored path",
-                className: "ignored-edit-dialog",
+                title: "Redirection",
+                className: "redirection-edit-dialog",
                 items: [
-                    {type: HTML.INPUT, label: "Ignored path", required: true, tabindex: 1 },
+                    {type: HTML.INPUT, label: "Source path", required: true, tabindex: 1 },
+                    {type: HTML.INPUT, label: "Redirection", tabindex: 4 },
                     {type: HTML.INPUT, label: "Error code", placeholder: "404", tabindex: 2 },
                     {type: HTML.INPUT, label: "Message", placeholder: "Not found", tabindex: 3 },
-                    {type: HTML.INPUT, label: "Redirect", tabindex: 4 }
                 ],
                 positive: {
                     label: u.create(HTML.SPAN, "OK"),
@@ -95,32 +95,32 @@ function IgnoredHolder(main) {
                             redirect: redirectNode.value,
                             origin: idNode.origin
                         };
-                        u.post("/admin/rest/ignored", { update: resultOptions}).then(function(){
+                        u.post("/admin/rest/redirections", { update: resultOptions}).then(function(){
                             u.progress.hide();
-                            u.toast.show("Ignored path saved");
+                            u.toast.show("Redirection saved");
                             dialog.close();
-                            main.turn("ignored");
+                            main.turn("redirections");
                         }).catch(function (error) {
                             u.progress.hide();
                             var json = JSON.parse(error.message);
                             var message = json.message || (reason && reason.statusText);
-                            u.toast.error(message || "Error saving ignored path");
+                            u.toast.error(message || "Error saving redirection");
                         });
                     }
                 },
                 neutral: {
                     label: u.create(HTML.SPAN, "Remove"),
                     onclick: function() {
-                        u.post("/admin/rest/ignored", { remove: {path: idNode.origin}}).then(function(){
+                        u.post("/admin/rest/redirections", { remove: {path: idNode.origin}}).then(function(){
                             u.progress.hide();
-                            u.toast.show("Ignored path removed");
+                            u.toast.show("Redirection removed");
                             dialog.close();
-                            main.turn("ignored");
+                            main.turn("redirections");
                         }).catch(function (error) {
                             u.progress.hide();
                             var json = JSON.parse(error.message);
                             var message = json.message || (reason && reason.statusText);
-                            u.toast.error(message || "Error removing ignored path");
+                            u.toast.error(message || "Error removing redirection");
                         });
                     }
                 },
@@ -133,9 +133,9 @@ function IgnoredHolder(main) {
             }, div.parentNode);
             // dialog.setTitle(options.mode);
             var idNode = dialog.items[0];
-            var codeNode = dialog.items[1];
-            var messageNode = dialog.items[2];
-            var redirectNode = dialog.items[3];
+            var redirectNode = dialog.items[1];
+            var codeNode = dialog.items[2];
+            var messageNode = dialog.items[3];
 
             idNode.value = id || "";
             if(id) {
@@ -144,9 +144,9 @@ function IgnoredHolder(main) {
                 dialog.neutral.hide();
             }
             idNode.origin = id || "";
+            redirectNode.value = options.redirect || "";
             codeNode.value = options.code || "";
             messageNode.value = options.message || "";
-            redirectNode.value = options.redirect || "";
 
             dialog.setTitle(title || "/" + id);
             dialog.open();
