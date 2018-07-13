@@ -11,7 +11,6 @@ import com.edeqa.helpers.Mime;
 import com.edeqa.helpers.MimeType;
 import com.edeqa.helpers.Misc;
 import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpsServer;
 
 import org.json.JSONObject;
 
@@ -131,35 +130,41 @@ public class RedirectServletHandler extends AbstractServletHandler {
 
     }
 
-    public RedirectServletHandler applyServer(HttpServer server) {
-        applyServer(server, false);
-        return this;
-    }
-
-    public RedirectServletHandler applySslServer(HttpsServer sslServer) {
-        applyServer(sslServer, true);
-        return this;
-    }
-
-    private void applyServer(HttpServer server, boolean secured) {
+    public RedirectServletHandler applyRedirections(HttpServer server) {
         try {
             Arguments arguments = ((Arguments) EventBus.getEventBus(AbstractAction.SYSTEMBUS).getHolder(Arguments.TYPE));
             WebPath ignoredPaths = new WebPath(arguments.getWebRootDirectory(), "data/.redirections.json");
             if(ignoredPaths.path().exists()) {
                 JSONObject paths = new JSONObject(ignoredPaths.content());
                 Iterator<String> iter = paths.keys();
-                while (iter.hasNext()) {
-                    String path = iter.next();
+
+                ArrayList<String> keys = new ArrayList<String>(paths.keySet());
+                keys.sort((o1, o2) -> Integer.compare(o2.length(), o1.length()));
+                for(int i = 0; i < keys.size(); i++) {
+                    String path = keys.get(i);
+//                while (iter.hasNext()) {
+//                    String path = iter.next();
                     JSONObject options = paths.getJSONObject(path);
 
                     server.createContext("/" + path, this);
                     getRedirections().put(server.getAddress().getPort() + "/" + path, options);
-                    Misc.log(this.getClass().getSimpleName(), "will catch", "[:" + server.getAddress().getPort() + "/" + path + "]");
+
+                    String destination = "404";
+                    try {
+                        if (options.has("code")) destination = "" + options.getInt("code");
+                        if (options.has("redirect")) destination = "" + options.getString("redirect");
+                        if (options.has("destination_port")) destination = "[:" + options.getInt("destination_port") + "]";
+                        if (options.has("mode")) destination = "[" + options.getString("mode") + "]";
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    Misc.log(this.getClass().getSimpleName(), "will catch", "[:" + server.getAddress().getPort() + "/" + path + "]", "->", destination);
                 }
             }
         } catch (Exception e) {
             Misc.err(LOG, "failed, error:", e);
         }
+        return this;
     }
 
     private Map<String, JSONObject> getRedirections() {

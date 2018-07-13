@@ -93,7 +93,7 @@ public class EdequateServer {
     }
 
     private static void setupServletHandlers() {
-        RedirectServletHandler redirectServer = new RedirectServletHandler().applyServer(getServer()).applySslServer(getSslServer());
+        RedirectServletHandler redirectServer = new RedirectServletHandler().applyRedirections(getServer()).applyRedirections(getSslServer());
         MainServletHandler mainServletHandler = new MainServletHandler();
         RestServletHandler restServletHandler = new RestServletHandler();
         AdminServletHandler adminServletHandler = new AdminServletHandler();

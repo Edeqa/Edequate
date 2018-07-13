@@ -1,16 +1,5 @@
 {
-  "admin": {
-    "destination_port": 8989,
-    "children": true,
-    "destination_secured": true
-  },
   "phpadmin": {},
-  ".well-known": {
-    "mode": "content"
-  },
-  "googlee7b16def95e75693.html": {
-    "mode": "content"
-  },
   "command.php": {},
   "wp-login.php": {},
   "templates": {},
