@@ -2,6 +2,9 @@
   "phpadmin": {},
   "command.php": {},
   "wp-login.php": {},
+  "robots.txt": {
+    "mime": "text/plain"
+  },
   "templates": {},
   "pma-old": {},
   "portal": {},

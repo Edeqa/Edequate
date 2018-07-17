@@ -50,7 +50,7 @@ public class AdminServletHandler extends RestServletHandler {
 
         registerAction(new Admins().read());
         registerAction(new Content().setWebPath(new WebPath(arguments.getWebRootDirectory(), "data/.settings.json")).setPersistent(true).setActionName("/admin/rest/data/settings"));
-        registerAction(new Content().setWebPath(new WebPath(arguments.getWebRootDirectory(), "data/.redirections.json")).setPersistent(true).setActionName("/admin/rest/data/ignored"));
+        registerAction(new Content().setWebPath(new WebPath(arguments.getWebRootDirectory(), "data/.redirections.json")).setPersistent(true).setActionName("/admin/rest/data/redirections"));
         registerAction(new Files().setFilenameFilter((dir, name) -> {
             if(appEngineVersion != null && appEngineVersion.length() > 0) {
                 return name.contains("AppEngineHolder");

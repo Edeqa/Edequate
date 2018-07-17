@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class Redirections extends FileRestAction {
 
-    public static final String TYPE = "/admin/rest/ignored";
+    public static final String TYPE = "/admin/rest/redirections";
 
     private static final int CONTENT_MAXIMUM_LENGTH = 1024 * 1024;
 
@@ -24,6 +24,7 @@ public class Redirections extends FileRestAction {
     private static final String REMOVE = "remove";
     private static final String UPDATE = "update";
 
+    private static final String MIME = "mime";
     private static final String PATH = "path";
     private static final String REDIRECT = "redirect";
 
@@ -79,6 +80,9 @@ public class Redirections extends FileRestAction {
         }
         if(options.has(REDIRECT) && options.getString(REDIRECT).length() > 0) {
             ignored.put(REDIRECT, options.getString(REDIRECT));
+        }
+        if(options.has(MIME) && options.getString(MIME).length() > 0) {
+            ignored.put(MIME, options.getString(MIME));
         }
         if(path != null && path.length() > 0 && map.has(path)) {
             map.remove(path);

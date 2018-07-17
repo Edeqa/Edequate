@@ -37,7 +37,7 @@ public class RedirectServletHandler extends AbstractServletHandler {
             String host = requestWrapper.getRequestedHost();
             String referer = requestWrapper.getReferer();
 
-            Misc.log(LOG, "[" + requestWrapper.getRemoteAddress() + "]", uri.getPath(), (referer != null ? "referer: " + referer : ""));
+            Misc.logOpened(LOG, "[" + requestWrapper.getRemoteAddress() + "]", uri.getPath(), (referer != null ? "referer: " + referer : ""));
 
             ArrayList<String> parts = new ArrayList<>(Arrays.asList(uri.getPath().split("/")));
 
@@ -54,10 +54,12 @@ public class RedirectServletHandler extends AbstractServletHandler {
                     }
                 }
             }
+            Misc.log(LOG, "->", "https://" + host + arguments.getWrappedHttpsPort() + uri.getPath());
             requestWrapper.sendRedirect("https://" + host + arguments.getWrappedHttpsPort() + uri.getPath());
         } catch (Exception e) {
             e.printStackTrace();
             Arguments arguments = ((Arguments) EventBus.getEventBus(AbstractAction.SYSTEMBUS).getHolder(Arguments.TYPE));
+            Misc.log(LOG, "->", "https://" + requestWrapper.getRequestedHost() + arguments.getWrappedHttpsPort() + "/404.html");
             requestWrapper.sendRedirect("https://" + requestWrapper.getRequestedHost() + arguments.getWrappedHttpsPort() + "/404.html");
         }
     }
@@ -92,20 +94,23 @@ public class RedirectServletHandler extends AbstractServletHandler {
                 Misc.err(LOG, "failed, error:", e);
             }
         }
-        if(json.has("mode")) {
+        if(json.has("mime")) {
             try {
-                mode = String.valueOf(json.get("mode"));
-                if("content".equals(mode)) {
-                    WebPath webPath = new WebPath(arguments.getWebRootDirectory(), requestWrapper.getRequestURI().getPath());
-                    if(webPath.path().exists()) {
-                        Misc.log(LOG, "-> " + webPath.path().length() + " byte(s)");
-                        new Content()
-                                .setMimeType(new MimeType().setMime(Mime.TEXT_PLAIN))
-                                .setWebPath(webPath)
-                                .setResultCode(200)
-                                .call(null, requestWrapper);
-                        return;
+                WebPath webPath = new WebPath(arguments.getWebRootDirectory(), requestWrapper.getRequestURI().getPath());
+                if(webPath.path().exists()) {
+                    String mime = Mime.APPLICATION_OCTET_STREAM;
+                    try {
+                        mime = String.valueOf(json.get("mime"));
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+                    Misc.log(LOG, "-> [" + mime + "]", webPath.path().length() + " byte(s)");
+                    new Content()
+                            .setMimeType(new MimeType().setMime(mime))
+                            .setWebPath(webPath)
+                            .setResultCode(200)
+                            .call(null, requestWrapper);
+                    return;
                 }
             } catch(Exception e) {
                 Misc.err(LOG, "failed, error:", e);

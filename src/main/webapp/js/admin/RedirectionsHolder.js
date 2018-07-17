@@ -38,13 +38,14 @@ function RedirectionsHolder(main) {
                     { label: "Path" },
                     { label: "Code" },
                     { label: "Message" },
-                    { label: "Redirect"  }
+                    { label: "Redirect" },
+                    { label: "MIME" }
                 ]
             },
             placeholder: "No data, try to refresh page."
         }, div);
 
-        u.getJSON("/admin/rest/data/redirection").then(function(json){
+        u.getJSON("/admin/rest/data/redirections").then(function(json){
             console.log(json);
             var paths = u.keys(json).sort();
 
@@ -63,7 +64,8 @@ function RedirectionsHolder(main) {
                         { innerHTML: u.clear(path) },
                         { innerHTML: u.clear(json[path].code) || "&#150" },
                         { innerHTML: u.clear(json[path].message) || "&#150" },
-                        { innerHTML: u.clear(json[path].redirect) || "&#150"}
+                        { innerHTML: u.clear(json[path].redirect) || "&#150"},
+                        { innerHTML: u.clear(json[path].mime) || "&#150"}
                     ]
                 }).origin = json[path];
             }
@@ -82,6 +84,7 @@ function RedirectionsHolder(main) {
                     {type: HTML.INPUT, label: "Redirection", tabindex: 4 },
                     {type: HTML.INPUT, label: "Error code", placeholder: "404", tabindex: 2 },
                     {type: HTML.INPUT, label: "Message", placeholder: "Not found", tabindex: 3 },
+                    {type: HTML.INPUT, label: "MIME", placeholder: "MIME type", tabindex: 4 },
                 ],
                 positive: {
                     label: u.create(HTML.SPAN, "OK"),
@@ -93,6 +96,7 @@ function RedirectionsHolder(main) {
                             code: codeNode.value,
                             message: messageNode.value,
                             redirect: redirectNode.value,
+                            mime: mimeNode.value,
                             origin: idNode.origin
                         };
                         u.post("/admin/rest/redirections", { update: resultOptions}).then(function(){
@@ -136,6 +140,7 @@ function RedirectionsHolder(main) {
             var redirectNode = dialog.items[1];
             var codeNode = dialog.items[2];
             var messageNode = dialog.items[3];
+            var mimeNode = dialog.items[4];
 
             idNode.value = id || "";
             if(id) {
@@ -147,6 +152,7 @@ function RedirectionsHolder(main) {
             redirectNode.value = options.redirect || "";
             codeNode.value = options.code || "";
             messageNode.value = options.message || "";
+            mimeNode.value = options.mime || "";
 
             dialog.setTitle(title || "/" + id);
             dialog.open();
