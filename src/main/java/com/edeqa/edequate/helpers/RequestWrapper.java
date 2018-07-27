@@ -136,7 +136,7 @@ public class RequestWrapper {
                     String contentType = httpServletResponse.getHeader(HttpHeaders.CONTENT_TYPE);
                     if (!contentType.toLowerCase().contains("; charset=")) {
                         contentType = contentType + "; charset=" + charset;
-                        httpServletResponse.setHeader(HttpHeaders.CONTENT_TYPE, contentType);
+                        setHeader(HttpHeaders.CONTENT_TYPE, contentType);
                     }
                 }
                 httpServletResponse.setStatus(code);
@@ -150,7 +150,7 @@ public class RequestWrapper {
                     for (String contentType : contentTypes) {
                         if (!contentType.toLowerCase().contains("; charset=")) {
                             contentType = contentType + "; charset=" + charset;
-                            httpExchange.getResponseHeaders().set(HttpHeaders.CONTENT_TYPE, contentType);
+                            setHeader(HttpHeaders.CONTENT_TYPE, contentType);
                         }
                     }
                 }

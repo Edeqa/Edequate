@@ -145,6 +145,7 @@ public class RedirectServletHandler extends AbstractServletHandler {
 
                 ArrayList<String> keys = new ArrayList<String>(paths.keySet());
                 keys.sort((o1, o2) -> Integer.compare(o2.length(), o1.length()));
+
                 for(int i = 0; i < keys.size(); i++) {
                     String path = keys.get(i);
 //                while (iter.hasNext()) {
