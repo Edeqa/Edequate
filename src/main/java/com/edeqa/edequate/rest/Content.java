@@ -130,8 +130,10 @@ public class Content extends FileRestAction {
                 if(getResultCode() == 0) setResultCode(200);
                 requestWrapper.sendResponseHeaders(getResultCode(), 0);
 
-                try(OutputStream os = requestWrapper.getResponseBody()) {
+                try (OutputStream os = requestWrapper.getResponseBody()) {
                     os.write(string.getBytes(charset));
+                } catch (Exception e) {
+                    Misc.err("Content", "failed for", webPath, requestWrapper.getRequestURI(), e);
                 }
             } else {
                 requestWrapper.setHeader(HttpHeaders.CONTENT_TYPE, getMimeType().fetchContentType());

@@ -90,6 +90,7 @@ public class RedirectServletHandler extends AbstractServletHandler {
                 URI newUri = new URI(secured ? "https" : "http", null, requestWrapper.getRequestedHost(), code, uri.getPath(), null, null);
                 Misc.log(LOG, "-> " + newUri.toString());
                 requestWrapper.sendRedirect(newUri.toString());
+                return;
             } catch(Exception e) {
                 Misc.err(LOG, "failed, error:", e);
             }
