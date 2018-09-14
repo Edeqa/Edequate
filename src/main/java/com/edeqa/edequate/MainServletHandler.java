@@ -65,7 +65,7 @@ public class MainServletHandler extends AbstractServletHandler {
         Arguments arguments = (Arguments) getSystemBus().getHolder(Arguments.TYPE);
         URI uri = requestWrapper.getRequestURI();
 
-        if ("/_ah/start".equals(uri.getPath())) {
+        /*if ("/_ah/start".equals(uri.getPath())) {
             requestWrapper.sendResponseHeaders(200,0);
             requestWrapper.getOutputStream().close();
             return;
@@ -73,7 +73,7 @@ public class MainServletHandler extends AbstractServletHandler {
             requestWrapper.sendResponseHeaders(200,0);
             requestWrapper.getOutputStream().close();
             return;
-        }
+        }*/
 
         String referer = requestWrapper.getReferer();
         String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();

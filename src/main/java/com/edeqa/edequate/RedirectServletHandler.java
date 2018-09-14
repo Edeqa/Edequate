@@ -16,7 +16,6 @@ import org.json.JSONObject;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,20 +38,14 @@ public class RedirectServletHandler extends AbstractServletHandler {
 
             Misc.logOpened(LOG, "[" + requestWrapper.getRemoteAddress() + "]", uri.getPath(), (referer != null ? "referer: " + referer : ""));
 
-            ArrayList<String> parts = new ArrayList<>(Arrays.asList(uri.getPath().split("/")));
+//            ArrayList<String> parts = new ArrayList<>(Arrays.asList(uri.getPath().split("/")));
 
             String path = "" + port + uri.getPath();
             Arguments arguments = ((Arguments) EventBus.getEventBus(AbstractAction.SYSTEMBUS).getHolder(Arguments.TYPE));
-            if(getRedirections().containsKey(path)) {
-                process(getRedirections().get(path), requestWrapper, arguments);
+            JSONObject redirectionOptions = testRedirection(path);
+            if(redirectionOptions != null) {
+                process(redirectionOptions, requestWrapper, arguments);
                 return;
-            } else {
-                for (Map.Entry<String, JSONObject> entry : getRedirections().entrySet()) {
-                    if (path.startsWith(entry.getKey())) {
-                        process(entry.getValue(), requestWrapper, arguments);
-                        return;
-                    }
-                }
             }
             Misc.log(LOG, "->", "https://" + host + arguments.getWrappedHttpsPort() + uri.getPath());
             requestWrapper.sendRedirect("https://" + host + arguments.getWrappedHttpsPort() + uri.getPath());
@@ -64,6 +57,24 @@ public class RedirectServletHandler extends AbstractServletHandler {
         }
     }
 
+    public JSONObject testRedirection(String path) {
+        if(getRedirections().containsKey(path)) {
+            return getRedirections().get(path);
+        } else {
+            for (Map.Entry<String, JSONObject> entry : getRedirections().entrySet()) {
+                if (path.startsWith(entry.getKey())) {
+                    return entry.getValue();
+                } else if(entry.getKey().contains("*")) {
+                    String pattern = entry.getKey().replaceAll("([\\\\/.])","\\\\$1").replaceAll("\\*", ".*?");
+                    if(path.matches(pattern)) {
+                        return entry.getValue();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private void process(JSONObject json, RequestWrapper requestWrapper, Arguments arguments) {
         int code = 404;
         String message = "Not found";
@@ -71,7 +82,7 @@ public class RedirectServletHandler extends AbstractServletHandler {
         if(json.has("redirect")) {
             try {
                 String path = String.valueOf(json.get("redirect"));
-                Misc.log(LOG, "-> " + path);
+                Misc.log(LOG, "->", path);
                 requestWrapper.sendRedirect(path);
                 return;
             } catch(Exception e) {
@@ -88,7 +99,7 @@ public class RedirectServletHandler extends AbstractServletHandler {
                 code = Integer.parseInt(String.valueOf(json.get("destination_port")));
 
                 URI newUri = new URI(secured ? "https" : "http", null, requestWrapper.getRequestedHost(), code, uri.getPath(), null, null);
-                Misc.log(LOG, "-> " + newUri.toString());
+                Misc.log(LOG, "->", newUri.toString());
                 requestWrapper.sendRedirect(newUri.toString());
                 return;
             } catch(Exception e) {
@@ -105,7 +116,7 @@ public class RedirectServletHandler extends AbstractServletHandler {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    Misc.log(LOG, "-> [" + mime + "]", webPath.path().length() + " byte(s)");
+                    Misc.log(LOG, "->", "[" + mime + "]", webPath.path().length(), "byte(s)");
                     new Content()
                             .setMimeType(new MimeType().setMime(mime))
                             .setWebPath(webPath)

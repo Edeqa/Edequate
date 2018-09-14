@@ -2,7 +2,7 @@ package com.edeqa.edequate.helpers;
 
 public class Version {
 
-    private static final int VERSION_CODE = 8;
+    private static final int VERSION_CODE = 9;
     private static final String VERSION_NAME = "2.1";
 
     public static int getVersionCode() {

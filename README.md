@@ -274,7 +274,9 @@ For example:
 
 ## History
 
-...
+2.1.9 - rest/Uptime.java
+
+2.1.8
 
 ## License
 
