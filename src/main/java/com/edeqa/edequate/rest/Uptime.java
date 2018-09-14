@@ -34,15 +34,15 @@ public class Uptime extends AbstractAction<RequestWrapper> {
         json.put(STATUS, STATUS_SUCCESS);
         json.put(CODE, CODE_STRING);
 
-        json.put(MESSAGE, "Uptime is " + fetchString());
+        json.put(MESSAGE, fetchString());
         json.put(EXTRA, fetchLong());
     }
 
-    public Long fetchLong() {
+    private Long fetchLong() {
         return getTimer().total();
     }
 
-    public String fetchString() {
+    private String fetchString() {
         Long total = fetchLong();
 
         long seconds = total / 1000;
@@ -57,20 +57,23 @@ public class Uptime extends AbstractAction<RequestWrapper> {
         long days = hours / 24;
         hours -= days*24;
 
-        StringBuilder message = new StringBuilder();
-        if(days > 0) message.append(days).append(" days ");
-        if(hours > 0) message.append(hours).append(" hours ");
-        if(minutes > 0) message.append(minutes).append(" minutes ");
-        if(seconds > 0) message.append(seconds).append(" seconds");
 
-        return message.toString();
+        String message = String.format("%d:%02d:%02d:%02d", days, hours, minutes, seconds);
+
+//        StringBuilder message = new StringBuilder();
+//        if(days > 0) message.append(days).append("days ");
+//        if(hours > 0) message.append(hours).append(" hours ");
+//        if(minutes > 0) message.append(minutes).append(" minutes ");
+//        if(seconds > 0) message.append(seconds).append(" seconds");
+
+        return message;
     }
 
-    public static Timer getTimer() {
+    private static Timer getTimer() {
         return timer;
     }
 
-    public static void setTimer(Timer timer) {
+    private static void setTimer(Timer timer) {
         Uptime.timer = timer;
     }
 }

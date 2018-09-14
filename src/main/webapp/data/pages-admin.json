@@ -3,18 +3,6 @@
   "section": "admin",
   "categories": [
     {
-      "category": 0,
-      "pages": [
-        {
-          "icon": "home",
-          "menu": "home",
-          "resource": "admin-home.html",
-          "title": "home",
-          "type": "home"
-        }
-      ]
-    },
-    {
       "category": 10,
       "pages": [
         {

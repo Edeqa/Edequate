@@ -9,6 +9,7 @@ import com.edeqa.edequate.rest.admin.LogsClear;
 import com.edeqa.edequate.rest.admin.LogsLog;
 import com.edeqa.edequate.rest.admin.Pages;
 import com.edeqa.edequate.rest.admin.Redirections;
+import com.edeqa.edequate.rest.admin.Restart;
 import com.edeqa.edequate.rest.admin.RestorePassword;
 import com.edeqa.edequate.rest.admin.Settings;
 import com.edeqa.edequate.rest.admin.Splash;
@@ -62,6 +63,7 @@ public class AdminServletHandler extends RestServletHandler {
         registerAction(new LogsClear());
         registerAction(new LogsLog());
         registerAction(new Pages());
+        registerAction(new Restart());
         registerAction(new RestorePassword());
         registerAction(new Settings());
         registerAction(new Splash());
