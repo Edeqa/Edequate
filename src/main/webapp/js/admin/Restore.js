@@ -1,5 +1,5 @@
 /**
- * Edequate. Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
+ * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * Created 3/29/18.
  *

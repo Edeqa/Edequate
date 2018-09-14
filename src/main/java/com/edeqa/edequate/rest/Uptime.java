@@ -34,10 +34,36 @@ public class Uptime extends AbstractAction<RequestWrapper> {
         json.put(STATUS, STATUS_SUCCESS);
         json.put(CODE, CODE_STRING);
 
-        Long tick = getTimer().tick();
+        json.put(MESSAGE, "Uptime is " + fetchString());
+        json.put(EXTRA, fetchLong());
+    }
 
-//        json.put(MESSAGE, "Uptime is " + format.format(tick));
-        json.put(EXTRA, tick);
+    public Long fetchLong() {
+        return getTimer().total();
+    }
+
+    public String fetchString() {
+        Long total = fetchLong();
+
+        long seconds = total / 1000;
+//        total -= seconds*1000;
+
+        long minutes = seconds / 60;
+        seconds -= minutes*60;
+
+        long hours = minutes / 60;
+        minutes -= hours*60;
+
+        long days = hours / 24;
+        hours -= days*24;
+
+        StringBuilder message = new StringBuilder();
+        if(days > 0) message.append(days).append(" days ");
+        if(hours > 0) message.append(hours).append(" hours ");
+        if(minutes > 0) message.append(minutes).append(" minutes ");
+        if(seconds > 0) message.append(seconds).append(" seconds");
+
+        return message.toString();
     }
 
     public static Timer getTimer() {
