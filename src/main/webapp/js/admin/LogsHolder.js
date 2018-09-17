@@ -44,6 +44,7 @@ function LogsHolder(main) {
 
     function updateData(){
         u.clear(logBody);
+        logBody.value = "";
         try {
             if(task) task.close();
         } catch(e) {

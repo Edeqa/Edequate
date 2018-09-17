@@ -2,6 +2,9 @@ package com.edeqa.edequate.rest.admin;
 
 import com.edeqa.edequate.abstracts.AbstractAction;
 import com.edeqa.edequate.helpers.RequestWrapper;
+import com.edeqa.edequate.helpers.WebPath;
+import com.edeqa.edequate.rest.system.Arguments;
+import com.edeqa.eventbus.EventBus;
 import com.edeqa.helpers.Misc;
 
 import org.json.JSONObject;
@@ -88,6 +91,11 @@ public class Restart extends AbstractAction<RequestWrapper> {
             for (int i = 1; i < mainCommand.length; i++) {
                 cmd.append(" ");
                 cmd.append(mainCommand[i]);
+            }
+
+            if(!cmd.toString().matches("\\.log")) {
+                String logFileName = ((Arguments) ((EventBus<AbstractAction>) EventBus.getOrCreate(SYSTEMBUS)).getHolder(Arguments.TYPE)).getLogFile();
+                cmd.append(" &> \"").append(new WebPath(logFileName).path().getCanonicalPath()).append("\"");
             }
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

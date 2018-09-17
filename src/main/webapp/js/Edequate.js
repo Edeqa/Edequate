@@ -833,7 +833,9 @@ function Edequate(options) {
 
     function clear(element) {
         if(element === null || element === undefined) return "";
-        if(element instanceof HTMLElement) {
+        if((element instanceof HTMLTextAreaElement) || (element instanceof HTMLInputElement)) {
+            element.value = "";
+        } else if(element instanceof HTMLElement) {
             for(var i = element.childNodes.length-1; i>=0; i--) {
                 element.removeChild(element.childNodes[i]);
             }
