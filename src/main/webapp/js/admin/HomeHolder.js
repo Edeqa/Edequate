@@ -18,11 +18,17 @@ function HomeHolder(main) {
     this.icon = "home";
     this.priority = 10;
     this.scrollTop = 0;
+
     var div;
     var dialogRestart;
     var dialogStop;
     var tableSummary;
     var previousStatus = null;
+    var delayStart;
+    var taskDelayUpdate;
+    var runningTime;
+    var taskRunningTimeUpdate;
+    var updateInterval = 1000;
 
     this.start = function() {
         div = main.content;
@@ -58,7 +64,7 @@ function HomeHolder(main) {
         tableSummary.uptimeItem = tableSummary.add({
             cells: [
                 { className:"th", innerHTML: "Uptime" },
-                { className:"option", innerHTML: 0, title: "Click for update", onclick: updateUptime }
+                { className:"option", innerHTML: "n/a", title: "Click for update", onclick: updateUptime }
             ]
         });
 
@@ -77,10 +83,16 @@ function HomeHolder(main) {
                 tableSummary.statusItem.childNodes[1].innerHTML = "stopped";
                 tableSummary.statusItem.childNodes[1].classList.add("warning");
                 tableSummary.statusItem.childNodes[2].classList.add("hidden");
+                if(previousStatus === STATUS_WAITING) {
+                    u.toast.error("Server has stopped");
+                }
             } else if(status === STATUS_RUNNING) {
                 tableSummary.statusItem.childNodes[1].innerHTML = "running";
                 tableSummary.statusItem.childNodes[1].classList.remove("warning");
                 tableSummary.statusItem.childNodes[2].classList.remove("hidden");
+                if(previousStatus === STATUS_WAITING) {
+                    u.toast.error("Server has started");
+                }
             } else if(status === STATUS_WAITING) {
                 tableSummary.statusItem.childNodes[1].innerHTML = "waiting";
                 tableSummary.statusItem.childNodes[2].classList.add("hidden");
@@ -89,15 +101,40 @@ function HomeHolder(main) {
         }
     }
 
+    function formatRunningTime(millis) {
+        var seconds = Math.floor(millis/1000);
+        millis -= seconds*1000;
+
+        var minutes = Math.floor(seconds/60);
+        seconds -= minutes*60;
+
+        var hours = Math.floor(minutes/60);
+        minutes -= hours*60;
+
+        var days = Math.floor(hours/24);
+        hours -= days*24;
+
+        return "%d:%02d:%02d:%02d".sprintf(days, hours, minutes, seconds);
+    }
+
     function updateUptime() {
-        u.getJSON("/rest/uptime").then(function(json){
-            tableSummary.uptimeItem.childNodes[1].innerHTML = json.message;
+        clearInterval(taskRunningTimeUpdate);
+        u.getJSON("/rest/uptime", null, 1000).then(function(json){
+            delayStart = 0;
+            runningTime = json.extra;
+            function runningTimeUpdate() {
+                tableSummary.uptimeItem.childNodes[1].innerHTML = formatRunningTime(runningTime);
+                runningTime += 1000;
+            }
+            runningTimeUpdate();
+            clearInterval(taskDelayUpdate);
+            taskRunningTimeUpdate = setInterval(runningTimeUpdate, 1000);
             updateStatus(STATUS_RUNNING);
         }).catch(function(e,x){
             console.error(e,x);
-            tableSummary.uptimeItem.childNodes[1].innerHTML = "n/a";
+            delayStart = 0;
             updateStatus(STATUS_STOPPED);
-            setTimeout(updateUptime, 1000);
+            setTimeout(updateUptime, updateInterval);
         });
     }
 
@@ -111,12 +148,24 @@ function HomeHolder(main) {
             positive: {
                 label: "Yes",
                 onclick: function() {
-                    console.log("restart");
                     u.toast.show("Server is restarting");
                     tableSummary.uptimeItem.childNodes[1].innerHTML = "n/a";
                     updateStatus(STATUS_WAITING);
-                    u.getJSON("/admin/rest/restart", {restart:true}).then(function(json){
-                        console.log("RESULT", json);
+                    delayStart = new Date().getTime();
+
+                    function restarting() {
+                        if(delayStart) {
+                            var delay = (new Date().getTime() - delayStart) / 1000;
+                            tableSummary.uptimeItem.childNodes[1].innerHTML = "restarting " + delay.toFixed(0) + " s...";
+                        } else {
+                            tableSummary.uptimeItem.childNodes[1].innerHTML = "n/a";
+                        }
+                    }
+                    clearInterval(taskRunningTimeUpdate);
+                    restarting();
+                    taskDelayUpdate = setInterval(restarting, 1000);
+                    updateInterval = 1000;
+                    u.getJSON("/admin/rest/restart", {restart:true}, 1000).then(function(json){
                         setTimeout(updateUptime, 1000);
                     }).catch(function(e,x){
                         console.error(e,x);
@@ -136,17 +185,17 @@ function HomeHolder(main) {
             title: "Stop server",
             modal: true,
             items: [
-                {innerHTML: "Do you want to stop the server?"}
+                {innerHTML: "Do you want to stop the server? Then you should be able to start it directly."}
             ],
             positive: {
                 label: "Yes",
                 onclick: function() {
-                    console.log("stop");
                     u.toast.show("Server is stopping");
                     tableSummary.uptimeItem.childNodes[1].innerHTML = "n/a";
+                    clearInterval(taskRunningTimeUpdate);
                     updateStatus(STATUS_WAITING);
-                    u.getJSON("/admin/rest/restart", {stop:true}).then(function(json){
-                        console.log("RESULT", json);
+                    updateInterval = 10000;
+                    u.getJSON("/admin/rest/restart", {stop:true}, 1000).then(function(json){
                         setTimeout(updateUptime, 1000);
                     }).catch(function(e,x){
                         console.error(e,x);

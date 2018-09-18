@@ -2111,11 +2111,12 @@ function Edequate(options) {
      .catch(callback(code,xhr));
      */
 
-    function rest(method, url, body) {
+    function rest(method, url, body, timeout) {
+        var self = this;
         return new Promise(function(resolve, reject) {
             var xhr = new XMLHttpRequest();
             xhr.open(method, url, true);
-            if(this.isJSON) {
+            if(self.isJSON) {
                 xhr.setRequestHeader("Content-type", "application/json");
             }
             xhr.onreadystatechange = function() {
@@ -2127,6 +2128,9 @@ function Edequate(options) {
                     resolve(xhr);
                 }
             };
+            if(self.timeout || timeout) {
+                xhr.timeout = self.timeout || timeout;
+            }
             try {
                 if(body) {
                     if(body.constructor === Object) {
@@ -2152,7 +2156,7 @@ function Edequate(options) {
     }
 
     function put(url) {
-        return rest.call(this, "PUT",url);
+        return rest.call(this, "PUT", url);
     }
 
     /**
@@ -2160,7 +2164,7 @@ function Edequate(options) {
      .then(callback(xhr))
      .catch(callback(code,xhr));
      */
-    function getJSON(url, body) {
+    function getJSON(url, body, timeout) {
         return new Promise(function(resolve, reject) {
             var onresolve = function(xhr) {
                 try {
@@ -2179,9 +2183,9 @@ function Edequate(options) {
                 }
             };
             if(body) {
-                post.bind({isJSON:true})(url, body).then(onresolve,reject);
+                post.bind({isJSON:true, timeout: timeout})(url, body).then(onresolve,reject);
             } else {
-                get.bind({isJSON:true})(url).then(onresolve,reject);
+                get.bind({isJSON:true, timeout: timeout})(url).then(onresolve,reject);
             }
         });
     }

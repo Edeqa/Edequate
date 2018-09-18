@@ -1134,6 +1134,7 @@ button:hover, button:active {
     margin: 3px;
     text-decoration: none;
 }
+
 .progress-dialog {
     min-width: 20%;
     padding-top: 20px;
