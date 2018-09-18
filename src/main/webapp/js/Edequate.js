@@ -5,7 +5,7 @@
  * Copyright (C) 2017-18 Edeqa <http://www.edeqa.com>
  *
  * History:
- * 8 - Promise implementation (resolve/reject/then/catch/all/race); Menu positioning; blinking for onclick events
+ * 8 - Promise implementation (resolve/reject/then/catch/all/race); Menu positioning; blinking for onclick events; timeout for rest requests
  * 7 - create(options#content) - if content is defined then just uses it as current HTMLElement; new component - tree; node#setContent(node)
  * 6 - drawer.headerSubtitle; require with caching
  * 5 - onload initialization; DRAWER constants
