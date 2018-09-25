@@ -76,11 +76,12 @@ public class Restart extends AbstractAction<RequestWrapper> {
             List<String> vmArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
             StringBuilder vmArgsOneLine = new StringBuilder();
             for (String arg : vmArguments) {
-                if (!arg.contains("-agentlib")) {
+                if (!arg.contains("-agentlib") && !arg.contains("-javaagent")) {
                     vmArgsOneLine.append("\"").append(arg).append("\" ");
                 }
             }
-            final StringBuilder cmd = new StringBuilder("\"" + java + "\" " + vmArgsOneLine);
+            if(java.contains(" ")) java = "\"" + java + "\"";
+            final StringBuilder cmd = new StringBuilder(java + " " + vmArgsOneLine);
 
             String[] mainCommand = System.getProperty("sun.java.command").split(" ");
             if (mainCommand[0].endsWith(".jar")) {
@@ -100,6 +101,7 @@ public class Restart extends AbstractAction<RequestWrapper> {
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
+                    System.out.println(cmd);
                     Runtime.getRuntime().exec(cmd.toString());
                 } catch (IOException e) {
                     e.printStackTrace();

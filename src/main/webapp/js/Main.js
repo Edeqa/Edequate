@@ -218,13 +218,19 @@ function Main(u) {
                         } else {
                             var urlPath = new URL(window.location);
                             var path = urlPath.path.split("/");
-                            var holderType;
-                            if(path.length > 2 && path[1].toLowerCase() === self.mainType) {
-                                path.shift();path.shift();
-                                holderType = path.shift();
+
+                            // remove the first element if it is empty
+                            if(path.length > 0 && !path[0]) {
+                                path.shift();
                             }
-                            holderType = holderType || "home";
-                            self.turn(holderType, path);
+
+                            urlPath = path.join("/").toLowerCase();
+                            while(!self.eventBus.holders[urlPath] && path.length > 0) {
+                                path.shift();
+                                urlPath = path.join("/").toLowerCase();
+                            }
+                            urlPath = urlPath || "home";
+                            self.turn(urlPath, path);
                         }
                         u.byId("loading-dialog").hide();
                     },

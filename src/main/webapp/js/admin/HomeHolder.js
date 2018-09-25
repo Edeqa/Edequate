@@ -25,6 +25,8 @@ function HomeHolder(main) {
     var tableSummary;
     var previousStatus = null;
     var delayStart;
+    var buttonRestart;
+    var buttonStop;
     var taskDelayUpdate;
     var runningTime;
     var taskRunningTimeUpdate;
@@ -38,13 +40,27 @@ function HomeHolder(main) {
         u.clear(div);
         var titleNode = u.create(HTML.H2, "Summary", div);
 
+        buttonRestart = u.create(HTML.BUTTON, {
+            className: "icon notranslate button-inline",
+            innerHTML: "refresh",
+            title: "Restart server",
+            onclick: askRestart
+        }, titleNode);
+
+        buttonStop = u.create(HTML.BUTTON, {
+            className: "icon notranslate button-inline",
+            innerHTML: "stop server",
+            title: "Stop",
+            onclick: askStop
+        }, titleNode);
+
         tableSummary = u.table({
             className: "option"
         }, div);
         tableSummary.statusItem = tableSummary.add({
             cells: [
                 { className: "th", innerHTML: "Server status" },
-                { className: "option", innerHTML: "n/a" },
+                { className: "option", innerHTML: "n/a" }/*,
                 { className: "option", children: [
                         u.create(HTML.BUTTON, {
                             className: "icon notranslate button-inline",
@@ -58,7 +74,7 @@ function HomeHolder(main) {
                             title: "Stop",
                             onclick: askStop
                         })
-                ] }
+                ] }*/
             ]
         });
         tableSummary.uptimeItem = tableSummary.add({
@@ -82,20 +98,23 @@ function HomeHolder(main) {
             if(status === STATUS_STOPPED) {
                 tableSummary.statusItem.childNodes[1].innerHTML = "stopped";
                 tableSummary.statusItem.childNodes[1].classList.add("warning");
-                tableSummary.statusItem.childNodes[2].classList.add("hidden");
+                buttonRestart.classList.add("hidden");
+                buttonStop.classList.add("hidden");
                 if(previousStatus === STATUS_WAITING) {
                     u.toast.error("Server has stopped");
                 }
             } else if(status === STATUS_RUNNING) {
                 tableSummary.statusItem.childNodes[1].innerHTML = "running";
                 tableSummary.statusItem.childNodes[1].classList.remove("warning");
-                tableSummary.statusItem.childNodes[2].classList.remove("hidden");
+                buttonRestart.classList.remove("hidden");
+                buttonStop.classList.remove("hidden");
                 if(previousStatus === STATUS_WAITING) {
                     u.toast.error("Server has started");
                 }
             } else if(status === STATUS_WAITING) {
                 tableSummary.statusItem.childNodes[1].innerHTML = "waiting";
-                tableSummary.statusItem.childNodes[2].classList.add("hidden");
+                buttonRestart.classList.add("hidden");
+                buttonStop.classList.add("hidden");
             }
             previousStatus = status;
         }
