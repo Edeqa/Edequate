@@ -223,14 +223,20 @@ function Main(u) {
                             if(path.length > 0 && !path[0]) {
                                 path.shift();
                             }
-
-                            urlPath = path.join("/").toLowerCase();
-                            while(!self.eventBus.holders[urlPath] && path.length > 0) {
+                            // remove the second element if it is "admin"
+                            if(path.length > 0) {
                                 path.shift();
-                                urlPath = path.join("/").toLowerCase();
                             }
-                            urlPath = urlPath || "home";
-                            self.turn(urlPath, path);
+                            urlPath = path.join("/");
+                            var args = [];
+
+                            var newPath = path.join("/").toLowerCase();
+                            while(!self.eventBus.holders[newPath] && path.length > 0) {
+                                args.unshift(path.pop());
+                                newPath = path.join("/").toLowerCase();
+                            }
+                            newPath = newPath || urlPath || "home";
+                            self.turn(newPath, args);
                         }
                         u.byId("loading-dialog").hide();
                     },
