@@ -60,21 +60,7 @@ function HomeHolder(main) {
         tableSummary.statusItem = tableSummary.add({
             cells: [
                 { className: "th", innerHTML: "Server status" },
-                { className: "option", innerHTML: "n/a" }/*,
-                { className: "option", children: [
-                        u.create(HTML.BUTTON, {
-                            className: "icon notranslate button-inline",
-                            innerHTML: "refresh",
-                            title: "Restart",
-                            onclick: askRestart
-                        }),
-                        u.create(HTML.BUTTON, {
-                            className: "icon notranslate button-inline",
-                            innerHTML: "stop",
-                            title: "Stop",
-                            onclick: askStop
-                        })
-                ] }*/
+                { className: "option", innerHTML: "n/a" }
             ]
         });
         tableSummary.uptimeItem = tableSummary.add({
@@ -83,6 +69,14 @@ function HomeHolder(main) {
                 { className:"option", innerHTML: "n/a", title: "Click for update", onclick: updateUptime }
             ]
         });
+        tableSummary.versionItem = tableSummary.add({
+            cells: [
+                { className:"th", innerHTML: "Edequate version" },
+                { className:"option", innerHTML: "..."}
+            ]
+        });
+
+        updateStaticData();
 
         previousStatus = null;
         updateUptime();
@@ -92,6 +86,24 @@ function HomeHolder(main) {
             }
         }, {passive: true});
     };
+
+    function updateStaticData() {
+        u.getJSON("/rest/version").then(function(json){
+            var version = json.extra ||"n/a";
+            tableSummary.versionItem.firstChild.nextSibling.innerHTML = version;
+            u.getJSON(/*"https://www.waytous.net*/"/rest/version").then(function(json){
+                var origin = json.extra || "n/a";
+                // if(origin !== version) {
+                    tableSummary.versionItem.lastChild.innerHTML = version + " (actual: " + origin + ")";
+                // }
+            }).catch(function(e,x){
+                console.error(e,x);
+            });
+        }).catch(function(e,x){
+            console.error(e,x);
+            tableSummary.versionItem.firstChild.nextSibling.innerHTML = "...error...";
+        });
+    }
 
     function updateStatus(status) {
         if(previousStatus !== status) {

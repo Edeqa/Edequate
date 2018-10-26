@@ -34,6 +34,11 @@ import java.util.zip.GZIPOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.edeqa.edequate.abstracts.AbstractAction.CODE;
+import static com.edeqa.edequate.abstracts.AbstractAction.ERROR_BAD_REQUEST;
+import static com.edeqa.edequate.abstracts.AbstractAction.STATUS;
+import static com.edeqa.edequate.abstracts.AbstractAction.STATUS_ERROR;
+
 /**
  * Created 6/9/2017.
  */
@@ -49,6 +54,8 @@ public class RequestWrapper {
     private HttpServletRequest httpServletRequest;
     private HttpServletResponse httpServletResponse;
     private String charset;
+    private String callback;
+    private String fallback;
 
     private HttpExchange httpExchange;
 
@@ -362,7 +369,21 @@ public class RequestWrapper {
     }
 
     public void sendResult(JSONObject json) {
-        sendResult(200, Mime.APPLICATION_JSON, json.toString().getBytes());
+        if(json != null && json.has(STATUS) && json.getString(STATUS).equals(STATUS_ERROR)) {
+            int code = ERROR_BAD_REQUEST;
+            try {
+                code = json.getInt(CODE);
+            } catch (Exception ignored) {}
+            sendError(code, json);
+            return;
+        }
+        String result = json.toString();
+        if(getCallback() != null) {
+            result = getCallback() + "(" + result + ");";
+            setCallback(null);
+            setFallback(null);
+        }
+        sendResult(200, Mime.APPLICATION_JSON, result.getBytes());
     }
 
     public void sendResult(String string) {
@@ -370,7 +391,17 @@ public class RequestWrapper {
     }
 
     public void sendError(Integer code, JSONObject json) {
-        sendResult(code, Mime.APPLICATION_JSON, json.toString().getBytes());
+        String result = json.toString();
+        if(getFallback() != null || getCallback() != null) {
+            if(getFallback() != null) {
+                result = getFallback() + "(" + result + ");";
+            } else if(getCallback() != null) {
+                result = getCallback() + "(" + result + ");";
+            }
+            setCallback(null);
+            setFallback(null);
+        }
+        sendResult(code, Mime.APPLICATION_JSON, result.getBytes());
     }
 
     public void sendError(Integer code, String string) {
@@ -598,5 +629,19 @@ public class RequestWrapper {
         return json;
     }
 
+    public String getCallback() {
+        return callback;
+    }
 
+    public void setCallback(String callback) {
+        this.callback = callback;
+    }
+
+    public String getFallback() {
+        return fallback;
+    }
+
+    public void setFallback(String fallback) {
+        this.fallback = fallback;
+    }
 }

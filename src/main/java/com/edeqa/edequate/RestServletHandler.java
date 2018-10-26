@@ -94,6 +94,13 @@ public class RestServletHandler extends AbstractServletHandler {
 
         JSONObject json = new JSONObject();
         json.put(AbstractAction.REQUEST, path);
+//        json.put(AbstractAction.ARGUMENTS, arguments);
+        if (arguments.containsKey(AbstractAction.CALLBACK)) {
+            requestWrapper.setCallback(arguments.get(AbstractAction.CALLBACK).get(0));
+        }
+        if (arguments.containsKey(FALLBACK)) {
+            requestWrapper.setFallback(arguments.get(FALLBACK).get(0));
+        }
 
         String ipRemote = requestWrapper.getRemoteAddress().getAddress().getHostAddress();
         try {
@@ -124,25 +131,21 @@ public class RestServletHandler extends AbstractServletHandler {
             }
         }
 
-        String callback = null;
-        String fallback = null;
-        if (arguments.containsKey(AbstractAction.CALLBACK)) {
-            callback = arguments.get(AbstractAction.CALLBACK).get(0);
-        }
-        if (arguments.containsKey(FALLBACK)) {
-            fallback = arguments.get(FALLBACK).get(0);
-        }
+//        String callback = null;
+//        String fallback = null;
+//        if (arguments.containsKey(AbstractAction.CALLBACK)) {
+//            requestWrapper.setCallback(arguments.get(AbstractAction.CALLBACK).get(0));
+//        }
+//        if (arguments.containsKey(FALLBACK)) {
+//            requestWrapper.setFallback(arguments.get(FALLBACK).get(0));
+//        }
+//
+//        if (json.getString(STATUS).equals(STATUS_ERROR) && !Misc.isEmpty(fallback)) {
+//            callback = fallback;
+//        }
 
-        if (json.getString(STATUS).equals(STATUS_ERROR) && !Misc.isEmpty(fallback)) {
-            callback = fallback;
-        }
-
-        if (json.getString(STATUS).equals(STATUS_ERROR) && !Misc.isEmpty(callback) ) {
-            requestWrapper.sendError(json.getInt(CODE),callback + "(" + json.toString() + ");");
-        } else if (json.getString(STATUS).equals(STATUS_ERROR)) {
+        if (json.getString(STATUS).equals(STATUS_ERROR)) {
             requestWrapper.sendError(json.getInt(CODE), json);
-        } else if (!Misc.isEmpty(callback) ) {
-            requestWrapper.sendResult(callback + "(" + json.toString() + ");");
         } else {
             requestWrapper.sendResult(json);
         }

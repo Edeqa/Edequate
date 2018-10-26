@@ -18,7 +18,7 @@ dependencies {
     compile 'com.sun.mail:javax.mail:+'
     compile 'org.json:json:20171018'
 // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.59'
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.60'
     testCompile 'junit:junit:+'
 }
 

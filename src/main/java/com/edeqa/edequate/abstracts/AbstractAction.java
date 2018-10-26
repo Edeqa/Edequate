@@ -17,6 +17,7 @@ public abstract class AbstractAction<T> extends AbstractEntityHolder {
     public static final String FALLBACK = "fallback";
     public static final String LOCALE = "locale";
     public static final String MESSAGE = "message";
+    public static final String ARGUMENTS = "arguments";
     public static final String REQUEST = "request";
     public static final String STATUS = "status";
     public static final String STATUS_ERROR = "error";
