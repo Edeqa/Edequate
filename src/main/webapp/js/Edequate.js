@@ -2118,6 +2118,7 @@ function Edequate(options) {
             xhr.open(method, url, true);
             if(self.isJSON) {
                 xhr.setRequestHeader("Content-type", "application/json");
+                xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
             }
             xhr.onreadystatechange = function() {
                 if (xhr.readyState !== 4) return;
@@ -2330,7 +2331,7 @@ function Edequate(options) {
             appendTo.insertBefore(layout, appendTo.firstChild);
         }
 
-        layout.frame = create("iframe", {width:"100%",height:"1%", className:"drawer-iframe"}, layout);
+        layout.frame = create("iframe", {width:"100%",height:"1%", className:"drawer-iframe", title:"Drawer"}, layout);
         layout.frame.contentWindow.addEventListener("resize",function(){
             if(!layout.resizeTask) layout.resizeTask = setTimeout(function(){
                 if(options.ontogglesize) options.ontogglesize();
