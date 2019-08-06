@@ -1,0 +1,8 @@
+{
+  "mail": {
+    "reply_name": "Edequate Mail Robot",
+    "reply_email": "noreply@edeqa.com",
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587
+  }
+}
